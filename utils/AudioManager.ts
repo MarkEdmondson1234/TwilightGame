@@ -19,6 +19,7 @@
 
 import { TileType } from '../types/core';
 import { debugLog } from './debugLog';
+import { AUDIO } from '../constants';
 
 // Sound categories with individual volume control
 export type SoundCategory = 'master' | 'music' | 'ambient' | 'sfx' | 'ui';
@@ -164,6 +165,18 @@ class AudioManager {
 
   // Sound cache and loading
   private sounds: Map<string, SoundData> = new Map();
+  /**
+   * Every sound the game knows about, loaded or not. Music and ambience are
+   * fetched and decoded the first time they are asked for, not at boot: the
+   * full set is ~1,500 s of audio, which decodes to ~440 MB of float PCM —
+   * more than the whole per-map texture budget, resident on every map, and
+   * the likeliest reason the iPhone's tab was being killed
+   * (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.3). Only effects are
+   * preloaded; they are small and must not lag their trigger.
+   */
+  private catalogue: Map<string, AudioAssetConfig> = new Map();
+  /** Decoded music/ambient buffers not currently playing, oldest first. */
+  private idleStreams: string[] = [];
   private loading: Map<string, Promise<AudioBuffer>> = new Map();
 
   // Active sounds for tracking/stopping
@@ -389,31 +402,80 @@ class AudioManager {
   /**
    * Batch load multiple sounds
    */
-  async loadBatch(assets: Record<string, AudioAssetConfig>): Promise<void> {
-    const assetCount = Object.keys(assets).length;
-    if (assetCount === 0) {
+  async loadBatch(
+    assets: Record<string, AudioAssetConfig>,
+    categories?: readonly SoundCategory[]
+  ): Promise<void> {
+    // Everything is registered so it can be loaded on demand later; only the
+    // requested categories are fetched and decoded now.
+    for (const [key, config] of Object.entries(assets)) {
+      this.catalogue.set(key, config);
+    }
+    const toLoad = Object.entries(assets).filter(
+      ([, config]) => !categories || categories.includes(config.category ?? 'sfx')
+    );
+    if (toLoad.length === 0) {
       debugLog('AudioManager', 'No audio assets to load');
       return;
     }
 
-    debugLog('AudioManager', `Loading ${assetCount} sounds...`);
+    debugLog('AudioManager', `Loading ${toLoad.length} of ${Object.keys(assets).length} sounds...`);
     const startTime = performance.now();
 
-    const promises = Object.entries(assets).map(
-      ([key, config]) =>
-        this.loadSound(key, config.url, {
-          category: config.category,
-          loop: config.loop,
-          baseVolume: config.baseVolume,
-          fadeIn: config.fadeIn,
-          fadeOut: config.fadeOut,
-        }).catch(() => null) // Don't fail entire batch on single error
-    );
-
-    await Promise.all(promises);
+    // A few at a time: firing every request in one tick competes with the
+    // texture loader for the same handful of connections at boot.
+    const queue = [...toLoad];
+    const worker = async () => {
+      while (queue.length > 0) {
+        const [key] = queue.shift()!;
+        await this.ensureLoaded(key).catch(() => null); // Don't fail the batch on one error
+      }
+    };
+    await Promise.all(Array.from({ length: AUDIO.MAX_CONCURRENT_LOADS }, worker));
 
     const loadTime = (performance.now() - startTime).toFixed(0);
     debugLog('AudioManager', `Loaded ${this.sounds.size} sounds in ${loadTime}ms`);
+  }
+
+  /**
+   * Load a catalogued sound if it is not loaded or loading. Resolves to null
+   * for keys not in the catalogue.
+   */
+  private ensureLoaded(key: string): Promise<AudioBuffer | null> {
+    if (this.sounds.has(key)) return Promise.resolve(this.sounds.get(key)!.buffer);
+    const config = this.catalogue.get(key);
+    if (!config) return Promise.resolve(null);
+    return this.loadSound(key, config.url, {
+      category: config.category,
+      loop: config.loop,
+      baseVolume: config.baseVolume,
+      fadeIn: config.fadeIn,
+      fadeOut: config.fadeOut,
+    });
+  }
+
+  /**
+   * A music or ambient buffer has stopped being used: remember it as idle and
+   * drop the oldest idle ones beyond AUDIO.MAX_IDLE_STREAMS so decoded PCM
+   * does not accumulate as the player moves between maps. A dropped track is
+   * simply fetched (from the HTTP cache) and decoded again next time.
+   */
+  private releaseStream(key: string): void {
+    const sound = this.sounds.get(key);
+    if (!sound || (sound.category !== 'music' && sound.category !== 'ambient')) return;
+    if (this.currentMusic?.id === key || this.activeAmbients.has(key)) return;
+    this.idleStreams = this.idleStreams.filter((k) => k !== key);
+    this.idleStreams.push(key);
+    while (this.idleStreams.length > AUDIO.MAX_IDLE_STREAMS) {
+      const evict = this.idleStreams.shift()!;
+      if (this.currentMusic?.id === evict || this.activeAmbients.has(evict)) continue;
+      this.sounds.delete(evict);
+      debugLog('AudioManager', `Released decoded audio: ${evict}`);
+    }
+  }
+
+  private markStreamInUse(key: string): void {
+    this.idleStreams = this.idleStreams.filter((k) => k !== key);
   }
 
   /**
@@ -530,9 +592,11 @@ class AudioManager {
         );
         this.pendingMusic.set(key, options);
       }
+      void this.ensureLoaded(key); // music is loaded on first request, not at boot
       return;
     }
     this.pendingMusic.delete(key);
+    this.markStreamInUse(key);
 
     const sound = this.sounds.get(key)!;
     const fadeInMs = options.fadeIn ?? 1000;
@@ -648,6 +712,7 @@ class AudioManager {
       } catch {
         // May already be stopped
       }
+      this.releaseStream(track.id);
     }, fadeOutMs);
 
     this.currentMusic = null;
@@ -668,6 +733,7 @@ class AudioManager {
       if (!this.pendingAmbients.has(key)) {
         this.pendingAmbients.set(key, { volume: options?.volume });
       }
+      void this.ensureLoaded(key); // ambience is loaded on first request, not at boot
       return null;
     }
 
@@ -675,6 +741,7 @@ class AudioManager {
     if (this.activeAmbients.has(key)) {
       return this.activeAmbients.get(key)!;
     }
+    this.markStreamInUse(key);
 
     const volume = options?.volume ?? this.sounds.get(key)!.baseVolume;
     const id = this.startAmbientCopy(key, volume, true);
@@ -790,6 +857,7 @@ class AudioManager {
     if (id) {
       this.stopSound(id, fadeOutMs);
       this.activeAmbients.delete(key);
+      setTimeout(() => this.releaseStream(key), fadeOutMs + AUDIO.RELEASE_GRACE_MS);
     }
   }
 
@@ -806,10 +874,12 @@ class AudioManager {
     }
     this.ambientCrossfadeTimers.clear();
 
+    const keys = Array.from(this.activeAmbients.keys());
     for (const [, id] of this.activeAmbients) {
       this.stopSound(id, fadeOutMs);
     }
     this.activeAmbients.clear();
+    setTimeout(() => keys.forEach((key) => this.releaseStream(key)), fadeOutMs + AUDIO.RELEASE_GRACE_MS);
   }
 
   /**

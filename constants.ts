@@ -321,6 +321,15 @@ export const INTERACTION = {
 } as const;
 
 /**
+ * AUDIO - decoded-audio residency policy (see utils/AudioManager.ts)
+ */
+export const AUDIO = {
+  MAX_CONCURRENT_LOADS: 4, // Fetch+decode at most this many sounds at once (boot shares the network with textures)
+  MAX_IDLE_STREAMS: 3, // Decoded music/ambient buffers kept after they stop; older ones are dropped and re-decoded on demand
+  RELEASE_GRACE_MS: 500, // Wait past an ambient's fade-out before releasing its buffer (the crossfade copy may still be playing)
+} as const;
+
+/**
  * STAMINA - Player energy system constants
  *
  * Controls stamina drain, restoration, and thresholds.

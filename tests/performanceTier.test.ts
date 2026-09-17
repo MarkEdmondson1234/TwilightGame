@@ -97,6 +97,7 @@ describe('desktop capability profiles', () => {
       generateMipmaps: false,
       textureBudgetMB: 384,
       maxConcurrentTextureLoads: 6,
+      halfResolutionSprites: true,
     });
   });
 
@@ -110,6 +111,7 @@ describe('desktop capability profiles', () => {
       glowSteps: 32,
       darknessCompositeScale: 0.5,
       particleScale: 1,
+      halfResolutionSprites: false,
     });
   });
 });

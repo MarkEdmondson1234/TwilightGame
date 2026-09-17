@@ -5,8 +5,8 @@
  * performance when sprites first appear on screen.
  */
 
-import { getSpriteConfig, CHARACTER_SPRITE_CONFIGS } from './characterSprites';
-import { DEFAULT_OUTFIT, getOutfits, getSpriteDir } from './characterOutfits';
+import { getSpriteConfig } from './characterSprites';
+import { DEFAULT_OUTFIT, getSpriteDir } from './characterOutfits';
 import { debugLog } from './debugLog';
 
 interface PreloadOptions {
@@ -14,41 +14,28 @@ interface PreloadOptions {
   onComplete?: () => void;
 }
 
-// Store preloaded images to keep them in memory
-const imageCache = new Map<string, HTMLImageElement>();
+// No decoded-image cache. This used to keep every preloaded HTMLImageElement
+// in a Map "to keep them in memory": 36 character frames at 1024² is ~144 MB of
+// decoded bitmap held for the whole session, for art the GPU path decodes
+// again on its own (TextureManager pins the selected character). The preload
+// exists to warm the HTTP cache so the first texture load is instant, and a
+// fetch does that without retaining anything.
 
 /**
  * Preload a single image and return a promise that resolves when loaded AND decoded
  * Using decode() ensures the image is ready for instant rendering without jank
  * Images are kept in memory to ensure they're truly cached
  */
-function preloadImage(src: string): Promise<void> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    // Set crossOrigin to ensure images can be cached properly
-    // img.crossOrigin = 'anonymous';
-
-    img.onload = async () => {
-      try {
-        // Decode the image to ensure it's ready for rendering
-        // This forces the browser to decode the image immediately
-        await img.decode();
-
-        // Store in cache to keep it in memory
-        imageCache.set(src, img);
-
-        resolve();
-      } catch (err) {
-        console.warn(`[AssetPreloader] Failed to decode: ${src}`, err);
-        resolve(); // Resolve anyway to not block other assets
-      }
-    };
-    img.onerror = () => {
-      console.warn(`[AssetPreloader] Failed to load: ${src}`);
-      resolve(); // Resolve anyway to not block other assets
-    };
-    img.src = src;
-  });
+async function preloadImage(src: string): Promise<void> {
+  try {
+    const response = await fetch(src);
+    if (!response.ok) console.warn(`[AssetPreloader] Failed to load: ${src} (${response.status})`);
+    // Drain the body so the response is committed to the HTTP cache.
+    await response.arrayBuffer();
+  } catch (err) {
+    console.warn(`[AssetPreloader] Failed to load: ${src}`, err);
+    // Resolve anyway to not block other assets
+  }
 }
 
 /**
@@ -106,18 +93,15 @@ export function getCharacterSpriteUrls(
  * Character sprites are the exception worth keeping: they are needed on every
  * map, from the first frame, and are the only art the player sees continuously.
  */
-export async function preloadAllAssets(options?: PreloadOptions): Promise<void> {
-  const urls: string[] = [
-    ...getCharacterSpriteUrls('character1'),
-    ...getCharacterSpriteUrls('character2'),
-  ];
-  // Costumes are small (a handful of frames each) and must appear instantly
-  // when chosen in the character creator — and on the first spawn wearing one.
-  for (const characterId of Object.keys(CHARACTER_SPRITE_CONFIGS)) {
-    for (const outfit of getOutfits(characterId)) {
-      urls.push(...getCharacterSpriteUrls(characterId, outfit.id));
-    }
-  }
+export async function preloadAllAssets(
+  options?: PreloadOptions & { characterId?: string; outfit?: string }
+): Promise<void> {
+  // Only the character the player is, wearing what they wear. Both
+  // characters and every costume used to be fetched and decoded here — the
+  // player only ever renders one, and the creator's previews are ordinary
+  // <img>s that load from the network cache in a blink when opened.
+  const characterId = options?.characterId ?? 'character1';
+  const urls = getCharacterSpriteUrls(characterId, options?.outfit ?? DEFAULT_OUTFIT);
   const uniqueUrls = [...new Set(urls)];
 
   await preloadImages(uniqueUrls, options);

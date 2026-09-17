@@ -954,6 +954,23 @@ Three things that are easy to get wrong here:
    and `GlamourModal` render them as React `<img>`. They are among the largest
    art in the game, and counting them charged every map hundreds of megabytes it
    never used. Only `npc.sprite` and `animatedStates` frames are uploaded.
+4. **Phones load half-size player and NPC sprites.** The optimiser writes a
+   `name@half.png` sibling (512px) next to every PNG under `character*/` and
+   `npcs/`, and `TextureManager` fetches it instead of the full file when the
+   tier's `halfResolutionSprites` is set (`utils/textureVariants.ts`). Those
+   frames are drawn at ~150–200 CSS px, so a 1024² frame (4 MB) was memory
+   spent on detail a phone cannot show: the village's NPCs were 86 MB, the
+   player's pinned frames 64 MB. Desktop keeps the full file, which also serves
+   as the dialogue portrait. `tests/textureVariants.test.ts` fails if a sprite
+   lands without its sibling — run `npm run optimize-assets`.
+5. **Music and ambience are decoded on first play, not at boot.** `AudioManager`
+   registers the whole catalogue but `loadBatch(audioAssets, ['sfx'])` fetches
+   only effects; `playMusic`/`playAmbient` fetch their track on demand and start
+   it when it lands, and stopped tracks beyond `AUDIO.MAX_IDLE_STREAMS` are
+   dropped and re-decoded next time. The full set is ~1,500 s of audio, which
+   decodes to ~440 MB of float PCM — more than the per-map texture budget,
+   resident on every map, and uncounted by any budget. `tests/audioLazyLoad.test.ts`
+   guards it.
 
 **Device policy** lives in `utils/performanceTier.ts` and keys on `isMobile`,
 **not** on `tier`. A modern iPhone lands on HIGH (6+ cores, and Safari does not

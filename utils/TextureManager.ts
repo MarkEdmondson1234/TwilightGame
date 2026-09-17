@@ -22,6 +22,7 @@ import { startDiagnosticOperation, logTextureEviction } from './sessionDiagnosti
 import { Assets, Texture, type Container } from 'pixi.js';
 import { getCachedPerformanceSettings } from './performanceTier';
 import { debugLog } from './debugLog';
+import { resolveTextureUrl } from './textureVariants';
 
 /** Bytes per pixel for an RGBA texture. */
 const BYTES_PER_PIXEL = 4;
@@ -57,6 +58,11 @@ class TextureManager {
    * extra ~33% is the difference between fitting in the memory budget and
    * having the tab killed.
    */
+  /** Whether this device loads the @half siblings of player/NPC sprites. */
+  private halfResolutionSprites(): boolean {
+    return getCachedPerformanceSettings().halfResolutionSprites;
+  }
+
   private applyPolicy(texture: Texture): Texture {
     texture.source.scaleMode = 'linear';
     texture.source.autoGenerateMipmaps = getCachedPerformanceSettings().generateMipmaps;
@@ -111,17 +117,22 @@ class TextureManager {
       return this.loading.get(key)!;
     }
 
+    // The URL actually fetched may be a smaller device variant of the logical
+    // one (utils/textureVariants.ts). The key stays logical, so every caller
+    // keeps asking for the URL it knows.
+    const fetchUrl = resolveTextureUrl(url, this.halfResolutionSprites());
+
     // Start loading
     const promise = (async () => {
-      await this.unloading.get(url);
-      return Assets.load<Texture>(url);
+      await this.unloading.get(fetchUrl);
+      return Assets.load<Texture>(fetchUrl);
     })()
       .then((texture) => {
         this.applyPolicy(texture);
 
         // Cache texture
         this.textures.set(key, texture);
-        this.urls.set(key, url);
+        this.urls.set(key, fetchUrl);
         this.loading.delete(key);
 
         return texture;

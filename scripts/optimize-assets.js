@@ -41,7 +41,6 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import sharp from 'sharp';
-import Spritesmith from 'spritesmith';
 
 const require = createRequire(import.meta.url);
 
@@ -162,120 +161,10 @@ function createDirectories() {
   });
 }
 
-// Generate sprite sheet for character animations
-async function generateCharacterSpriteSheets() {
-  console.log('📦 Generating character sprite sheets...');
-
-  const baseDir = path.join(ASSETS_DIR, 'character1/base');
-  if (!fs.existsSync(baseDir)) {
-    console.log('⚠️  No character base sprites found, skipping...');
-    return;
-  }
-
-  const directions = ['down', 'up', 'left', 'right'];
-  const tempDir = path.join(OPTIMIZED_DIR, 'temp');
-
-  try {
-    for (const direction of directions) {
-      const frames = [];
-
-      // Collect all frames for this direction (0-3)
-      for (let i = 0; i <= 3; i++) {
-        const framePath = path.join(baseDir, `${direction}_${i}.png`);
-        if (fs.existsSync(framePath)) {
-          frames.push(framePath);
-        }
-      }
-
-      if (frames.length === 0) {
-        console.log(`  ⚠️  No frames found for ${direction}`);
-        continue;
-      }
-
-      // First, resize all frames to target size
-      const resizedFrames = [];
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-
-      for (let i = 0; i < frames.length; i++) {
-        const tempPath = path.join(tempDir, `${direction}_${i}.png`);
-        await sharp(frames[i])
-          .resize(SPRITE_SIZE, SPRITE_SIZE, {
-            fit: 'contain',
-            background: { r: 0, g: 0, b: 0, alpha: 0 }
-          })
-          .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
-          .toFile(tempPath);
-        resizedFrames.push(tempPath);
-      }
-
-      // Generate sprite sheet from resized frames
-      await new Promise((resolve, reject) => {
-        Spritesmith.run({ src: resizedFrames }, async (err, result) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-
-          const outputPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.png`);
-          const metadataPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.json`);
-
-          // Save sprite sheet
-          await sharp(result.image)
-            .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
-            .toFile(outputPath);
-
-          // Save metadata (frame positions)
-          const metadata = {
-            frames: {},
-            meta: {
-              size: { w: result.properties.width, h: result.properties.height },
-              frameSize: { w: SPRITE_SIZE, h: SPRITE_SIZE }
-            }
-          };
-
-          Object.keys(result.coordinates).forEach((framePath, index) => {
-            const coords = result.coordinates[framePath];
-            metadata.frames[index] = {
-              x: coords.x,
-              y: coords.y,
-              w: coords.width,
-              h: coords.height
-            };
-          });
-
-          fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-
-          const originalSizes = frames.map(f => fs.statSync(f).size);
-          const totalOriginal = originalSizes.reduce((a, b) => a + b, 0);
-          const optimizedSize = fs.statSync(outputPath).size;
-          const savings = ((1 - optimizedSize / totalOriginal) * 100).toFixed(1);
-
-          console.log(`  ✅ ${direction}: ${frames.length} frames → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
-
-          resolve();
-        });
-      });
-
-      // Clean up temp files
-      resizedFrames.forEach(f => fs.unlinkSync(f));
-    }
-  } finally {
-    // Always remove the temp directory, even if a direction failed above. `rmdirSync`
-    // requires an empty directory and throws ENOTEMPTY otherwise — if a Spritesmith
-    // error left resized frames behind, the next run's cleanup would fail on files
-    // it doesn't know about, aborting the ENTIRE optimize-assets run (not just the
-    // character sprite sheets) with a confusing ENOTEMPTY error. `rmSync` with
-    // `recursive: true, force: true` removes whatever is there, or no-ops if the
-    // directory is already gone.
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
-  }
-
-  console.log('');
-}
+// The character sprite sheets (character1/{down,up,left,right}.png + .json,
+// 2048x2048 each) are no longer generated: nothing loaded them — the game
+// renders per-frame PNGs from character1/base — and they cost 16 MB of GPU
+// each wherever they were touched. utils/spriteSheetLoader.ts went with them.
 
 // Optimize individual tile images
 async function optimizeTiles() {
@@ -688,6 +577,7 @@ async function optimizeNPCs() {
       })
       .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for NPCs
       .toFile(outputPath);
+    await writeHalfVariant(outputPath, { quality: SHOWCASE_QUALITY });
 
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
@@ -1526,7 +1416,37 @@ async function optimizeSeasonal() {
  * Always fit:'inside' with withoutEnlargement so the source aspect ratio is
  * preserved exactly and nothing is upscaled — see the note in optimizeNPCs().
  */
-async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, label }) {
+/**
+ * Suffix of the half-resolution sibling written next to player and NPC sprites.
+ * Must match HALF_RESOLUTION_SUFFIX in utils/textureVariants.ts.
+ */
+const HALF_SUFFIX = '@half';
+
+/**
+ * Write a half-resolution sibling (`name@half.png`) of an optimised PNG.
+ *
+ * Phones load these instead of the full file (utils/textureVariants.ts). The
+ * player and NPCs are drawn at ~150–200 CSS px, so a 1024px frame is 4MB of
+ * GPU memory for detail no phone screen shows — the village's ten NPCs alone
+ * were 86MB, the player's pinned frames 64MB. Desktop keeps the full file,
+ * which also serves as the dialogue portrait. `withoutEnlargement` and
+ * fit:'inside' for the same reasons as the full-size pass.
+ */
+async function writeHalfVariant(outputPath, { quality, compressionLevel = 4 }) {
+  if (!/\.png$/i.test(outputPath)) return null;
+  const halfPath = outputPath.replace(/\.png$/i, `${HALF_SUFFIX}.png`);
+  const meta = await sharp(outputPath).metadata();
+  const w = Math.max(1, Math.round((meta.width || 2) / 2));
+  const h = Math.max(1, Math.round((meta.height || 2) / 2));
+  deleteIfExists(halfPath);
+  await sharp(outputPath)
+    .resize(w, h, { fit: 'inside', withoutEnlargement: true, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: false, quality, compressionLevel })
+    .toFile(halfPath);
+  return halfPath;
+}
+
+async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, label, halfVariant = false }) {
   console.log(`${label}`);
 
   const srcDir = path.join(ASSETS_DIR, dirName);
@@ -1576,6 +1496,10 @@ async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, 
       fs.copyFileSync(inputPath, outputPath);
     }
 
+    if (halfVariant && !isJpeg) {
+      await writeHalfVariant(outputPath, { quality, compressionLevel });
+    }
+
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
     const displayPath = relativePath.includes(path.sep) ? relativePath : file;
@@ -1589,7 +1513,6 @@ async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, 
 async function main() {
   try {
     createDirectories();
-    await generateCharacterSpriteSheets();
     await optimizeTiles();
     await optimizeFarming();
     await optimizeHerbs();
@@ -1616,26 +1539,31 @@ async function main() {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,
       label: '🚶 Optimising player character sprites (character1)...',
+      halfVariant: true,
     });
     await optimizeImageDir('character1/variations', {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,
       label: '👕 Optimising player sprite variations...',
+      halfVariant: true,
     });
     await optimizeImageDir('character2/base', {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,
       label: '🚶 Optimising player character sprites (character2)...',
+      halfVariant: true,
     });
     await optimizeImageDir('character2/outfits/polka_dress', {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,
       label: '👗 Optimising costume sprites (character2 polka dot dress)...',
+      halfVariant: true,
     });
     await optimizeImageDir('character1/fairy', {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,
       label: '🧚 Optimising fairy spell sprites...',
+      halfVariant: true,
     });
     // optimizeAnimations() above only matches .gif; the stream/ frames are PNGs
     // and so were never processed.
