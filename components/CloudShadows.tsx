@@ -11,14 +11,25 @@
  * - Randomization: Shadow positions/sizes vary each day
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, MutableRefObject } from 'react';
 import { TILE_SIZE } from '../constants';
 import { Z_SPRITE_BACKGROUND, zClass } from '../zIndex';
-import { TimeManager } from '../utils/TimeManager';
+import type { ViewFrame } from '../utils/viewFrame';
 
 interface CloudShadowsProps {
+  /** React's snapshot of the camera; used only when no viewFrameRef is given. */
   cameraX: number;
   cameraY: number;
+  /**
+   * The live camera, written by the game loop every frame. With it the
+   * shadows scroll exactly with the canvas; without it they follow the
+   * ~10 Hz snapshot above.
+   */
+  viewFrameRef?: MutableRefObject<ViewFrame>;
+  /** In-game season and date: the seed for today's shadows and their seasonal look. */
+  season: string;
+  day: number;
+  year: number;
   mapWidth: number;
   mapHeight: number;
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -167,15 +178,15 @@ function generateShadows(
 const CloudShadows: React.FC<CloudShadowsProps> = ({
   cameraX,
   cameraY,
+  viewFrameRef,
+  season,
+  day,
+  year,
   mapWidth,
   mapHeight,
   weather,
   enabled = true,
 }) => {
-  const [time, setTime] = useState(0);
-
-  // Get current season and day for seeding
-  const { season, day, year } = TimeManager.getCurrentTime();
   const { opacityMult, speedMult, countMult } = getSeasonalModifiers(season);
 
   // Create a seed based on the current day (changes daily)
@@ -189,91 +200,99 @@ const CloudShadows: React.FC<CloudShadowsProps> = ({
   // Check if shadows should be visible
   const showShadows = enabled && weatherAllowsShadows(weather);
 
-  // Animate shadows
+  // The drift is written straight to each div's transform from a rAF, not
+  // through React state: this used to be a second render loop (setState every
+  // frame, re-rendering blurred divs over the canvas), which is exactly the
+  // cost the rest of the frame was cleared of (PERFORMANCE_MOBILE_PLAN.md
+  // §3.1 cause E). React now renders this only when the weather, season or
+  // map changes.
+  const divsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const cameraRef = useRef({ x: cameraX, y: cameraY });
+  cameraRef.current = { x: cameraX, y: cameraY };
+  const mapWidthPx = mapWidth * TILE_SIZE;
+  const mapHeightPx = mapHeight * TILE_SIZE;
+
   useEffect(() => {
     if (!showShadows) return;
 
     let animationFrame: number;
     let lastTime = performance.now();
+    let time = 0;
 
     const animate = (currentTime: number) => {
       const delta = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
-      setTime((t) => t + delta);
-      animationFrame = requestAnimationFrame(animate);
-    };
+      time += delta;
+      const live = viewFrameRef?.current;
+      const camX = live ? live.cameraX : cameraRef.current.x;
+      const camY = live ? live.cameraY : cameraRef.current.y;
 
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [showShadows]);
-
-  if (!showShadows) {
-    return null;
-  }
-
-  const mapWidthPx = mapWidth * TILE_SIZE;
-  const mapHeightPx = mapHeight * TILE_SIZE;
-
-  return (
-    <div
-      className={`fixed inset-0 pointer-events-none overflow-hidden ${zClass(Z_SPRITE_BACKGROUND)}`}
-    >
-      {shadows.map((shadow) => {
+      for (const shadow of shadows) {
+        const el = divsRef.current.get(shadow.id);
+        if (!el) continue;
         // Apply seasonal speed modifier
-        const speedX = shadow.baseSpeedX * speedMult;
-        const speedY = shadow.baseSpeedY * speedMult;
-
-        // Calculate current position with wrapping
-        const totalX = shadow.startX + time * speedX;
-        const totalY = shadow.startY + time * speedY;
-
+        const totalX = shadow.startX + time * shadow.baseSpeedX * speedMult;
+        const totalY = shadow.startY + time * shadow.baseSpeedY * speedMult;
         // Wrap position to stay within extended map bounds
         const wrapWidth = mapWidthPx + shadow.width * 2;
         const wrapHeight = mapHeightPx + shadow.height * 2;
         const worldX = (((totalX % wrapWidth) + wrapWidth) % wrapWidth) - shadow.width;
         const worldY = (((totalY % wrapHeight) + wrapHeight) % wrapHeight) - shadow.height;
-
         // Convert to screen space
-        const screenX = worldX - cameraX;
-        const screenY = worldY - cameraY;
+        el.style.transform = `translate(${worldX - camX}px, ${worldY - camY}px)`;
+      }
+      animationFrame = requestAnimationFrame(animate);
+    };
 
-        // Apply seasonal opacity modifier
-        const opacity = shadow.baseOpacity * opacityMult;
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [showShadows, shadows, speedMult, mapWidthPx, mapHeightPx, viewFrameRef]);
 
-        return (
-          <div
-            key={shadow.id}
-            className="absolute"
-            style={{
-              left: `${screenX}px`,
-              top: `${screenY}px`,
-              width: `${shadow.width}px`,
-              height: `${shadow.height}px`,
-              backgroundColor: 'rgba(0, 0, 0, 1)',
-              opacity,
-              borderRadius: shadow.borderRadius,
-              filter: 'blur(20px)',
-              transition: 'opacity 2s ease-out',
-            }}
-          />
-        );
-      })}
+  if (!showShadows) {
+    return null;
+  }
+
+  return (
+    <div
+      className={`fixed inset-0 pointer-events-none overflow-hidden ${zClass(Z_SPRITE_BACKGROUND)}`}
+    >
+      {shadows.map((shadow) => (
+        <div
+          key={shadow.id}
+          ref={(el) => {
+            if (el) divsRef.current.set(shadow.id, el);
+            else divsRef.current.delete(shadow.id);
+          }}
+          className="absolute left-0 top-0"
+          style={{
+            width: `${shadow.width}px`,
+            height: `${shadow.height}px`,
+            backgroundColor: 'rgba(0, 0, 0, 1)',
+            // Apply seasonal opacity modifier
+            opacity: shadow.baseOpacity * opacityMult,
+            borderRadius: shadow.borderRadius,
+            filter: 'blur(20px)',
+            transition: 'opacity 2s ease-out',
+            // Off-screen until the first animation frame places it.
+            transform: 'translate(-10000px, -10000px)',
+          }}
+        />
+      ))}
     </div>
   );
 };
 
-// Cloud shadows are large, slow-moving — skip re-render for small camera movements
-const CAMERA_THRESHOLD = 48;
-
+// The camera is read per frame from viewFrameRef (or the mirrored props), so a
+// camera move is never a reason to re-render.
 export default React.memo(CloudShadows, (prev, next) => {
-  if (prev.weather !== next.weather) return false;
-  if (prev.enabled !== next.enabled) return false;
-  if (prev.mapWidth !== next.mapWidth || prev.mapHeight !== next.mapHeight) return false;
-  if (
-    Math.abs(prev.cameraX - next.cameraX) >= CAMERA_THRESHOLD ||
-    Math.abs(prev.cameraY - next.cameraY) >= CAMERA_THRESHOLD
-  ) {
-    return false;
-  }
-  return true;
+  return (
+    prev.weather === next.weather &&
+    prev.enabled === next.enabled &&
+    prev.mapWidth === next.mapWidth &&
+    prev.mapHeight === next.mapHeight &&
+    prev.season === next.season &&
+    prev.day === next.day &&
+    prev.year === next.year &&
+    prev.viewFrameRef === next.viewFrameRef
+  );
 });

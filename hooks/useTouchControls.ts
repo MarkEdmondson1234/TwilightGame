@@ -3,7 +3,7 @@
  * Handles touch input for mobile devices
  */
 
-import { MutableRefObject } from 'react';
+import { MutableRefObject, useCallback } from 'react';
 import { Position } from '../types';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
@@ -63,15 +63,23 @@ export function useTouchControls(config: TouchControlsConfig) {
     onTakePhoto,
   } = config;
 
-  const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
-    const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-    keysPressed[keyMap[direction]] = true;
-  };
+  // Stable: TouchControls is memoised on these, and keysPressed is a shared
+  // mutable object that never changes identity.
+  const handleDirectionPress = useCallback(
+    (direction: 'up' | 'down' | 'left' | 'right') => {
+      const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+      keysPressed[keyMap[direction]] = true;
+    },
+    [keysPressed]
+  );
 
-  const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
-    const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-    keysPressed[keyMap[direction]] = false;
-  };
+  const handleDirectionRelease = useCallback(
+    (direction: 'up' | 'down' | 'left' | 'right') => {
+      const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+      keysPressed[keyMap[direction]] = false;
+    },
+    [keysPressed]
+  );
 
   const handleActionPress = () => {
     debugLog(

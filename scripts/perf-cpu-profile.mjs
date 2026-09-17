@@ -14,6 +14,7 @@
  *
  * Usage (dev server running):
  *   node scripts/perf-cpu-profile.mjs [url] [label] [--map village] [--throttle 4] [--window 10000]
+ *   Add `--tsx` to list every component function, to see what a commit is spent on.
  *
  * Prints, for a 10 s idle window and a 10 s walking window, the inclusive
  * main-thread ms per second of the functions that matter (React's
@@ -39,6 +40,9 @@ const map = flag('map', 'village');
 const throttle = Number(flag('throttle', '4'));
 const WINDOW_MS = Number(flag('window', '10000'));
 const whoSetsState = args.includes('--who-sets-state');
+// `--tsx` widens the table to every component function (any frame from a .tsx
+// file), which is how to see what each App commit is actually spent on.
+const showTsx = args.includes('--tsx');
 
 const WANT = [
   'performWorkOnRoot', 'App ', 'commitRoot', 'renderTiles', 'renderTile', 'renderSprites', 'renderShadows',
@@ -108,7 +112,13 @@ async function captureProfile(intervalUs, during) {
   const byId = new Map(profile.nodes.map((n) => [n.id, n]));
   const parent = new Map();
   for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
-  const name = (n) => `${n.callFrame.functionName} @${n.callFrame.url.split('/').pop().split('?')[0]}`;
+  // Anonymous frames (inline arrows, memo factories, IIFEs) are told apart by
+  // line, otherwise every closure in a file collapses into one " @App.tsx" row.
+  const name = (n) => {
+    const file = n.callFrame.url.split('/').pop().split('?')[0];
+    const fn = n.callFrame.functionName;
+    return fn ? `${fn} @${file}` : `(anonymous:${n.callFrame.lineNumber + 1}) @${file}`;
+  };
   return { profile, byId, parent, name, dt };
 }
 
@@ -126,9 +136,10 @@ async function inclusiveTable(windowName, during) {
       cur = parent.get(cur);
     }
   }
-  const rows = [...total].filter(([k]) => WANT.some((w) => k.includes(w))).sort((a, b) => b[1] - a[1]);
+  const wanted = (k) => WANT.some((w) => k.includes(w)) || (showTsx && /@\S+\.tsx$/.test(k));
+  const rows = [...total].filter(([k]) => wanted(k)).sort((a, b) => b[1] - a[1]);
   console.log(`\n== ${label} ${windowName} (${dt} ms wall, ${throttle}x throttle, inclusive ms/s) ==`);
-  for (const [k, v] of rows.slice(0, 25)) console.log(`${((v / 1000 / dt) * 1000).toFixed(1).padStart(7)}  ${k}`);
+  for (const [k, v] of rows.slice(0, showTsx ? 45 : 25)) console.log(`${((v / 1000 / dt) * 1000).toFixed(1).padStart(7)}  ${k}`);
 }
 
 async function stateSetters(windowName, during) {

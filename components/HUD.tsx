@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { mapManager } from '../maps';
 import { useGameState } from '../hooks/useGameState';
 import { TimeManager, GameTime } from '../utils/TimeManager';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
-import { WATER_CAN } from '../constants';
+import { WATER_CAN, WATERING_CAN } from '../constants';
 import { resolveIcon, isImageIcon } from '../utils/iconMap';
 import AnalogClock from './AnalogClock';
 import PotionEffectIndicator from './PotionEffectIndicator';
@@ -25,16 +24,28 @@ function formatTimeRemaining(ms: number): string {
 
 interface HUDProps {
   compact?: boolean;
+  /** Name of the current map, shown top-right. A prop, not a manager read, so the memo below sees map changes. */
+  mapName: string;
   /** Currently selected item ID (or null if nothing selected) */
   selectedItemId?: string | null;
   /** Quantity of selected item (for display) */
   selectedItemQuantity?: number;
 }
 
-const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity, compact = false }) => {
-  const currentMap = mapManager.getCurrentMap();
-  const mapName = currentMap ? currentMap.name : 'Loading...';
-  const { gold, forestDepth, caveDepth } = useGameState();
+/**
+ * Memoised: App commits ~10 times a second while the player walks, and the two
+ * SVG clocks below were the most expensive thing in every one of those commits
+ * (PERFORMANCE_MOBILE_PLAN.md §5 M10). Everything the HUD shows arrives as a
+ * primitive prop, a selected game-state field, or its own 1 Hz clock, so it
+ * renders when one of those changes and not otherwise.
+ */
+const HUD: React.FC<HUDProps> = ({ mapName, selectedItemId, selectedItemQuantity, compact = false }) => {
+  const gold = useGameState((s) => s.gold);
+  const forestDepth = useGameState((s) => s.forestDepth);
+  const caveDepth = useGameState((s) => s.caveDepth);
+  // Same fallback as gameState.getWaterLevel(), read as a selector so a
+  // watering action re-renders this and a stamina commit does not.
+  const waterLevel = useGameState((s) => s.wateringCan?.currentLevel ?? WATERING_CAN.CAPACITY);
   const [currentTime, setCurrentTime] = useState<GameTime>(TimeManager.getCurrentTime());
   const [movementEffect, setMovementEffect] = useState(gameState.getMovementEffect());
   const [movementTimeRemaining, setMovementTimeRemaining] = useState(0);
@@ -160,7 +171,7 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity, compact
               {/* Water level for watering can */}
               {selectedItemId === 'tool_watering_can' && (
                 <span className="text-xs text-cyan-300">
-                  💧 {gameState.getWaterLevel()}/{WATER_CAN.MAX_CAPACITY}
+                  💧 {waterLevel}/{WATER_CAN.MAX_CAPACITY}
                 </span>
               )}
             </div>
@@ -280,4 +291,4 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity, compact
   );
 };
 
-export default HUD;
+export default React.memo(HUD);

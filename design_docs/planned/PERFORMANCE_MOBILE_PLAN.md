@@ -136,6 +136,29 @@ device variant rather than a global downsize).
   overlays inside the world layer (stamina bar, indicators) are positioned from
   the snapshot, so they can trail the player by up to half a tile while walking.
 
+**Day 5 (§5 M10, cheap commits) — done 2026-09-17.**
+
+- Profiling with `perf-cpu-profile.mjs --tsx` (new: lists every component
+  function) showed what each of the ~10 App commits a second was spent on
+  after §6A: `AnalogClock` ~110 ms/s, `App`'s body ~130, `CloudShadows` ~40
+  (its own rAF `setState` loop), `QuickSlotBar` ~38, `SundialClock` ~30, `HUD`
+  and `Bookshelf` ~10 each (4× throttle, walking).
+- `HUD`, `AnalogClock`, `SundialClock`, `QuickSlotBar`, `Bookshelf`,
+  `GameUIControls`, `TouchControls`, `PresenceIndicator` and `ChatPanel` are
+  `React.memo`; the clocks compare only the fields they draw. App hands them
+  stable props (memoised nine-slot slice, `useCallback`/`useMemo` handlers, the
+  map name as a prop instead of a manager read; Bookshelf lost three dead
+  props and takes its unlock state as props). `useGameState` selects a field
+  and compares before setting state, so a stamina commit no longer re-renders
+  the HUD. `CloudShadows` writes each shadow's transform from its rAF and reads
+  the camera from `viewFrameRef` — no `setState` per frame, and it scrolls with
+  the canvas instead of in 48 px steps.
+- Measured (same profile): React while walking **325 → 109 ms/s**, idle
+  **90 → 13 ms/s**. What remains while walking is App's own body at ~10
+  renders/s (~67 ms/s) and the game loop itself (~50, not React).
+  `tests/hudMemo.test.tsx` fails if the HUD re-renders on a parent commit
+  or on a game-state commit that changes nothing it shows.
+
 ---
 
 ## 2. What the devices are actually doing (Sentry, last 14 days)
@@ -390,7 +413,7 @@ adds up.
 | M7 | **Photos out of the main save blob.** Store `dataUrl`s under their own localStorage keys (as paintings already are) and reference by id. | `inventoryManager.ts:698-728`, `GameState.ts:1016-1022` | The save stays 20–100 KB; the 5-minute cloud upload stops shipping megabytes of base64. |
 | M8 | **Code-split the initial bundle**: `React.lazy` HelpBrowser + ChatBubble (react-markdown, 155 KB), DevTools/SpriteMetadataEditor/DebugOverlay (48 KB), minigame components behind the registry (135 KB), the Anthropic SDK (70 KB); pre-parse the 15 YAML chains to JSON at build time (drops `yaml`, 98 KB, and the runtime parse); add `modulepreload` for Pixi's `WebGLRenderer`/`browserAll`/`SharedSystems` chunks to kill the waterfall. | `vite.config.ts`, `App.tsx:14,22-23`, `minigames/registry.ts`, `utils/eventChainLoader.ts` | ~450 KB raw / ~130 KB gzipped off the initial parse; 1.5–3 s of parse time on A9/A10 silicon today. |
 | M9 | **Service worker**: version `CACHE_NAME` per deploy (inject `VITE_APP_VERSION`) or use stale-while-revalidate for static assets, and add an LRU/size cap. | `public/sw.js` | Returning players currently keep old art forever, and iOS CacheStorage fills with 300+ MB. |
-| M10 | **Memo the always-mounted children** (`HUD`, `QuickSlotBar`, `GameUIControls`, `TouchControls`, `PresenceIndicator`, `ChatPanel`) and `useCallback` the inline arrows that defeat `TransitionIndicators`' memo; `useGameState` should select fields and compare before `setState`. | `App.tsx:2425, 2568-2681`, `hooks/useGameState.ts:17-19` | Only matters while App still renders per frame; cheap insurance after §6A. |
+| M10 ✅ | **Memo the always-mounted children** (`HUD`, `QuickSlotBar`, `GameUIControls`, `TouchControls`, `PresenceIndicator`, `ChatPanel`) and `useCallback` the inline arrows that defeat `TransitionIndicators`' memo; `useGameState` should select fields and compare before `setState`. | `App.tsx:2425, 2568-2681`, `hooks/useGameState.ts:17-19` | Only matters while App still renders per frame; cheap insurance after §6A. |
 | M11 | **Replace `preserveDrawingBuffer: true`** with `renderer.extract` for screenshots (it renders to a render texture and does not need the flag). | `usePixiRenderer.ts:344` | Restores framebuffer discard on tile-based mobile GPUs. Needs a real-GPU A/B; the win is plausible but unmeasured. |
 
 ---

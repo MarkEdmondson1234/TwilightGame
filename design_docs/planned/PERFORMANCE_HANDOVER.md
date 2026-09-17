@@ -23,6 +23,8 @@ Three PRs merged to `main` today, all deployed to production
 
 | #141 | **Day 4, §6A.** The player position, direction and animation frame live in refs; React gets a ≤10 Hz snapshot. Camera and room transform computed per frame by the loop (`utils/viewFrame.ts`, `hooks/useViewFrame.ts`) and applied to Pixi, the DOM world layer and the pointer maths from the ref; `usePixiRenderer`'s camera and player effects are gone. | CI `movement` scenario: App renders 0.955 → **0.08 /frame** (36 → 4.3 /s). Unit guard: 10 commits per second of walking. |
 
+| #142 | **Day 5, §5 M10.** Always-mounted children memoised with stable props; `useGameState` selects and compares; `CloudShadows` drives its divs from its rAF via refs, camera from `viewFrameRef`. `perf-cpu-profile.mjs --tsx` lists every component function; anonymous frames are attributed by line. | React while walking 325 → **109 ms/s**, idle 90 → **13 ms/s** (4× throttle). |
+
 **Not yet confirmed on a real device.** Every number above is from the
 headless profile or arithmetic. Sentry will show the truth within a session of
 play on today's release: see §2.
@@ -43,7 +45,10 @@ play on today's release: see §2.
    `texture_batch` (0.4–4.7 s) and `local_save` durations.
 2. **CPU attribution → `scripts/perf-cpu-profile.mjs`** (new today). V8
    sampling profile under 4× throttle, idle and walking, aggregated by function
-   name. Run against `main` and the branch (serve `main` from a scratch
+   name. `--tsx` adds every component function, which is how to see what a
+   React commit is spent on; anonymous frames are labelled `(anonymous:line)`
+   with the line in the *served* file (`curl localhost:4000/TwilightGame/App.tsx`
+   to map it back — Vite's transform shifts lines slightly). Run against `main` and the branch (serve `main` from a scratch
    worktree on another port) and put both tables in the PR. Headless fps
    cannot see CPU changes (SwiftShader is fill-bound); this can. Add
    `--who-sets-state` to see which code asks React to re-render.
@@ -77,8 +82,8 @@ one camera+room-transform function, evaluated per frame by the loop
 (`viewFrameRef`, which also drives the DOM world layer's transform and click
 mapping) and from the snapshot by React; `usePixiRenderer.syncView()` /
 `syncPlayer()` replace the camera and player effects.
-**Follow-ups it leaves open:** memoise App's always-mounted children (M10) so
-the remaining ~10 Hz commits are cheap; move `visibleRange` to the loop (§6B);
+**Follow-ups it leaves open:** ~~memoise App's always-mounted children (M10)~~
+done (PR #142); move `visibleRange` to the loop (§6B);
 the overlays inside the DOM world layer (stamina bar, rest "z"s, indicators)
 are positioned from the snapshot and can trail the player by ≤ half a tile
 while walking — M1 (draw them in Pixi) is the real fix.
