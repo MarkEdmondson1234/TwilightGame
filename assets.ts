@@ -747,10 +747,12 @@ export const fairyAssets = {
 // Some GIFs use original size when specified (e.g., dragonfly_stream)
 export const animationAssets = {
   cave_drip: '/TwilightGame/assets/effects/cave-drip/atlas.png',
-  cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
-  dragonfly_stream: '/TwilightGame/assets-optimized/animations/dragonfly_stream.gif', // Use original size
-  bees: '/TwilightGame/assets-optimized/animations/bees.gif', // Use original size
-  fire: '/TwilightGame/assets-optimized/animations/fire/fire.gif',
+  // Sprite sheets built from the source GIFs by scripts/optimize-assets.js; each
+  // has a `.sheet.json` sidecar with the frame delays (utils/pixi/AnimationLayer.ts).
+  cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.sheet.png',
+  dragonfly_stream: '/TwilightGame/assets-optimized/animations/dragonfly_stream.sheet.png',
+  bees: '/TwilightGame/assets-optimized/animations/bees.sheet.png',
+  fire: '/TwilightGame/assets-optimized/animations/fire/fire.sheet.png',
   // Future animations:
   // rain: '/TwilightGame/assets-optimized/animations/rain.gif',
   // snow: '/TwilightGame/assets-optimized/animations/snow.gif',

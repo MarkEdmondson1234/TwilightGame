@@ -69,7 +69,13 @@ const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 const SHOWCASE_QUALITY = 97; // Very high quality for showcase assets (trees, NPCs)
 const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
 const WITCH_HUT_QUALITY = 98; // Very high quality for witch hut (large building, minimal compression)
-const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
+// Animated GIFs become sprite sheets (one PNG grid + a JSON of frame delays)
+// that PixiJS plays as AnimatedSprites. Shipped as GIFs they were decoded on
+// the main thread by <img> elements laid over the canvas — 313 frames across
+// the four of them (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §5 M1).
+const SHEET_FRAME_SIZE = 256; // Each frame is drawn at 64–250 px; the dragonfly at up to 1000 px is the outlier
+const SHEET_MAX_FRAMES = 48; // Sheet = 8 × 6 × 256² = 12.6 MB of GPU memory at most, counted per map by the budget test
+const SHEET_COLUMNS = 8;
 const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
@@ -591,32 +597,71 @@ async function optimizeNPCs() {
   console.log(`\n  Optimized ${optimized} NPC sprites\n`);
 }
 
-// Resolve a gifsicle binary: prefer one already on PATH (e.g. the apt-get
-// install in CI), otherwise fall back to the prebuilt binary shipped by the
-// npm `gifsicle` devDependency so a fresh checkout works without any manual
-// system install (this is what silently produced uncompressed GIFs before).
-function resolveGifsicle() {
-  try {
-    execSync('which gifsicle', { stdio: 'ignore' });
-    return 'gifsicle';
-  } catch {
-    // fall through to the npm package
+// Turn each animated GIF into a sprite sheet PNG plus a JSON sidecar.
+//
+// Frames past SHEET_MAX_FRAMES are dropped from the end rather than sampled:
+// consecutive frames keep the motion smooth (a bee at 120 ms per frame), at
+// the cost of a shorter loop with a jump at the wrap. Sampling every nth frame
+// keeps the loop but turns 60 ms flight into 260 ms stop-motion, which reads
+// far worse for an insect. The dragonfly (209 frames) is the one that pays.
+async function buildAnimationSheet(inputPath, outputBase) {
+  const meta = await sharp(inputPath, { animated: true }).metadata();
+  const pages = meta.pages ?? 1;
+  const pageHeight = meta.pageHeight ?? meta.height;
+  const frameCount = Math.min(pages, SHEET_MAX_FRAMES);
+  const columns = Math.min(SHEET_COLUMNS, frameCount);
+  const rows = Math.ceil(frameCount / columns);
+
+  // All pages stacked vertically, fully composited (libvips applies GIF disposal).
+  const strip = await sharp(inputPath, { animated: true }).png().toBuffer();
+  const composites = [];
+  for (let i = 0; i < frameCount; i++) {
+    const frame = await sharp(strip)
+      .extract({ left: 0, top: i * pageHeight, width: meta.width, height: pageHeight })
+      .resize(SHEET_FRAME_SIZE, SHEET_FRAME_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png()
+      .toBuffer();
+    composites.push({
+      input: frame,
+      left: (i % columns) * SHEET_FRAME_SIZE,
+      top: Math.floor(i / columns) * SHEET_FRAME_SIZE,
+    });
   }
-  try {
-    const bundled = require('gifsicle');
-    const binPath = bundled.default || bundled;
-    if (binPath && fs.existsSync(binPath)) {
-      return `"${binPath}"`;
-    }
-  } catch {
-    // npm package not installed either
-  }
-  return null;
+
+  await sharp({
+    create: {
+      width: columns * SHEET_FRAME_SIZE,
+      height: rows * SHEET_FRAME_SIZE,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite(composites)
+    .png({ quality: HIGH_QUALITY, compressionLevel: 6 })
+    .toFile(`${outputBase}.sheet.png`);
+
+  const delays = (meta.delay ?? []).slice(0, frameCount);
+  while (delays.length < frameCount) delays.push(delays[delays.length - 1] ?? 100);
+  fs.writeFileSync(
+    `${outputBase}.sheet.json`,
+    JSON.stringify({
+      frameWidth: SHEET_FRAME_SIZE,
+      frameHeight: SHEET_FRAME_SIZE,
+      columns,
+      frames: frameCount,
+      sourceFrames: pages,
+      delays,
+    })
+  );
+  return { frameCount, pages, columns, rows };
 }
 
-// Optimize animated GIFs
+// Animated GIFs → sprite sheets
 async function optimizeAnimations() {
-  console.log('🎬 Optimizing animated GIFs...');
+  console.log('🎬 Building sprite sheets from animated GIFs...');
 
   const animationsDir = path.join(ASSETS_DIR, 'animations');
   if (!fs.existsSync(animationsDir)) {
@@ -625,64 +670,36 @@ async function optimizeAnimations() {
   }
 
   const allFiles = getAllFiles(animationsDir);
-  let optimized = 0;
-  const gifsicleBin = resolveGifsicle();
-
-  if (!gifsicleBin) {
-    console.log('⚠️  gifsicle not found - GIFs will be copied without optimization');
-    console.log('   Install with: npm install --save-dev gifsicle (or brew/apt-get install gifsicle)\n');
-  }
+  let built = 0;
 
   for (const inputPath of allFiles) {
     const file = path.basename(inputPath);
     if (!file.match(/\.gif$/i)) continue;
 
-    // Calculate relative path to preserve directory structure
-    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
+    // Preserve directory structure; lowercase for cross-platform consistency.
     const relativePath = path.relative(animationsDir, inputPath);
-    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'animations', relativePath));
+    const outputBase = normalizePathCase(
+      path.join(OPTIMIZED_DIR, 'animations', relativePath.replace(/\.gif$/i, ''))
+    );
+    fs.mkdirSync(path.dirname(outputBase), { recursive: true });
+    // The GIF itself is no longer shipped.
+    deleteIfExists(`${outputBase}.gif`);
 
-    // Ensure output subdirectory exists
-    const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-
-    const originalSize = fs.statSync(inputPath).size;
-
-    // Delete output file if it exists (handles case-sensitivity issues on Windows)
-    deleteIfExists(outputPath);
-
-    if (gifsicleBin) {
-      try {
-        // Optimize GIF with gifsicle: resize and optimize
-        execSync(
-          `${gifsicleBin} --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
-          { stdio: 'pipe' }
-        );
-
-        const optimizedSize = fs.statSync(outputPath).size;
-        const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
-
-        // Show relative path for files in subdirectories
-        const displayPath = relativePath.includes(path.sep) ? relativePath : file;
-        console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
-      } catch (error) {
-        const displayPath = relativePath.includes(path.sep) ? relativePath : file;
-        console.log(`  ⚠️  ${displayPath}: optimization failed, copying original`);
-        fs.copyFileSync(inputPath, outputPath);
-      }
-    } else {
-      // Just copy if gifsicle not available
-      fs.copyFileSync(inputPath, outputPath);
+    try {
+      const { frameCount, pages, columns, rows } = await buildAnimationSheet(inputPath, outputBase);
+      const size = fs.statSync(`${outputBase}.sheet.png`).size;
       const displayPath = relativePath.includes(path.sep) ? relativePath : file;
-      console.log(`  ℹ️  ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB (copied without optimization)`);
+      const dropped = pages > frameCount ? ` (${pages - frameCount} of ${pages} frames dropped)` : '';
+      console.log(
+        `  ✅ ${displayPath}: ${frameCount} frames, ${columns}×${rows} sheet, ${(size / 1024).toFixed(0)}KB${dropped}`
+      );
+      built++;
+    } catch (error) {
+      console.log(`  ❌ ${file}: sheet build failed — ${error.message}`);
     }
-
-    optimized++;
   }
 
-  console.log(`\n  Processed ${optimized} animation file(s)\n`);
+  console.log(`\n  Built ${built} sprite sheet(s)\n`);
 }
 
 // Optimize cutscene images

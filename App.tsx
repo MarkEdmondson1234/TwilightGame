@@ -99,7 +99,6 @@ import BattleSpectator from './components/BattleSpectator';
 import PresenceIndicator from './components/PresenceIndicator';
 import Inventory, { InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
-import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import { seasonalEventManager } from './utils/SeasonalEventManager';
@@ -2445,34 +2444,10 @@ const App: React.FC = () => {
           pointerEvents: 'none', // Allow clicks to pass through to canvas
         }}
       >
-        {/* Render Background Animations (behind everything) */}
-        <AnimationOverlay
-          currentMap={currentMap}
-          visibleRange={visibleRange}
-          seasonKey={seasonKey}
-          timeOfDay={timeOfDay}
-          layer="background"
-          gridOffset={
-            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
-          }
-          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
-        />
 
         {/* Foreground Image Layers are now rendered by PixiJS BackgroundImageLayer */}
         {/* (skipForeground: false enables full PixiJS rendering for background-image rooms) */}
 
-        {/* Render Midground Animations (behind player and NPCs) */}
-        <AnimationOverlay
-          currentMap={currentMap}
-          visibleRange={visibleRange}
-          seasonKey={seasonKey}
-          timeOfDay={timeOfDay}
-          layer="midground"
-          gridOffset={
-            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
-          }
-          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
-        />
 
         {/* Render Player as DOM element when PixiJS is disabled, or when the map opts in
             to DOM player so depth-sorted z-index keeps the player above midground DOM animations */}
@@ -2539,18 +2514,6 @@ const App: React.FC = () => {
           />
         )}
 
-        {/* Render Foreground Animations (above everything - falling petals, etc.) */}
-        <AnimationOverlay
-          currentMap={currentMap}
-          visibleRange={visibleRange}
-          seasonKey={seasonKey}
-          timeOfDay={timeOfDay}
-          layer="foreground"
-          gridOffset={
-            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
-          }
-          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
-        />
 
         {/* Weather effects now handled by PixiJS WeatherLayer */}
 

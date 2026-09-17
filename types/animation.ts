@@ -27,13 +27,13 @@ export interface AnimationConditions {
 
 export interface AnimationEffect {
   id: string;
-  image: string; // Path to GIF or animated image
+  image: string; // Sprite sheet PNG built from the source GIF (see scripts/optimize-assets.js)
   layer: 'background' | 'midground' | 'foreground';
   loop: boolean; // Whether animation loops infinitely
   conditions?: AnimationConditions; // Optional display conditions
   opacity?: number; // Optional opacity (0-1, default 1)
   scale?: number | number[]; // Optional scale multiplier (default 1) or array for random variation
-  gifSize?: number; // Original GIF dimensions in pixels (defaults to 512 for optimized GIFs)
+  gifSize?: number; // Size the source animation is drawn at before `scale`, in pixels (default 512)
 }
 
 // Tile-based animations (appear near specific tile types)

@@ -44,6 +44,7 @@ import { ForegroundParallaxLayer } from '../utils/pixi/ForegroundParallaxLayer';
 import { hasForegroundParallax } from '../data/foregroundParallax';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
+import { AnimationLayer } from '../utils/pixi/AnimationLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
@@ -225,6 +226,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const npcLayerRef = useRef<NPCLayer | null>(null);
   const remotePlayerLayerRef = useRef<RemotePlayerLayer | null>(null);
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
+  const animationLayerRef = useRef<AnimationLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
   const thoughtBubbleLayerRef = useRef<ThoughtBubbleLayer | null>(null);
@@ -310,6 +312,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     characterId: 'character1',
     playerScale: 1,
     movementMode: 'normal' as MovementMode,
+    seasonKey: 'spring' as string,
+    timeOfDay: 'day' as 'day' | 'night',
   });
   frameParamsRef.current = {
     characterScale: currentMap?.characterScale ?? 1.0,
@@ -323,6 +327,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     characterId,
     playerScale,
     movementMode,
+    seasonKey,
+    timeOfDay,
   };
 
   /**
@@ -560,6 +566,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         gridOffset
       );
     }
+    if (offsetChanged && animationLayerRef.current) {
+      const map = mapManager.getCurrentMap();
+      if (map) {
+        const { seasonKey, timeOfDay } = frameParamsRef.current;
+        animationLayerRef.current.render(map, visibleRange, seasonKey, timeOfDay, gridOffset, tileSize);
+      }
+    }
 
     // NPCs are drawn from the manager when it says something changed, the same
     // way remote players are: an NPC step must not cost a React re-render.
@@ -760,6 +773,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayerRef.current = placedItemsLayer;
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
+
+        // Tile-triggered animations (petals, bees, hearth fire), depth-sorted
+        // with everything else. A sheet's metadata arrives asynchronously;
+        // re-render once so the animation appears when it does.
+        const animationLayer = new AnimationLayer();
+        animationLayerRef.current = animationLayer;
+        animationLayer.setDepthContainer(depthSortedContainer);
+        animationLayer.setOnMetaLoaded(() => setTextureVersion((v) => v + 1));
 
         // Create thought bubble layer (added to depthSortedContainer for correct world-space positioning)
         const thoughtBubbleLayer = new ThoughtBubbleLayer();
@@ -991,6 +1012,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         weatherLayerRef.current.destroy();
         weatherLayerRef.current = null;
       }
+      if (animationLayerRef.current) {
+        animationLayerRef.current.destroy();
+        animationLayerRef.current = null;
+      }
       if (cloudShadowLayerRef.current) {
         cloudShadowLayerRef.current.destroy();
         cloudShadowLayerRef.current = null;
@@ -1209,6 +1234,18 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         map.characterScale ?? 1.0,
         viewFrameRef.current.tileSize,
         viewFrameRef.current.gridOffset
+      );
+    }
+
+    // Tile-triggered animations, at this frame's grid offset
+    if (animationLayerRef.current) {
+      animationLayerRef.current.render(
+        map,
+        visibleRange,
+        seasonKey,
+        timeOfDay,
+        viewFrameRef.current.gridOffset,
+        viewFrameRef.current.tileSize
       );
     }
 

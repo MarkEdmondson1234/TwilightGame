@@ -1132,7 +1132,7 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 
 ### Image Optimization
 
-The optimization script (`scripts/optimize-assets.js`) uses Sharp and gifsicle to optimize all game assets.
+The optimization script (`scripts/optimize-assets.js`) uses Sharp to optimize all game assets.
 
 #### Running the Optimizer
 
@@ -1140,7 +1140,6 @@ The optimization script (`scripts/optimize-assets.js`) uses Sharp and gifsicle t
 - **Automatic**: Runs automatically before `npm run build`
 - **Requirements**:
   - Sharp (installed via npm)
-  - gifsicle (install: `brew install gifsicle` on macOS, `apt-get install gifsicle` on Linux)
 - **Source**: Original high-quality images in `/public/assets/`
 - **Output**: Optimized images in `/public/assets-optimized/` (typically 95-99% size reduction)
 - **When to run manually**: After adding new assets to `/public/assets/`
@@ -1161,7 +1160,7 @@ The script optimizes different asset types with appropriate settings:
 | **Farming sprites**                          | 512×512       | High (95%)      | Level 6     | Crop plants (key gameplay)                                        |
 | **Dialogue frames / stream**                 | 512×512       | High (95%)      | Level 6     | UI and animation frames                                           |
 | **Regular tiles**                            | 256×256       | Standard (85%)  | Level 6     | Grass, rocks, paths                                               |
-| **Animated GIFs**                            | 512×512       | N/A             | gifsicle    | Weather effects, particles                                        |
+| **Animated GIFs** (`animations/`)            | 48 frames × 256² | High (95%)   | Level 6     | Become a sprite sheet PNG + `.sheet.json` sidecar; played by `utils/pixi/AnimationLayer.ts` |
 
 **Two rules that are not obvious from the table:**
 
@@ -1230,7 +1229,7 @@ else if (file.includes('iris') || file.includes('rose') || file.includes('lavend
 
 - **Asset References**: Always import from `/public/assets-optimized/` in `assets.ts`
 - **Multi-tile sprites**: Use optimized versions (they preserve transparency and quality)
-- **GIF Optimization**: If gifsicle is not installed, GIFs are copied without optimization
+- **Animated GIFs are not shipped**: the optimiser turns each into a sprite sheet (`name.sheet.png` + `name.sheet.json`, at most 48 frames of 256²) and PixiJS plays it as an `AnimatedSprite`. `tests/animationSheets.test.ts` fails if a sidecar is missing or disagrees with its PNG.
 - **Re-optimization**: Safe to run multiple times - overwrites previous output
 
 ### Tile Background Colors and ColorResolver

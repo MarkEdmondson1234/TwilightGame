@@ -238,8 +238,10 @@ export interface MapDefinition {
   };
 
   /** Force the player to render as a DOM element (z-index sorted) instead of via PixiJS.
-   *  Use in background-image rooms that have midground DOM animations (e.g. fireplace fire)
-   *  which must appear behind the player but in front of the room background. */
+   *  No map needs this any more: it existed for the hearth fire, which was a DOM GIF
+   *  that had to sort behind the player, and that is a PixiJS AnimatedSprite now. It
+   *  costs a React commit on every frame the player moves (see useMovementController's
+   *  snapshotEveryFrame), so think twice before setting it. */
   useDOMPlayer?: boolean;
 
   /** Map-wide tileable background texture, rendered between the solid colour layer and tile sprites.

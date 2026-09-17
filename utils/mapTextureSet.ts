@@ -38,6 +38,7 @@ import { TileType } from '../types';
 import { CAVE_DRIP_PLACEMENTS } from '../data/caveDrips';
 import { hasWeatherVane, WEATHER_VANE } from '../data/weatherVane';
 import { getParallaxTreeUrls, hasForegroundParallax } from '../data/foregroundParallax';
+import { getTileAnimationSheetUrls } from './tileAnimationPlacement';
 
 /** Season keys as they appear in SeasonalImageSet (lowercase, unlike TimeManager's enum). */
 export const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -217,6 +218,8 @@ export function getTexturesForMap(mapId: string, season: SeasonKey = 'spring'): 
   collect(out, map.backgroundTexture?.image);
   // The parallax crowns framing outdoor maps: seven trees, resident for the map.
   if (hasForegroundParallax(map)) collect(out, getParallaxTreeUrls(season));
+  // Sprite sheets for the animations this map's tiles trigger (petals, bees, fire).
+  collect(out, getTileAnimationSheetUrls(tileTypes, season));
 
   // Room background images are loaded per-map by BackgroundImageLayer already.
 

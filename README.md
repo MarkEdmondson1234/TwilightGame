@@ -12,7 +12,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ArqQZSPqnja94BsLXPhUSb
 
 **Prerequisites:**
 - Node.js (v18 or higher)
-- gifsicle (for GIF optimization) - Optional but recommended
 
 ### Setup
 
@@ -20,21 +19,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ArqQZSPqnja94BsLXPhUSb
    ```bash
    npm install
    ```
-
-2. **Install gifsicle (optional but recommended for asset optimization):**
-
-   macOS:
-   ```bash
-   brew install gifsicle
-   ```
-
-   Linux:
-   ```bash
-   sudo apt-get install gifsicle
-   ```
-
-   Windows:
-   Download from https://www.lcdf.org/gifsicle/
 
 3. **Optimize assets (optional but recommended):**
    ```bash
