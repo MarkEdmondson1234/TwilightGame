@@ -21,6 +21,8 @@ Three PRs merged to `main` today, all deployed to production
 | #138 | **Day 2, the GPU.** Shadows are soft-disc sprites (no `BlurFilter`), darkness composites at 0.25× (mobile) / 0.5× (desktop) on one clock, fog mask removed, phones never get the HIGH render profile, particles scale by tier. Plus the **CI gate** (see §3) and a harness fix. | Filtered nodes 30 → 0, darkness uploads per frame ≤1 at 1/16 the bytes. |
 | #139 | **Day 3, memory.** Music/ambience decoded on first play (was ~440 MB of PCM at boot); preloader scoped to the selected character with no bitmap cache (was ~144 MB); phones load `@half` (512 px) player and NPC sprites (player pinned 64 → 16 MB, village NPCs 86 → 22 MB); dead 2048² sprite sheets removed. | Roughly 600 MB less resident on a phone. |
 
+| #141 | **Day 4, §6A.** The player position, direction and animation frame live in refs; React gets a ≤10 Hz snapshot. Camera and room transform computed per frame by the loop (`utils/viewFrame.ts`, `hooks/useViewFrame.ts`) and applied to Pixi, the DOM world layer and the pointer maths from the ref; `usePixiRenderer`'s camera and player effects are gone. | CI `movement` scenario: App renders 0.955 → **0.08 /frame** (36 → 4.3 /s). Unit guard: 10 commits per second of walking. |
+
 **Not yet confirmed on a real device.** Every number above is from the
 headless profile or arithmetic. Sentry will show the truth within a session of
 play on today's release: see §2.
@@ -56,18 +58,32 @@ play on today's release: see §2.
    scenario walks during the measurement. Baseline comparison starts working
    for a metric once a `main` run has recorded it.
 
-The number that matters next: **App renders /frame while walking ≈ 0.8–1.0**
-today. §6A below should take it to ~0.
+The number that mattered most, **App renders /frame while walking**, went from
+≈0.8–1.0 to ≈0.08 with §6A (PR #141). What is left of it is the snapshot
+cadence (`TIMING.PLAYER_SNAPSHOT_MS`) and tile-change commits; the next lever
+is making each of those commits cheap (§5 M10, memoise the always-mounted
+children).
 
 ---
 
 ## 3. Next, in order
 
-### A. §6A — the player position leaves React state per frame (one sprint)
+### A. §6A — the player position leaves React state per frame — DONE (PR #141)
 
-This is the remaining walking cost and the biggest single item left. Each
-App commit is ~19 ms at 4× throttle, i.e. a dropped frame on the iPad per
-moving frame.
+Kept here because the shape matters for what follows. What landed:
+`usePlayerMovement` writes refs only; `useMovementController` commits a
+snapshot on tile change / every 100 ms / on stop; `computeViewFrame()` is the
+one camera+room-transform function, evaluated per frame by the loop
+(`viewFrameRef`, which also drives the DOM world layer's transform and click
+mapping) and from the snapshot by React; `usePixiRenderer.syncView()` /
+`syncPlayer()` replace the camera and player effects.
+**Follow-ups it leaves open:** memoise App's always-mounted children (M10) so
+the remaining ~10 Hz commits are cheap; move `visibleRange` to the loop (§6B);
+the overlays inside the DOM world layer (stamina bar, rest "z"s, indicators)
+are positioned from the snapshot and can trail the player by ≤ half a tile
+while walking — M1 (draw them in Pixi) is the real fix.
+
+The original brief, for reference:
 
 **Why it's structural:** `hooks/usePlayerMovement.ts:147` does
 `onSetPlayerPos(prev => next)` every moving frame; `playerPos` is a `useState`

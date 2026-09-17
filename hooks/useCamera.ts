@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Position } from '../types';
-import { TILE_SIZE } from '../constants';
+import { computeCameraPosition, type CameraPosition } from '../utils/viewFrame';
 
 interface CameraConfig {
   playerPos: Position;
@@ -12,21 +12,9 @@ interface CameraConfig {
   zoom?: number;
 }
 
-interface CameraPosition {
-  cameraX: number;
-  cameraY: number;
-}
-
 /**
- * Hook for camera positioning logic
- * Centers small maps, follows player on large maps
- * Accounts for zoom — at zoom 2x the effective viewport is half the screen size
- *
- * `zoom` is expected to already be at least whatever getCoverZoom
- * (hooks/usePinchZoom.ts) requires for the current map/viewport — App.tsx
- * enforces that as the pinch-zoom minimum. Given that, mapPixelWidth/Height
- * should never actually be smaller than the effective viewport below; the
- * "centre it" branches are a defensive fallback only (issue #26).
+ * React wrapper around computeCameraPosition (utils/viewFrame.ts) for
+ * components that need the camera as a memoised value.
  */
 export function useCamera(config: CameraConfig): CameraPosition {
   const {
@@ -38,39 +26,9 @@ export function useCamera(config: CameraConfig): CameraPosition {
     zoom = 1.0,
   } = config;
 
-  const camera = useMemo(() => {
-    const mapPixelWidth = mapWidth * TILE_SIZE;
-    const mapPixelHeight = mapHeight * TILE_SIZE;
-
-    // Effective viewport accounts for zoom — zoomed in means less visible area
-    const effectiveWidth = viewportWidth / zoom;
-    const effectiveHeight = viewportHeight / zoom;
-
-    let cameraX: number;
-    let cameraY: number;
-
-    // If map is smaller than effective viewport, center it
-    if (mapPixelWidth <= effectiveWidth) {
-      cameraX = -(effectiveWidth - mapPixelWidth) / 2;
-    } else {
-      // Otherwise follow player
-      cameraX = Math.min(
-        mapPixelWidth - effectiveWidth,
-        Math.max(0, playerPos.x * TILE_SIZE - effectiveWidth / 2)
-      );
-    }
-
-    if (mapPixelHeight <= effectiveHeight) {
-      cameraY = -(effectiveHeight - mapPixelHeight) / 2;
-    } else {
-      cameraY = Math.min(
-        mapPixelHeight - effectiveHeight,
-        Math.max(0, playerPos.y * TILE_SIZE - effectiveHeight / 2)
-      );
-    }
-
-    return { cameraX, cameraY };
-  }, [playerPos, mapWidth, mapHeight, viewportWidth, viewportHeight, zoom]);
-
-  return camera;
+  return useMemo(
+    () =>
+      computeCameraPosition(playerPos, mapWidth, mapHeight, viewportWidth, viewportHeight, zoom),
+    [playerPos, mapWidth, mapHeight, viewportWidth, viewportHeight, zoom]
+  );
 }

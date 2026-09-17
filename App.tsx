@@ -43,7 +43,7 @@ import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
-import { useCamera } from './hooks/useCamera';
+import { useViewFrame } from './hooks/useViewFrame';
 import { usePinchZoom, getZoomLimitsForRoom, getCoverZoom } from './hooks/usePinchZoom';
 import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
 import { useBrowserZoom } from './hooks/useBrowserZoom';
@@ -52,11 +52,7 @@ import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
-import {
-  getRoomArtworkSize,
-  getRoomCoverScale,
-  getRoomTransform,
-} from './utils/backgroundRoomLayout';
+import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -199,6 +195,8 @@ import { reportMessageOnce } from './utils/errorReporting';
 //    Game loop (rAF) .............. gameLoop, animationFrameId, lastFrameTime
 //    Camera / viewport / culling .. viewportScale, effectiveGridOffset,
 //                                   effectiveTileSize, visibleRange, isCompactMode
+//                                   (per frame: useViewFrame → viewFrameRef; React's
+//                                   cameraX/effectiveGridOffset are a ~10 Hz snapshot)
 //    Cutscenes .................... isCutscenePlaying, handleLoadingCutsceneComplete
 //    Inventory .................... inventoryItems, handleFoodEat, handleInventoryReorder
 //    Potions / magic / fairy form . handlePotionUse, isFairyFormFading, fairyFormTimersRef
@@ -213,18 +211,13 @@ import { reportMessageOnce } from './utils/errorReporting';
 //   • Read docs/ARCHITECTURE_GOTCHAS.md before touching the coordinate pipeline
 //     (effectiveGridOffset must stay in pre-zoom stage pixels) or ambient audio (each effect stops
 //     only its own sound). Effect ordering and dependency arrays matter here.
+//   • playerPos / cameraX / direction here are React's throttled SNAPSHOT of the
+//     player (≤10 Hz while walking). Anything per frame reads playerPosRef /
+//     viewFrameRef instead — never add a per-frame setState on the player.
 //   • No test exercises this component at runtime and main auto-deploys — verify
 //     visually with `make dev` after any change.
 //   • Don't grow this file. New system → new hook (see the golden rule).
 // ═════════════════════════════════════════════════════════════════════════════
-
-/**
- * Tiled maps have no grid offset. One shared constant, not a literal in the
- * render body: the renderer keys its scene-rebuild effects on this object's
- * identity, and a fresh `{ x: 0, y: 0 }` per render rebuilt every tile and
- * sprite on every frame (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.1).
- */
-const ZERO_GRID_OFFSET = Object.freeze({ x: 0, y: 0 });
 
 const App: React.FC = () => {
   // Counted, not timed: how often this 3,000-line component commits is the
@@ -524,6 +517,8 @@ const App: React.FC = () => {
     clickToMoveDestination,
     clickToMoveTargetNPC,
     playerPosRef,
+    directionRef,
+    animationFrameRef,
     isMovingRef,
     updateMovement,
     setDestination: setClickToMoveDestination,
@@ -540,6 +535,10 @@ const App: React.FC = () => {
     isUIActive,
     isCutscenePlaying,
     activeNPC,
+    // React draws the player itself in these two cases, so it needs the
+    // position every frame. Everywhere else PixiJS reads the refs and React
+    // gets a ~10 Hz snapshot (see useMovementController).
+    snapshotEveryFrame: !USE_PIXI_RENDERER || currentMap?.useDOMPlayer === true,
   });
 
   // Revalidate a mobile save/entry after maps and NPCs have loaded. A clear
@@ -557,8 +556,8 @@ const App: React.FC = () => {
   // ── Multiplayer presence ──────────────────────────────────────────────────
   // Refs so the game-loop publisher below reads live values without being
   // rebuilt (and re-subscribed) on every step the player takes.
-  const presenceStateRef = useRef({ direction, playerSizeTier, isFairyForm });
-  presenceStateRef.current = { direction, playerSizeTier, isFairyForm };
+  const presenceStateRef = useRef({ playerSizeTier, isFairyForm });
+  presenceStateRef.current = { playerSizeTier, isFairyForm };
 
   const getLocalPresence = useCallback(() => {
     const character = gameState.getSelectedCharacter();
@@ -569,12 +568,12 @@ const App: React.FC = () => {
       characterId: character.characterId || 'character1',
       outfit: character.outfit,
       position: playerPosRef.current,
-      direction: live.direction,
+      direction: directionRef.current,
       sizeTier: live.playerSizeTier,
       fairyForm: live.isFairyForm,
       emote: null,
     };
-  }, [playerPosRef]);
+  }, [playerPosRef, directionRef]);
 
   const { remotePlayerCount, remotePlayerNames, tickMultiplayer, sendEmote } =
     useMultiplayerController({ currentMapId, getLocalPresence });
@@ -748,13 +747,17 @@ const App: React.FC = () => {
     isFairyForm
   );
 
-  // Get player sprite info (URL and scale, plus flip for fairy form)
+  // Player sprite info from React's snapshot of the animation state. PixiJS
+  // resolves its own per frame from the refs; this copy is for the DOM player
+  // (house2 / non-Pixi, which get a per-frame snapshot) and for the body
+  // height below, which is the same for every walk frame.
+  const selectedCharacterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
   const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
     playerSprites,
     direction,
     animationFrame,
     isFairyForm,
-    gameState.getSelectedCharacter()?.characterId
+    selectedCharacterId
   );
 
   const playerBodyHeight = PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) *
@@ -1473,11 +1476,11 @@ const App: React.FC = () => {
       });
     }
 
-    // Update PixiJS animations (weather particles, sprite animations, tile animations)
-    updateAnimations(deltaTime);
-
     // Pause movement when dialogue, cutscene, event chain popup, or a full-screen mini-game is active
     if (activeNPC || isCutscenePlaying || activeChainPopup || miniGame) {
+      // The world still animates, and a teleport mid-dialogue still has to show.
+      syncViewFrame();
+      updateAnimations(deltaTime);
       animationFrameId.current = requestAnimationFrame(gameLoop);
       return;
     }
@@ -1565,8 +1568,15 @@ const App: React.FC = () => {
       isOnBench
     );
 
+    // Where the world sits now that the player has moved, then draw: camera,
+    // player sprite, NPCs, weather. None of this goes through React — the
+    // player position reached React as a throttled snapshot inside
+    // updateMovement, if at all this frame (§6A).
+    syncViewFrame();
+    updateAnimations(deltaTime);
+
     animationFrameId.current = requestAnimationFrame(gameLoop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations is a stable useCallback destructured from usePixiRenderer below this line; activeNPC, isCutscenePlaying, activeChainPopup, ui.miniGame and currentMapId are read through loopStateRef/currentMapIdRef on purpose (see the comment at the top of the loop)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations and syncViewFrame are stable useCallbacks destructured from usePixiRenderer/useViewFrame below this line; activeNPC, isCutscenePlaying, activeChainPopup, ui.miniGame and currentMapId are read through loopStateRef/currentMapIdRef on purpose (see the comment at the top of the loop)
   }, [
     updateMovement,
     checkChainProximity,
@@ -1700,25 +1710,33 @@ const App: React.FC = () => {
     return viewportSize.height < 600;
   }, [viewportSize.height]);
 
-  // One pre-zoom transform for artwork, entities, labels, and pointer inversion.
-  const roomTransform = useMemo(
-    () => getRoomTransform(currentMap, isMobileInteriorCamera ? {
-      x: playerPos.x,
-      y: playerPos.y - playerBodyHeight / (TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1)) / 2,
-    } : playerPos, roomViewport, viewportScale, zoom),
-    [currentMap, playerPos, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight]
+  // One pre-zoom transform for artwork, entities, labels, and pointer inversion,
+  // computed at two rates: the loop writes viewFrameRef every frame from the
+  // live position (PixiJS, the DOM world layer's transform, click mapping);
+  // React gets `view` from its snapshot for the overlays below.
+  const viewFrameInputs = useMemo(
+    () => ({
+      map: currentMap,
+      mapWidth,
+      mapHeight,
+      viewport: viewportSize,
+      roomViewport,
+      viewportScale,
+      zoom,
+      cameraAnchorLiftTiles: isMobileInteriorCamera
+        ? playerBodyHeight / (TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1)) / 2
+        : 0,
+    }),
+    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight]
   );
-  const backgroundRoomPan = roomTransform.pan;
-  const effectiveGridOffset = roomTransform.gridOffset;
-  const effectiveTileSize = roomTransform.tileSize;
-
-  // Use camera hook for positioning
-  const { cameraX, cameraY } = useCamera({
+  const { viewFrameRef, worldLayerRef, syncViewFrame, view } = useViewFrame(
+    viewFrameInputs,
     playerPos,
-    mapWidth,
-    mapHeight,
-    zoom,
-  });
+    playerPosRef
+  );
+  const { cameraX, cameraY } = view;
+  const effectiveGridOffset = view.gridOffset;
+  const effectiveTileSize = view.tileSize;
 
   // Debug: Log touch device status
   useEffect(() => {
@@ -1738,6 +1756,7 @@ const App: React.FC = () => {
     effectiveTileSize:
       currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
     gridOffset: currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined,
+    viewFrameRef,
   });
 
   // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
@@ -1814,10 +1833,10 @@ const App: React.FC = () => {
         eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
       },
       getCurrentMapId: () => currentMapId,
-      getPlayerPosition: () => playerPos,
+      getPlayerPosition: () => playerPosRef.current,
       triggerVFX: (vfxType: string, position?: Position) => {
         // Trigger visual effect at player position or specified position
-        triggerVFX(vfxType, position || playerPos);
+        triggerVFX(vfxType, position || playerPosRef.current);
       },
       // Verdant Surge: Clear forage cooldowns on current map
       clearForageCooldowns: () => {
@@ -1920,8 +1939,8 @@ const App: React.FC = () => {
         }
       },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the callbacks read refs, singletons and the mount-captured handleMapTransition (which reads currentMapIdRef by design); currentMapId/playerPos/playerScale/playerSizeTier are the real invalidation triggers
-    [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the callbacks read refs, singletons and the mount-captured handleMapTransition (which reads currentMapIdRef by design); currentMapId/playerScale/playerSizeTier are the real invalidation triggers
+    [currentMapId, playerScale, playerSizeTier, triggerVFX]
   );
 
   // Handle potion usage from inventory click
@@ -2004,26 +2023,23 @@ const App: React.FC = () => {
       currentWeather,
     },
     viewport: {
-      cameraX,
-      cameraY,
+      viewFrameRef,
       visibleRange,
       viewportScale,
       viewportSize,
-      effectiveGridOffset: effectiveGridOffset ?? ZERO_GRID_OFFSET,
       effectiveTileSize,
-      backgroundRoomPan,
       roomViewport,
       groundPlayers: isMobileInteriorCamera,
       zoom,
     },
     player: {
-      pos: playerPos,
-      direction,
-      animationFrame,
-      spriteUrl: playerSpriteUrl,
-      spriteScale,
+      playerPosRef,
+      directionRef,
+      animationFrameRef,
+      sprites: playerSprites,
+      isFairyForm,
+      characterId: selectedCharacterId,
       playerScale,
-      shouldFlip,
       movementMode,
       isFairyFormFading,
     },
@@ -2158,6 +2174,7 @@ const App: React.FC = () => {
     effectiveTileSize:
       currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
     gridOffset: currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined,
+    viewFrameRef,
   });
 
   // Environment controller - manages weather, time, ambient audio, item decay
@@ -2360,17 +2377,16 @@ const App: React.FC = () => {
       )}
 
       {/* Hybrid Layer: Sprites/Player/NPCs (Always rendered with DOM, works with both renderers) */}
-      {/* For background-image rooms: skip camera transform, use fixed positioning aligned with centered image */}
-      {/* For tiled rooms: apply camera transform for scrolling */}
+      {/* For background-image rooms: no camera scroll, zoom only; overlays carry the pan in gridOffset */}
+      {/* For tiled rooms: scrolls with the camera. The transform is NOT set here — the game
+          loop writes it every frame (useViewFrame.syncViewFrame) so this layer tracks the
+          canvas exactly while React only re-renders on the ~10 Hz position snapshot. */}
       <div
+        ref={worldLayerRef}
         className="relative"
         style={{
           width: currentMap?.renderMode === 'background-image' ? '100%' : mapWidth * TILE_SIZE,
           height: currentMap?.renderMode === 'background-image' ? '100%' : mapHeight * TILE_SIZE,
-          transform:
-            currentMap?.renderMode === 'background-image'
-              ? `scale(${zoom})` // Zoom only (no camera scroll) for background-image rooms
-              : `scale(${zoom}) translate(${-cameraX}px, ${-cameraY}px)`,
           transformOrigin: '0 0',
           pointerEvents: 'none', // Allow clicks to pass through to canvas
         }}

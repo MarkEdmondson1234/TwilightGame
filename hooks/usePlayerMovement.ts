@@ -1,10 +1,10 @@
 import { useCallback, useRef, MutableRefObject } from 'react';
 import { Position, Direction } from '../types';
-import { PLAYER_SIZE } from '../constants';
+import { PLAYER_SIZE, TIMING } from '../constants';
 import { mapManager } from '../maps';
 
-const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
-const ANIMATION_SPEED_MS = 150; // time between animation frames
+const PLAYER_SPEED = TIMING.PLAYER_SPEED; // tiles per second (frame-rate independent)
+const ANIMATION_SPEED_MS = TIMING.PLAYER_FRAME_MS; // time between animation frames
 
 /** Map Direction enum to the string keys used in frameCounts config */
 const DIRECTION_KEYS: Record<Direction, string> = {
@@ -17,13 +17,20 @@ const DIRECTION_KEYS: Record<Direction, string> = {
 interface PlayerMovementConfig {
   keysPressed: Record<string, boolean>;
   checkCollision: (pos: Position) => boolean;
+  /**
+   * The live player state. Written directly every frame — none of it goes
+   * through React here. The movement controller decides when React gets a
+   * snapshot (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §6A).
+   */
   playerPosRef: MutableRefObject<Position>;
-  lastDirectionRef: MutableRefObject<Direction>;
-  onSetDirection: (direction: Direction) => void;
-  onSetAnimationFrame: (frame: number | ((prev: number) => number)) => void;
-  onSetPlayerPos: (pos: Position | ((prev: Position) => Position)) => void;
-  /** Optional pathing vector from click-to-move (used when no keyboard input) */
-  pathingVector?: { vectorX: number; vectorY: number } | null;
+  directionRef: MutableRefObject<Direction>;
+  animationFrameRef: MutableRefObject<number>;
+  /**
+   * Pathing vector from click-to-move, read per frame (used when no keyboard
+   * input). A function rather than a value because it depends on where the
+   * player is *now*, not where they were when React last rendered.
+   */
+  getPathingVector?: () => { vectorX: number; vectorY: number } | null;
   /** If true, animate even when idle (e.g., fairy wing flapping) */
   animateWhenIdle?: boolean;
   /** Optional callback triggered when a footstep sound should play */
@@ -44,18 +51,16 @@ interface MovementResult {
  * Hook for player movement logic
  * Handles input processing, animation, collision detection, and position updates
  */
-const DEFAULT_FOOTSTEP_INTERVAL_MS = 280; // Matches NPC animation timing
+const DEFAULT_FOOTSTEP_INTERVAL_MS = TIMING.NPC_FRAME_MS; // Matches NPC animation timing
 
 export function usePlayerMovement(config: PlayerMovementConfig) {
   const {
     keysPressed,
     checkCollision,
     playerPosRef,
-    lastDirectionRef,
-    onSetDirection,
-    onSetAnimationFrame,
-    onSetPlayerPos,
-    pathingVector,
+    directionRef,
+    animationFrameRef,
+    getPathingVector,
     animateWhenIdle = false,
     onFootstep,
     footstepIntervalMs = DEFAULT_FOOTSTEP_INTERVAL_MS,
@@ -91,9 +96,12 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       }
 
       // 2. If no keyboard input, use pathing vector (click-to-move)
-      if (!isKeyboardInput && pathingVector) {
-        vectorX = pathingVector.vectorX;
-        vectorY = pathingVector.vectorY;
+      if (!isKeyboardInput && getPathingVector) {
+        const pathingVector = getPathingVector();
+        if (pathingVector) {
+          vectorX = pathingVector.vectorX;
+          vectorY = pathingVector.vectorY;
+        }
       }
 
       const isMoving = vectorX !== 0 || vectorY !== 0;
@@ -104,10 +112,10 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
           // Continue animating even when idle (for fairy wing flapping)
           if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
             lastAnimationTime.current = now;
-            onSetAnimationFrame((prev) => (prev === 1 ? 2 : 1));
+            animationFrameRef.current = animationFrameRef.current === 1 ? 2 : 1;
           }
         } else {
-          onSetAnimationFrame(0); // Reset to idle frame (frame 0)
+          animationFrameRef.current = 0; // Reset to idle frame (frame 0)
           walkDirectionRef.current = 1; // Reset ping-pong for next walk
         }
       } else {
@@ -118,69 +126,61 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
         else if (vectorX < 0) newDirection = Direction.Left;
         else if (vectorX > 0) newDirection = Direction.Right;
 
-        // Update direction when it changes
-        if (newDirection !== null && newDirection !== lastDirectionRef.current) {
-          onSetDirection(newDirection);
-          lastDirectionRef.current = newDirection;
+        if (newDirection !== null) {
+          directionRef.current = newDirection;
         }
 
         // Animate based on time — ping-pong walk cycle: 0 → 1 → 2 → 3 → 2 → 1 → 0 → …
         if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
           lastAnimationTime.current = now;
-          const dirKey = DIRECTION_KEYS[lastDirectionRef.current];
+          const dirKey = DIRECTION_KEYS[directionRef.current];
           const maxFrame = (walkFrameCounts?.[dirKey] ?? 3) - 1;
-          onSetAnimationFrame((prev) => {
-            const next = prev + walkDirectionRef.current;
-            if (next > maxFrame) {
-              walkDirectionRef.current = -1;
-              return maxFrame - 1;
-            }
-            if (next < 0) {
-              walkDirectionRef.current = 1;
-              return 1;
-            }
-            return next;
-          });
+          const next = animationFrameRef.current + walkDirectionRef.current;
+          if (next > maxFrame) {
+            walkDirectionRef.current = -1;
+            animationFrameRef.current = maxFrame - 1;
+          } else if (next < 0) {
+            walkDirectionRef.current = 1;
+            animationFrameRef.current = 1;
+          } else {
+            animationFrameRef.current = next;
+          }
         }
-      }
-
-      onSetPlayerPos((prevPos) => {
-        if (!isMoving) return prevPos;
 
         const magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
-        if (magnitude === 0) return prevPos;
+        if (magnitude > 0) {
+          // Delta-time based movement: speed * deltaTime gives consistent movement regardless of frame rate
+          const dx = (vectorX / magnitude) * PLAYER_SPEED * deltaTime;
+          const dy = (vectorY / magnitude) * PLAYER_SPEED * deltaTime;
 
-        // Delta-time based movement: speed * deltaTime gives consistent movement regardless of frame rate
-        const dx = (vectorX / magnitude) * PLAYER_SPEED * deltaTime;
-        const dy = (vectorY / magnitude) * PLAYER_SPEED * deltaTime;
+          const prevPos = playerPosRef.current;
+          const nextPos = { ...prevPos };
 
-        const nextPos = { ...prevPos };
+          const tempXPos = { ...nextPos, x: nextPos.x + dx };
+          if (!checkCollision(tempXPos)) {
+            nextPos.x += dx;
+          }
 
-        const tempXPos = { ...nextPos, x: nextPos.x + dx };
-        if (!checkCollision(tempXPos)) {
-          nextPos.x += dx;
+          const tempYPos = { ...nextPos, y: nextPos.y + dy };
+          if (!checkCollision(tempYPos)) {
+            nextPos.y += dy;
+          }
+
+          const currentMap = mapManager.getCurrentMap();
+          if (currentMap) {
+            nextPos.x = Math.max(
+              PLAYER_SIZE / 2,
+              Math.min(currentMap.width - PLAYER_SIZE / 2, nextPos.x)
+            );
+            nextPos.y = Math.max(
+              PLAYER_SIZE / 2,
+              Math.min(currentMap.height - PLAYER_SIZE / 2, nextPos.y)
+            );
+          }
+
+          playerPosRef.current = nextPos;
         }
-
-        const tempYPos = { ...nextPos, y: nextPos.y + dy };
-        if (!checkCollision(tempYPos)) {
-          nextPos.y += dy;
-        }
-
-        const currentMap = mapManager.getCurrentMap();
-        if (currentMap) {
-          nextPos.x = Math.max(
-            PLAYER_SIZE / 2,
-            Math.min(currentMap.width - PLAYER_SIZE / 2, nextPos.x)
-          );
-          nextPos.y = Math.max(
-            PLAYER_SIZE / 2,
-            Math.min(currentMap.height - PLAYER_SIZE / 2, nextPos.y)
-          );
-        }
-
-        playerPosRef.current = nextPos; // Keep ref in sync
-        return nextPos;
-      });
+      }
 
       // Trigger footstep sound at intervals while moving
       if (isMoving && onFootstep && now - lastFootstepTime.current > footstepIntervalMs) {
@@ -194,11 +194,9 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       keysPressed,
       checkCollision,
       playerPosRef,
-      lastDirectionRef,
-      onSetDirection,
-      onSetAnimationFrame,
-      onSetPlayerPos,
-      pathingVector,
+      directionRef,
+      animationFrameRef,
+      getPathingVector,
       animateWhenIdle,
       onFootstep,
       footstepIntervalMs,

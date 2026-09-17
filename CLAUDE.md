@@ -105,7 +105,8 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
 
 1. **Never put remote player positions through React state.** They change every frame.
    `usePixiRenderer`'s per-frame `updateAnimations()` polls `remotePlayerManager` directly; the
-   EventBus trigger fires only on join/leave.
+   EventBus trigger fires only on join/leave. (The local player works the same way now — see
+   the Player System notes below.)
 2. **The emote list is duplicated in `multiplayer/emotes.ts` and `database.rules.json` on purpose** —
    the rules enforce the closed vocabulary server-side. `tests/emoteVocabulary.test.ts` fails if the
    two lists drift.
@@ -601,6 +602,17 @@ Pure functions and game systems:
 - Collision: Independent X/Y axis collision, supports both regular tiles and multi-tile sprites
 - Boundary: Clamped to current map bounds
 - Architecture: Isolated collision detection and movement logic in dedicated hooks
+- **The player's position, direction and animation frame live in refs, not React state.**
+  `usePlayerMovement` writes `playerPosRef`/`directionRef`/`animationFrameRef` every frame;
+  PixiJS (`usePixiRenderer.syncPlayer`/`syncView`), the DOM world layer's transform and the
+  pointer maths (`viewFrameRef` from `hooks/useViewFrame.ts`) read them per frame. React's
+  `playerPos`/`cameraX` are a **snapshot** committed on a tile change, at most every
+  `TIMING.PLAYER_SNAPSHOT_MS` while walking, and once on stopping — enough for the HUD,
+  indicators and menus. An App render costs ~19 ms on an iPad, so a per-frame `setState`
+  on the player is a dropped frame per step; `tests/playerPosSnapshot.test.tsx` fails if one
+  comes back. The two exceptions that do commit every frame are the DOM renderer
+  (`USE_PIXI_RENDERER` off) and rooms with `useDOMPlayer` (house2), where React draws the
+  player itself.
 
 **Map System** (`maps/MapManager.ts`):
 

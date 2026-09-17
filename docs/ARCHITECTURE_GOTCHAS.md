@@ -63,6 +63,15 @@ position changes. Interior game zoom remains disabled; the math also handles
 zoom during map entry and future zoom changes. Browser page zoom is accounted
 for separately by `useBrowserZoom` and responsive scaling.
 
+**It is computed at two rates.** `computeViewFrame()` in `utils/viewFrame.ts`
+wraps `getRoomTransform` and the tiled camera. The game loop evaluates it every
+frame from the live `playerPosRef` into `viewFrameRef` (`hooks/useViewFrame.ts`)
+— that is what moves the Pixi containers, the DOM world layer's CSS transform
+and the click/hover maths. React evaluates the same function from its ~10 Hz
+player snapshot for the DOM overlays. If a click lands a step behind the canvas
+while walking, something is reading React's `cameraX`/`effectiveGridOffset`
+where it should read `viewFrameRef`.
+
 ### Empty HUD layouts must not intercept world input
 
 CSS scaling shrinks a book button visually but leaves its parent's layout box
