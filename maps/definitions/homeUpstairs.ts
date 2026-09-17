@@ -88,7 +88,7 @@ export const homeUpstairs: MapDefinition = {
       fromPosition: { x: 3, y: 7 }, // Stairs down
       tileType: TileType.DOOR,
       toMapId: 'mums_kitchen',
-      toPosition: { x: 11, y: 4 }, // Back to kitchen near stairs
+      toPosition: { x: 11.5, y: 4 }, // Back to kitchen near stairs; (11,4) clipped a wall tile
       label: 'Downstairs',
       hasDoor: true,
     },

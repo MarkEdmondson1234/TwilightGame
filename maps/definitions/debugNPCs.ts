@@ -159,7 +159,7 @@ export const debugNPCs: MapDefinition = {
       fromPosition: { x: 27, y: 6 },
       tileType: TileType.DOOR,
       toMapId: 'wizard_trials',
-      toPosition: { x: 3, y: 7 },
+      toPosition: { x: 2, y: 8 }, // (3,7) clipped a wall tile
       label: 'To Wizard Trials',
     },
   ],

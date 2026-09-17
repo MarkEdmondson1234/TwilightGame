@@ -71,7 +71,7 @@ export const bearCave: MapDefinition = {
       fromPosition: { x: 2, y: 18 }, // West path exit
       tileType: TileType.PATH,
       toMapId: 'farm_area',
-      toPosition: { x: 17, y: 20 }, // Return to farm area
+      toPosition: { x: 17, y: 20.5 }, // Return to farm area; (17,20) clipped a wall tile
       label: 'To Farm Area',
     },
     {
@@ -86,7 +86,7 @@ export const bearCave: MapDefinition = {
       tileType: TileType.BEAR_HOUSE,
       toMapId: 'bear_den',
       toPosition: { x: 7, y: 7 }, // Inside the den (centre of walkable area)
-      label: 'Enter Bear\'s Den',
+      label: "Enter Bear's Den",
       hasDoor: true,
     },
   ],

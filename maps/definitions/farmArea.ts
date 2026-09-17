@@ -96,7 +96,7 @@ export const farmArea: MapDefinition = {
       fromPosition: { x: 13, y: 22 }, // Garden shed door
       tileType: TileType.GARDEN_SHED,
       toMapId: 'seed_shed',
-      toPosition: { x: 5, y: 4 },
+      toPosition: { x: 5, y: 5.5 }, // (5,4) clipped a wall tile
       label: 'To Seed Shed',
       hasDoor: true,
     },

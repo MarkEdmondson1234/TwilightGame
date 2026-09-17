@@ -97,7 +97,9 @@ export const mumsKitchen: MapDefinition = {
       fromPosition: { x: 4, y: 8 }, // Door at left side (where D is in grid)
       tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 10, y: 22 }, // Spawn just outside home door in village
+      // (10,22) put the player's PLAYER_SIZE=0.8 bounding box astride column 9, which is the
+      // PLAYER_HOME anchor tile itself (solid in the base grid) — reported as JAVASCRIPT-REACT-B.
+      toPosition: { x: 10.5, y: 22 }, // Spawn just outside home door in village
       label: 'To Village',
       hasDoor: true,
     },

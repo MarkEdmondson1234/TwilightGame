@@ -232,4 +232,47 @@ describe('Map Validation - Cross-Map Transition Targets', () => {
     }
     expect(violations).toEqual([]);
   });
+
+  it('every transition toPosition lands on walkable ground in the TARGET map', () => {
+    // In-bounds is not enough: a toPosition can sit squarely inside a wall,
+    // door frame or multi-tile sprite's collision box. MapManager.transitionToMap()
+    // silently rescues that to the nearest safe square and reports it once via
+    // Sentry (category "map") — the player never notices, but it shipped 12
+    // times across the map set and produced 4 live production issues
+    // (JAVASCRIPT-REACT-A/B/E/P) before anyone looked. Calling the real public
+    // API here (not the private collision check) exercises the same rescue
+    // path production hits.
+    const violations: string[] = [];
+
+    for (const map of registeredMaps) {
+      for (const t of map.transitions) {
+        if (isProceduralTarget(t.toMapId)) continue;
+        const target = mapManager.getMap(t.toMapId);
+        if (!target) continue; // Reported by the "targets a map that exists" test.
+
+        const { x, y } = t.toPosition;
+        if (x < 0 || x >= target.width || y < 0 || y >= target.height) continue; // Reported above.
+
+        const { spawn } = mapManager.transitionToMap(t.toMapId, t.toPosition);
+        if (spawn.x !== x || spawn.y !== y) {
+          violations.push(
+            `Map "${map.id}" transition at (${t.fromPosition.x}, ${t.fromPosition.y})` +
+              `${t.label ? ` "${t.label}"` : ''} -> "${t.toMapId}": ` +
+              `toPosition (${x}, ${y}) is inside a wall/obstacle — MapManager silently ` +
+              `rescued to (${spawn.x.toFixed(2)}, ${spawn.y.toFixed(2)})`
+          );
+        }
+      }
+    }
+
+    if (violations.length > 0) {
+      console.error(
+        'Transitions landing inside a wall/obstacle in the target map:\n' +
+          violations.join('\n') +
+          '\n\nFIX: nudge toPosition off the solid tile (or out of a multi-tile ' +
+          "sprite's collision box) in the TARGET map's own definition file."
+      );
+    }
+    expect(violations).toEqual([]);
+  });
 });

@@ -133,7 +133,10 @@ export const village: MapDefinition = {
       // Just inside the kitchen door (the 'D' sits at (3,7); (4,7) is the floor tile beside it).
       // Was (10,22) — the village-side coordinate copy-pasted from the return transition, which
       // is outside mums_kitchen's 15x9 bounds and only worked via MapManager's fallback search.
-      toPosition: { x: 4, y: 7 },
+      // (4,7) itself was still wrong: the player's PLAYER_SIZE=0.8 bounding box at that centre
+      // clips the wall at grid (3,6) diagonally above the door, so every arrival silently
+      // rescued to a nearby tile and reported JAVASCRIPT-REACT-A. (4.5,7) clears it.
+      toPosition: { x: 4.5, y: 7 },
       label: 'To Home',
       hasDoor: true,
     },
@@ -157,7 +160,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 12.0, y: 12.5 }, // Shop building (next to fox)
       tileType: TileType.SHOP,
       toMapId: 'shop',
-      toPosition: { x: 10, y: 8 }, // Center of walkable floor in shop (19x11 grid)
+      toPosition: { x: 10, y: 8.5 }, // Center of walkable floor in shop (19x11 grid); (10,8) clips a wall tile
       label: 'To Shop',
       hasDoor: true,
     },
@@ -165,7 +168,9 @@ export const village: MapDefinition = {
       fromPosition: { x: 21.9, y: 24 }, // Cottage entrance (K tile)
       tileType: TileType.COTTAGE,
       toMapId: 'cottage_interior',
-      toPosition: { x: 0, y: 8 }, // Bottom left near door
+      // (0,8) clipped the west wall (PLAYER_SIZE bounding box straddles x=-0.4..0.4);
+      // reported as JAVASCRIPT-REACT-E.
+      toPosition: { x: 0.5, y: 8 }, // Bottom left near door
       label: 'To Cottage',
       hasDoor: true,
     },
