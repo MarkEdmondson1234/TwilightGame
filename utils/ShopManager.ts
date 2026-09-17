@@ -178,10 +178,14 @@ export class ShopManager {
 
     // No inventory space check - unlimited capacity!
 
-    // Transaction valid
+    // Transaction valid. Clothing tells the player how to wear it — the moment
+    // of purchase is exactly when they want to try it on.
+    const wearHint = itemDef.outfitId
+      ? ' — right-click it in your bag to try it on!'
+      : '';
     return {
       success: true,
-      message: `Purchased ${quantity}× ${itemDef.displayName} for ${totalCost}g`,
+      message: `Purchased ${quantity}× ${itemDef.displayName} for ${totalCost}g${wearHint}`,
       goldChange: -totalCost,
     };
   }

@@ -16,6 +16,7 @@ export enum ItemCategory {
   FOOD = 'food', // Cooked food items
   POTION = 'potion', // Brewed potions
   DECORATION = 'decoration', // Placeable decorations for home/maps
+  CLOTHING = 'clothing', // Wearable outfits — right-click to wear; see utils/characterOutfits.ts
   FURNITURE = 'furniture', // Placeable furniture with utility effects (beds, etc.)
   MISC = 'misc',
   KEEPSAKE = 'keepsake', // Unique collectibles (photos, mementos) — not stackable, not tradeable
@@ -65,4 +66,5 @@ export interface ItemDefinition {
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
   isWallpaper?: boolean; // If true, triggers "Apply to room" flow instead of grid placement
   targetMapId?: string; // The map ID this wallpaper applies to (used when isWallpaper is true)
+  outfitId?: string; // For clothing: the costume this item grants (utils/characterOutfits.ts). Buying it unlocks the outfit; wearing never consumes it.
 }

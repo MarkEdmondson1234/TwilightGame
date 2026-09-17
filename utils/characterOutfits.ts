@@ -45,8 +45,9 @@ const OUTFITS: Record<string, readonly CharacterOutfit[]> = {
     {
       id: 'polka_dress',
       label: 'Polka-Dot Dress',
-      iconUrl:
-        '/TwilightGame/assets-optimized/character2/outfits/polka_dress/icon.png',
+      // The same hanger art the inventory item uses — buying it at Mushra's
+      // shop is what unlocks this chip (see data/items/clothing.ts).
+      iconUrl: '/TwilightGame/assets-optimized/items/clothing/polka_dress.png',
       // The dress art ships front and back views only (2 frames each); the
       // left/right files are copies of the front frames until side-view art
       // arrives — see design_docs/planned/ART_INTEGRATION_BACKLOG.md §3.

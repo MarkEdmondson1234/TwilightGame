@@ -75,7 +75,15 @@ Backward compatible both directions: old clients never write `o`; old records de
 | `down_0.png` / `down_1.png` | front views (eyes open = idle, closed = walk frame — reads as a blink) |
 | `up_0.png` / `up_1.png` | the two back views |
 | `left_{0,1}.png` / `right_{0,1}.png` | **copies of the down frames** — no side-view art exists yet; the character faces the camera when strafing |
-| `icon.png` | the dress on its hanger (creator chip) |
+
+The dress on its hanger is the **inventory item icon** (`items/clothing/polka_dress.png`, 256px) — shared by the bag, the creator chip and the purchase toast. A costume is unlocked by *buying* it:
+
+### Buying and wearing
+
+- `data/items/clothing.ts` — `clothing_polka_dress` (ItemCategory.CLOTHING, 120g at Mushra's, not sellable) with `outfitId: 'polka_dress'` — the item↔outfit link
+- **Wear** is a right-click/long-press action on the item in the bag (`utils/inventoryActions.ts`) — available anywhere, including standing in Mushra's shop just after buying; it toggles Wear / Take Off and reuses the character-change path (`selectCharacter` + version bump) so sprites, portrait and presence update exactly as after the creator
+- The purchase message ends "— right-click it in your bag to try it on!" (`ShopManager.validateBuyTransaction`)
+- **Creator chips show owned outfits only** — the mirror never offers clothes the player has not bought
 
 2-frame directions ping-pong (character2's up/down already do). Side art, when it
 arrives, is a file swap — zero code.

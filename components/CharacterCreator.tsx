@@ -6,6 +6,7 @@ import {
   getSpriteDir,
   resolveOutfit,
 } from '../utils/characterOutfits';
+import { getItem } from '../data/items';
 import { Z_CHARACTER_CREATOR, zClass } from '../zIndex';
 
 interface CharacterCreatorProps {
@@ -22,16 +23,28 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
   const isEditMode = existingCharacter !== null;
 
   const [selectedId, setSelectedId] = useState(existingCharacter?.characterId || 'character1');
-  // Worn costume — only meaningful for characters with outfits in the registry.
-  // Resolved on read so a save carrying an unknown/foreign id starts sensibly.
-  const [outfitId, setOutfitId] = useState(() =>
-    existingCharacter
-      ? resolveOutfit(existingCharacter.characterId, existingCharacter.outfit)
-      : DEFAULT_OUTFIT
+  // Outfits are unlocked by owning their clothing item (bought from Mushra's
+  // shop) — chips only show for outfits in the bag, so the creator never
+  // offers clothes the player has not bought.
+  const ownedOutfitIds = new Set(
+    gameState
+      .loadInventory()
+      .items.map((invItem) => getItem(invItem.itemId)?.outfitId)
+      .filter((id): id is string => typeof id === 'string')
   );
+  // Worn costume — only meaningful for characters with owned outfits.
+  // Resolved on read so a save carrying an unknown/foreign id starts sensibly,
+  // and dropped to everyday if the worn costume is somehow not owned.
+  const [outfitId, setOutfitId] = useState(() => {
+    if (!existingCharacter) return DEFAULT_OUTFIT;
+    const worn = resolveOutfit(existingCharacter.characterId, existingCharacter.outfit);
+    return worn === DEFAULT_OUTFIT || ownedOutfitIds.has(worn) ? worn : DEFAULT_OUTFIT;
+  });
   const [name, setName] = useState(existingCharacter?.name || '');
 
-  const outfitChoices = getOutfits(selectedId);
+  const outfitChoices = getOutfits(selectedId).filter((outfit) =>
+    ownedOutfitIds.has(outfit.id)
+  );
   /** Card/chip preview: the chosen costume's set, or the character's base art. */
   const previewUrl = (characterId: string, outfit: string) =>
     `/TwilightGame/assets/${getSpriteDir(characterId, outfit)}/down_0.png`;
