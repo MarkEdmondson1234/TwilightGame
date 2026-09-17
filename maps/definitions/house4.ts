@@ -34,7 +34,7 @@ export const house4: MapDefinition = {
       fromPosition: { x: 6, y: 3 },
       tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 22, y: 23 }, // Spawn 2 tiles below the door
+      toPosition: { x: 22, y: 25 }, // Spawn on open path; (22,23) clipped a wall tile
       label: 'To Village',
       hasDoor: true,
     },

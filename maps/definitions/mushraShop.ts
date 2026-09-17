@@ -105,7 +105,7 @@ export const mushraShop: MapDefinition = {
       fromPosition: { x: 3, y: 8 }, // Door tile (D) at row 8 - adjust column to match image
       tileType: TileType.DOOR,
       toMapId: 'mushroom_forest',
-      toPosition: { x: 25, y: 7 }, // Just below the mushroom house anchor in the forest
+      toPosition: { x: 25, y: 7.5 }, // Just below the mushroom house anchor in the forest; (25,7) clipped a wall tile
       label: 'Exit',
       hasDoor: true,
     },

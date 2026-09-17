@@ -1420,7 +1420,7 @@ export function generateRandomCave(
       fromPosition: { x: 1, y: exitY },
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'village',
-      toPosition: { x: 20, y: 4 },
+      toPosition: { x: 20, y: 4.5 }, // (20,4) clipped the mine entrance's solid rock tile at (20,3)
       label: 'Exit Cave',
     },
     {

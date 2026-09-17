@@ -69,7 +69,15 @@ class NpcGardenService {
   startListening(): void {
     // Retry on sign-in. onSnapshot subscriptions survive re-auth, but a call
     // made before isAuthenticated() is true silently no-ops — so re-run.
+    // authService.onAuthStateChange() invokes its callback synchronously
+    // with the current state before it returns, so when the caller is
+    // already authenticated the callback below calls startListening() again
+    // before this.authUnsubscribe has been assigned — the placeholder here
+    // makes the guard true for that re-entrant call instead of recursing
+    // forever (it shipped as an unguarded `InternalError: too much
+    // recursion` crash).
     if (!this.authUnsubscribe) {
+      this.authUnsubscribe = () => {};
       this.authUnsubscribe = authService.onAuthStateChange((state) => {
         if (state.isAuthenticated && !this.isListening) {
           this.startListening();
@@ -173,7 +181,7 @@ class NpcGardenService {
           npcId,
           gardenLevel: nextLevel,
           requestedCrop:
-            requestedCrop !== undefined ? requestedCrop : existing?.requestedCrop ?? null,
+            requestedCrop !== undefined ? requestedCrop : (existing?.requestedCrop ?? null),
           updatedBy: authService.getUserId(),
           updatedAt: serverTimestamp(),
         };
@@ -192,7 +200,7 @@ class NpcGardenService {
         npcId,
         gardenLevel: Math.max(current?.gardenLevel ?? 1, clampedLevel),
         requestedCrop:
-          requestedCrop !== undefined ? requestedCrop : current?.requestedCrop ?? null,
+          requestedCrop !== undefined ? requestedCrop : (current?.requestedCrop ?? null),
         updatedBy: authService.getUserId(),
         updatedAt: serverTimestamp(),
       });

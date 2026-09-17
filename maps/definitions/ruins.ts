@@ -80,7 +80,7 @@ export const ruins: MapDefinition = {
       fromPosition: { x: 21, y: 18 },
       tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 26, y: 1 },
+      toPosition: { x: 26, y: 1.5 }, // (26,1) clipped a wall tile
       label: 'To Village',
     },
     {

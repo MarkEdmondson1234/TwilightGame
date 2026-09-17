@@ -56,7 +56,7 @@ export const greenhouse: MapDefinition = {
       fromPosition: { x: 7, y: 8 },
       tileType: TileType.DOOR,
       toMapId: 'personal_garden',
-      toPosition: { x: 12, y: 23 }, // Path in front of the greenhouse
+      toPosition: { x: 12, y: 23.5 }, // Path in front of the greenhouse; (12,23) clipped a wall tile
       label: 'Back to the Garden',
     },
   ],
