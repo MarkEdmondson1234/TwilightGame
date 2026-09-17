@@ -362,17 +362,16 @@ describe('lost_kitten outcome handler', () => {
     eventChainManager.resetChain(CHAIN_ID);
   });
 
-  it('leaves the kitten undecided (visible) until the quest is done', async () => {
-    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+  it('leaves the kitten undecided until the quest is done', async () => {
+    const { getLostKittenOutcome } = await import(
       '../data/questHandlers/lostKittenHandler'
     );
     expect(getLostKittenOutcome()).toBeUndefined();
-    expect(shouldShowLostKitten()).toBe(true);
   });
 
-  it('adopting sends the kitten home — it leaves the well', async () => {
+  it('adopting records the outcome — the kitten becomes a free wanderer', async () => {
     const { eventChainManager } = await import('../utils/EventChainManager');
-    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+    const { getLostKittenOutcome } = await import(
       '../data/questHandlers/lostKittenHandler'
     );
 
@@ -384,12 +383,11 @@ describe('lost_kitten outcome handler', () => {
 
     expect(eventChainManager.getProgress(CHAIN_ID)?.completed).toBe(true);
     expect(getLostKittenOutcome()).toBe('adopted');
-    expect(shouldShowLostKitten()).toBe(false);
   });
 
-  it('a kitten left as the village cat stays by the well forever', async () => {
+  it('a kitten left as the village cat records that ending', async () => {
     const { eventChainManager } = await import('../utils/EventChainManager');
-    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+    const { getLostKittenOutcome } = await import(
       '../data/questHandlers/lostKittenHandler'
     );
 
@@ -403,12 +401,11 @@ describe('lost_kitten outcome handler', () => {
 
     expect(eventChainManager.getProgress(CHAIN_ID)?.completed).toBe(true);
     expect(getLostKittenOutcome()).toBe('village_cat');
-    expect(shouldShowLostKitten()).toBe(true);
   });
 
   it('resolves pre-handler completions from recorded choice texts', async () => {
     const { eventChainManager } = await import('../utils/EventChainManager');
-    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+    const { getLostKittenOutcome } = await import(
       '../data/questHandlers/lostKittenHandler'
     );
 
@@ -421,6 +418,68 @@ describe('lost_kitten outcome handler', () => {
     delete progress.metadata?.outcome;
 
     expect(getLostKittenOutcome()).toBe('adopted');
+  });
+});
+
+// ============================================
+// Lost Kitten — the kitten NPC's life after the story
+// ============================================
+
+describe('lost_kitten kitten NPC', () => {
+  const CHAIN_ID = 'lost_kitten';
+  const WELL = { x: 21, y: 18 };
+
+  afterAll(async () => {
+    const { TimeManager } = await import('../utils/TimeManager');
+    TimeManager.clearTimeOverride();
+  });
+
+  beforeEach(async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    eventChainManager.initialise();
+    eventChainManager.resetChain(CHAIN_ID);
+  });
+
+  it('while the quest is undecided she waits at the well', async () => {
+    const { createKittenNPC } = await import('../utils/npcs/village/kitten');
+    const { NPCBehavior } = await import('../types');
+
+    const kitten = createKittenNPC('kitten', WELL);
+    expect(kitten.behavior).toBe(NPCBehavior.STATIC);
+    expect(kitten.position).toEqual(WELL);
+  });
+
+  it('after the quest she becomes a wanderer with a daily home spot', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { createKittenNPC } = await import('../utils/npcs/village/kitten');
+    const { NPCBehavior } = await import('../types');
+
+    await eventChainManager.startChain(CHAIN_ID);
+    await eventChainManager.makeChoice(CHAIN_ID, 0); // adopt
+    await eventChainManager.checkAutoAdvance();
+
+    const kitten = createKittenNPC('kitten', WELL);
+    expect(kitten.behavior).toBe(NPCBehavior.WANDER);
+    // Not glued to the well any more — she has a home spot for today
+    const { getDailyKittenSpot } = await import('../utils/npcs/village/kitten');
+    expect(kitten.position).toEqual(getDailyKittenSpot());
+  });
+
+  it('the daily home spot is stable within a day and drawn from the curated list', async () => {
+    const { TimeManager, Season } = await import('../utils/TimeManager');
+    const { getDailyKittenSpot, KITTEN_SPOTS } = await import('../utils/npcs/village/kitten');
+
+    TimeManager.setTimeOverride({ season: Season.SPRING, year: 1, day: 3 });
+    const spotA = getDailyKittenSpot();
+    const spotB = getDailyKittenSpot();
+    expect(spotA).toEqual(spotB); // Deterministic — every player agrees
+    expect(KITTEN_SPOTS).toContainEqual(spotA);
+
+    // A later day can (not must) pick a different spot — the seed moves on
+    TimeManager.setTimeOverride({ season: Season.SPRING, year: 1, day: 4 });
+    const day2 = getDailyKittenSpot();
+    expect(KITTEN_SPOTS).toContainEqual(day2);
+    TimeManager.clearTimeOverride();
   });
 });
 
