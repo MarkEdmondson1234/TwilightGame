@@ -201,8 +201,12 @@ export async function initializeGameAssets(
   fruitTreeManager.initialise();
   debugLog('App', 'Initialised fruit tree system');
 
-  // Preload all assets early to prevent lag on first use
+  // Warm the network cache with the player's own sprite frames so the first
+  // texture load is instant. Selected character only — see assetPreloader.
+  const selectedCharacter = gameState.getSelectedCharacter();
   await preloadAllAssets({
+    characterId: selectedCharacter?.characterId,
+    outfit: selectedCharacter?.outfit,
     onProgress: (loaded, total) => {
       debugLog('App', `Asset preload progress: ${loaded}/${total}`);
       options?.onProgress?.(loaded, total);
@@ -215,8 +219,10 @@ export async function initializeGameAssets(
   // Initialize audio system (non-blocking - sounds load in background)
   // Note: Audio context will be resumed on first user interaction (mobile Safari requirement)
   audioManager.initialise().then(() => {
-    // Load audio assets in background - won't block game start
-    audioManager.loadBatch(audioAssets).catch((err) => {
+    // Load sound effects in the background - won't block game start. Music
+    // and ambience are fetched and decoded on first play (see AudioManager):
+    // the full set decodes to ~440 MB of PCM, which no phone should hold.
+    audioManager.loadBatch(audioAssets, ['sfx']).catch((err) => {
       // Audio loading failures are non-fatal - game works without sounds
       console.warn('[AudioManager] Some audio assets failed to load:', err);
     });

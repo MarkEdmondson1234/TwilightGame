@@ -40,6 +40,12 @@ interface PerformanceSettings {
   darknessCompositeScale: number;
   /** Multiplier on weather particle counts and emit rates (1 = as authored). */
   particleScale: number;
+  /**
+   * Load the half-resolution siblings of player and NPC sprites (see
+   * utils/textureVariants.ts). Memory policy, so keyed on isMobile like the
+   * rest of the texture policy: a phone draws them at ~150 px whatever its tier.
+   */
+  halfResolutionSprites: boolean;
 
   // ---- Texture memory policy (see isMobile) ----
   /**
@@ -202,6 +208,7 @@ export function getPerformanceSettings(): PerformanceSettings {
         generateMipmaps: false,
         textureBudgetMB: tier === PerformanceTier.LOW ? 256 : 384,
         maxConcurrentTextureLoads: tier === PerformanceTier.LOW ? 4 : 6,
+        halfResolutionSprites: true,
       }
     : tier !== PerformanceTier.HIGH
       ? {
@@ -210,11 +217,13 @@ export function getPerformanceSettings(): PerformanceSettings {
           // continually discard the neighbouring map's working set.
           textureBudgetMB: tier === PerformanceTier.LOW ? 384 : 512,
           maxConcurrentTextureLoads: tier === PerformanceTier.LOW ? 4 : 6,
+          halfResolutionSprites: tier === PerformanceTier.LOW,
         }
       : {
           generateMipmaps: true,
           textureBudgetMB: 1536,
           maxConcurrentTextureLoads: 16,
+          halfResolutionSprites: false,
         };
 
   // A phone never renders with the HIGH profile (see isMobile above). The

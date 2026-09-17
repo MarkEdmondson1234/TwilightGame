@@ -83,6 +83,26 @@ frame per step until that lands.
   `bear_cave` and `witch_hut` number CI has reported so far was a village
   measurement. It now goes through the real transition (`window.debugTeleport`).
 
+**Day 3 (memory) — done 2026-09-17**, §4 items 8, 9, 10 (the last as a
+device variant rather than a global downsize).
+
+- **Audio on demand.** `loadBatch(audioAssets, ['sfx'])` at boot; music and
+  ambience are fetched and decoded on first `playMusic`/`playAmbient` (the
+  existing pending queues start them when they land), loads are capped at four
+  at a time, and stopped tracks beyond `AUDIO.MAX_IDLE_STREAMS` are released.
+  Removes ~400 MB of decoded PCM from every session.
+- **One character, no bitmap cache.** The preloader fetched both characters
+  and every costume as decoded `HTMLImageElement`s and kept them in a Map for
+  the session (~144 MB), while the GPU path decoded the selected one again.
+  It now warms the HTTP cache for the selected character's worn outfit only.
+- **Half-size player and NPC sprites on phones.** The optimiser writes a
+  `@half` sibling (512px) for every PNG under `character*/` and `npcs/`;
+  `TextureManager` resolves the logical URL to it when the tier's
+  `halfResolutionSprites` is set (mobile, and LOW desktops). Player pinned set
+  64 → 16 MB, village NPCs 86 → 22 MB on a phone; desktop art and dialogue
+  portraits are unchanged. `tests/textureVariants.test.ts` fails if a sprite
+  lands without its sibling.
+
 ---
 
 ## 2. What the devices are actually doing (Sentry, last 14 days)
@@ -306,9 +326,9 @@ overlay when it lands.
 | 5 ✅ | **Darkness: composite at ¼ resolution on mobile and on one clock.** `updateLights` stores positions and sets a dirty flag; the existing 20 Hz flicker tick is the sole caller of `_compositeDarkness`. Skip when nothing changed. | `DarknessLayer.ts:337-363, 474-548, 596-604` | S | Upload shrinks 16×, and from 60+20 Hz to ≤20 Hz. Caves, mines and the village at night. | Cave fps on iPad. |
 | 6 ✅ | **Drop the fog/mist sprite mask** (at least on mobile); bake any edge feather into the fog PNG alpha. | `WeatherLayer.ts:323-348` | S | Removes a full-screen RTT + filter per frame and the W×H JS loop on setup/resize. | Fog/mist weather fps. |
 | 7 ✅ | **Never give mobile the HIGH render profile.** When `isMobile && tier === HIGH`, return MEDIUM render settings (`resolution ≤ 1.5`, `antialias: false`, `glowSteps: 8`) with the HIGH memory policy. Add a `tests/performanceTier.test.ts` case. | `utils/performanceTier.ts:183-248` | S | Reaches every iPhone 8/X or newer, which today gets 2× resolution + MSAA + 32-step glows + blurred shadows. | `game.session_start` on iPhones shows `graphics.resolution: 1.5`. |
-| 8 | **Load audio lazily.** `loadBatch` only SFX at boot; ambient/music per map on `playAmbient`/`playMusic` (the `pendingAmbients`/`pendingMusic` queues already handle "requested before loaded"). Cap concurrency. Convert stereo ambients to mono. | `gameInitializer.ts:217-223`, `AudioManager.ts:392-420` | S–M | Frees ~400 MB from every session and removes 53 fetches competing with the 6-slot texture loader at boot. | `game.performance` JS heap; iPhone reloads stop. |
-| 9 | **Preload only the selected character and worn outfit, and drop `imageCache`.** `getCoreTextureUrls` already scopes correctly. | `utils/assetPreloader.ts:18,38,109-124`, `gameInitializer.ts:205` | S | ~144 MB of duplicate bitmaps gone; faster boot. | Same. |
-| 10 | **Downsize player and NPC frames to 512².** | `scripts/optimize-assets.js:57-58` (`SPRITE_SIZE`, `NPC_SIZE`) | S (re-run optimiser) | Player pinned set 64 → 16 MB; village NPCs 86 → 22 MB; forest/lake sets −75%. Still ≥1.7× at resolution 2. Fixes the mipmap-less cache thrash for the sprites drawn every frame. Review with `npm run art-review`. | Budget test totals; village fps. |
+| 8 ✅ | **Load audio lazily.** `loadBatch` only SFX at boot; ambient/music per map on `playAmbient`/`playMusic` (the `pendingAmbients`/`pendingMusic` queues already handle "requested before loaded"). Cap concurrency. Convert stereo ambients to mono. | `gameInitializer.ts:217-223`, `AudioManager.ts:392-420` | S–M | Frees ~400 MB from every session and removes 53 fetches competing with the 6-slot texture loader at boot. | `game.performance` JS heap; iPhone reloads stop. |
+| 9 ✅ | **Preload only the selected character and worn outfit, and drop `imageCache`.** `getCoreTextureUrls` already scopes correctly. | `utils/assetPreloader.ts:18,38,109-124`, `gameInitializer.ts:205` | S | ~144 MB of duplicate bitmaps gone; faster boot. | Same. |
+| 10 ✅ | **Downsize player and NPC frames to 512².** | `scripts/optimize-assets.js:57-58` (`SPRITE_SIZE`, `NPC_SIZE`) | S (re-run optimiser) | Player pinned set 64 → 16 MB; village NPCs 86 → 22 MB; forest/lake sets −75%. Still ≥1.7× at resolution 2. Fixes the mipmap-less cache thrash for the sprites drawn every frame. Review with `npm run art-review`. | Budget test totals; village fps. |
 | 11 ✅ | **Read `playerPos` from a ref in `useAmbientVFX` and `useVFX`** so the interval is created once and `triggerVFX` is stable. | `hooks/useAmbientVFX.ts:107-170`, `hooks/useVFX.ts:38-63` | S | Fixes both the per-frame interval churn and the "ambient VFX never fires while walking" bug; stabilises `magicEffectCallbacks`. | — |
 | 12 ✅ | **gameLoop deps → refs** (`activeNPC`, `isCutscenePlaying`, `activeChainPopup`, `ui.miniGame`; the file already does this for `currentMapIdRef`), and split the rAF effect from the shared-sync lifecycle. | `App.tsx:1483-1495, 1585-1609` | S–M | No Firestore flush/re-subscribe and no rAF restart on every conversation. | Open/close dialogue in the village: no `stopSharedSync` log. |
 | 13 ✅ | **Scale weather by tier**: multiply `maxParticles`/`emitRate` by ~0.4 on mobile; drop the per-particle `Math.random()` alpha jitter there. | `WeatherLayer.ts:262-292, 440-463`, `data/weatherConfig.ts:200-247` | S | Rain/storm on a 2–4 core device. | Rain fps on iPad. |
