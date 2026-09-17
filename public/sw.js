@@ -1,5 +1,5 @@
 // Service Worker for Twilight Game PWA
-const CACHE_NAME = 'twilight-game-v2';
+const CACHE_NAME = 'twilight-game-v3';
 const urlsToCache = [
   '/TwilightGame/',
   '/TwilightGame/index.html',
