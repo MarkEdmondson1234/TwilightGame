@@ -154,7 +154,17 @@ export interface UsePixiRendererProps {
 
   /** Optional callback for texture loading progress (used by loading screen) */
   onTextureProgress?: (loaded: number, total: number) => void;
+
+  /**
+   * The renderer found the window a different size from what it was drawing
+   * for (see fitToWindow). React keeps its own copy of the viewport size for
+   * culling and layout; this is how it learns when a resize event never came.
+   */
+  onWindowSizeChanged?: (width: number, height: number) => void;
 }
+
+/** How often the loop checks the renderer against the window size (~1 s at 60 fps). */
+const FIT_CHECK_INTERVAL_FRAMES = 60;
 
 const EMPTY_APPLIED_PLAYER = {
   x: NaN,
@@ -209,8 +219,19 @@ export interface UsePixiRendererReturn {
  * Hook that manages all PixiJS rendering
  */
 export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererReturn {
-  const { enabled, canvasRef, mapConfig, viewport, player, timing, triggers, onTextureProgress } =
-    props;
+  const {
+    enabled,
+    canvasRef,
+    mapConfig,
+    viewport,
+    player,
+    timing,
+    triggers,
+    onTextureProgress,
+    onWindowSizeChanged,
+  } = props;
+  const onWindowSizeChangedRef = useRef(onWindowSizeChanged);
+  onWindowSizeChangedRef.current = onWindowSizeChanged;
 
   // State
   const [isPixiInitialized, setIsPixiInitialized] = useState(false);
@@ -332,6 +353,45 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   };
 
   /**
+   * Size the renderer and the viewport-sized layers to the window.
+   *
+   * Called from the resize event and from every structural view pass, and a
+   * no-op when nothing changed. The structural pass matters: Safari can
+   * change the window (entering full screen, say) while the renderer is
+   * still initialising and its resize listener does not exist yet, which
+   * left the canvas short of the window with a band of page background below
+   * it, and the darkness overlay short of the canvas. App's own resize
+   * listener always updates viewportSize, and that reaches this pass.
+   */
+  const fitToWindow = useCallback(() => {
+    const app = pixiAppRef.current;
+    if (!app) return;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    if (app.renderer.screen.width !== width || app.renderer.screen.height !== height) {
+      const resolution = getRendererResolution(
+        width,
+        height,
+        window.screen.width,
+        window.screen.height,
+        getCachedPerformanceSettings().resolution
+      );
+      app.renderer.resize(width, height, resolution);
+      debugLog('usePixiRenderer', `Resized to ${width}x${height}`);
+      onWindowSizeChangedRef.current?.(width, height);
+    }
+    if (backgroundImageLayerRef.current && canvasRef.current) {
+      backgroundImageLayerRef.current.setViewportDimensions(
+        canvasRef.current.clientWidth ?? width,
+        canvasRef.current.clientHeight ?? height
+      );
+    }
+    weatherLayerRef.current?.resize(width, height);
+    darknessLayerRef.current?.resize(width, height);
+    parallaxLayerRef.current?.resize(width, height);
+  }, [canvasRef]);
+
+  /**
    * Apply this frame's view to the stage: zoom, camera containers, the room
    * artwork's pan, the highlight grid and the torch lights. Runs from the game
    * loop, not from a React effect, so scrolling the world never costs an App
@@ -355,6 +415,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     viewDirtyRef.current = false;
 
     if (structural) {
+      fitToWindow();
       // Apply user zoom to the entire stage
       if (pixiAppRef.current) {
         pixiAppRef.current.stage.scale.set(zoom);
@@ -371,13 +432,6 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       }
       // The parallax crowns are screen-fixed too, like the DOM layer they replace.
       parallaxLayerRef.current?.getContainer().scale.set(1 / zoom);
-      // A forced layout read — only when something structural changed, not per step.
-      if (backgroundImageLayerRef.current && canvasRef.current) {
-        backgroundImageLayerRef.current.setViewportDimensions(
-          canvasRef.current.clientWidth ?? window.innerWidth,
-          canvasRef.current.clientHeight ?? window.innerHeight
-        );
-      }
     }
 
     const { cameraX, cameraY } = view;
@@ -440,7 +494,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     parallaxLayerRef.current?.update(cameraX, cameraY);
 
     return { moved: true, offsetChanged };
-  }, [viewFrameRef, canvasRef]);
+  }, [viewFrameRef, fitToWindow]);
 
   /**
    * Move the player sprite to where the refs say the player is. Per frame,
@@ -532,8 +586,28 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     );
   }, [viewFrameRef, playerPosRef, directionRef, animationFrameRef]);
 
+  // Frames since the renderer's size was last checked against the window.
+  const fitCheckFramesRef = useRef(0);
+
   // Animation update function (called from game loop)
   const updateAnimations = useCallback((deltaTime: number) => {
+    // Safari has been seen to change the window without a resize event
+    // reaching us (a short canvas with page background below it, and a
+    // darkness overlay short of the canvas). Once a second, look for
+    // ourselves; fitToWindow is a couple of comparisons when nothing changed.
+    if (++fitCheckFramesRef.current >= FIT_CHECK_INTERVAL_FRAMES) {
+      fitCheckFramesRef.current = 0;
+      const app = pixiAppRef.current;
+      if (
+        app &&
+        (app.renderer.screen.width !== window.innerWidth ||
+          app.renderer.screen.height !== window.innerHeight)
+      ) {
+        fitToWindow();
+        viewDirtyRef.current = true;
+      }
+    }
+
     // Where the world is this frame, then where the player is in it. Both
     // read refs the loop has just written; neither goes through React.
     const { offsetChanged } = syncView();
@@ -639,7 +713,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         );
       }
     }
-  }, [syncView, syncPlayer, viewFrameRef]);
+  }, [syncView, syncPlayer, viewFrameRef, fitToWindow]);
 
   // =========================================================================
   // EFFECT: PixiJS Initialization
@@ -1039,32 +1113,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (!enabled || !isPixiInitialized || !pixiAppRef.current) return;
 
     const handleResize = () => {
-      const app = pixiAppRef.current;
-      if (!app) return;
-
-      const resolution = getRendererResolution(
-        window.innerWidth,
-        window.innerHeight,
-        window.screen.width,
-        window.screen.height,
-        getCachedPerformanceSettings().resolution
-      );
-      app.renderer.resize(window.innerWidth, window.innerHeight, resolution);
-      parallaxLayerRef.current?.resize(window.innerWidth, window.innerHeight);
-
-      if (backgroundImageLayerRef.current && canvasRef.current) {
-        backgroundImageLayerRef.current.setViewportDimensions(
-          canvasRef.current.clientWidth ?? window.innerWidth,
-          canvasRef.current.clientHeight ?? window.innerHeight
-        );
-      }
-
-      debugLog('usePixiRenderer', `Resized to ${window.innerWidth}x${window.innerHeight}`);
+      fitToWindow();
+      // Everything placed from the viewport (parallax crowns, tint) re-applies next frame.
+      viewDirtyRef.current = true;
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [enabled, isPixiInitialized, canvasRef]);
+  }, [enabled, isPixiInitialized, fitToWindow]);
 
   useEffect(() => {
     const app = pixiAppRef.current;

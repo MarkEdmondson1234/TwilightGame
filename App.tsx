@@ -2110,6 +2110,13 @@ const App: React.FC = () => {
       // Texture loading is the second half of progress (0.5 - 1.0)
       setLoadingProgress(total > 0 ? 0.5 + (loaded / total) * 0.5 : 0.5);
     }, []),
+    // The renderer noticed a window size the resize listener never reported
+    // (Safari); culling and the camera read viewportSize, so update it too.
+    onWindowSizeChanged: useCallback((width: number, height: number) => {
+      setViewportSize((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height }
+      );
+    }, []),
   });
 
   // Cycle thought bubbles through pending NPCs every 15 seconds
