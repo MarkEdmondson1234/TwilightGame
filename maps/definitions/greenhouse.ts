@@ -14,10 +14,14 @@ import { GREENHOUSE_MAP_ID } from '../../constants';
  * artwork yet, so the glass comes from the sky-coloured window band and the
  * warmth from the crops themselves. Swap to a drawn interior later if wanted.
  *
+ * The floor overrides '.' (normally seasonal grass tufts) to GRASS_PLAIN:
+ * flat colour only, so the greenhouse reads the same in every season — the
+ * winter tuft sprites carry snow piles, which have no business inside glass.
+ *
  * Grid Legend:
  * V = Building window (glass roof band — solid, sky-coloured)
  * # = Wall/obstacle
- * . = Floor (walkable)
+ * . = Floor (walkable — flat GRASS_PLAIN, no seasonal tufts or snow)
  * X = Farm plot (fallow soil)
  * D = Door (transition back to the personal garden)
  */
@@ -39,7 +43,10 @@ export const greenhouse: MapDefinition = {
   name: 'Greenhouse',
   width: 15,
   height: 9,
-  grid: parseGrid(gridString),
+  // '.' is TUFT in the global legend (seasonal grass, snow piles in winter) —
+  // the greenhouse floor overrides it to flat GRASS_PLAIN: inside glass, the
+  // season never arrives.
+  grid: parseGrid(gridString, { '.': TileType.GRASS_PLAIN }),
   colorScheme: 'indoor',
   hasClouds: false, // Indoor — weather and rain never reach the plots
   isRandom: false,
