@@ -40,6 +40,7 @@ export function shouldPublish(
     previous.fairyForm !== next.fairyForm ||
     previous.sizeTier !== next.sizeTier ||
     previous.characterId !== next.characterId ||
+    previous.outfit !== next.outfit ||
     previous.name !== next.name
   ) {
     return 'state-change';

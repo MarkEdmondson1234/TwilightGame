@@ -22,7 +22,7 @@ the PR + art-review workflow in §4.
 | Artwork | What it is | Likely destination | Notes |
 | --- | --- | --- | --- |
 | `magnolia-mango-concepts.png` | Princess Magnolia & Knight Mango character sheet — knight in armour on horse, princess in gown, chibi shouting sketch | **Deliberately deferred** by Mark — decide later whether they become NPCs, character-creator options, or cutscene characters | Highest-effort item: character sprites, possibly a horse sprite. Do not start without a decision on scope. |
-| `Polka dotted dress.PNG` + `Female player polka dot dress{, 2}.PNG` + `Female back polka dot dress{, 2}.PNG` (5 files) | Player character outfit — front and back views, two pose variants | Character sprite wardrobe — the character sprite system is layered (`public/assets/character1/`); a dress variant is a new layer or an outfit option in `CharacterCreator` | Front AND back views suggests a walk-cycle direction split. Check `tests/characterSpriteScale.test.ts` — custom character art renders at 3× and pattern-matches the sprite URL (`isCustomCharacterSprite()`); moving art between directories has broken that match silently before. |
+| `Polka dotted dress.PNG` + `Female player polka dot dress{, 2}.PNG` + `Female back polka dot dress{, 2}.PNG` (5 files) | ~~Player character outfit~~ **Integrated** — the art is the existing Girl (character2) in a different outfit (same topknot, ears, eyes and shadow), so it shipped as the game's first **costume**: an outfit picker in `CharacterCreator`, plumbed through sprites, preload, texture pinning, portraits and multiplayer presence. See `COSTUMES_SPRINT.md` and `utils/characterOutfits.ts`. | ~~Character sprite wardrobe~~ Done — `public/assets/character2/outfits/polka_dress/`, registry entry in `utils/characterOutfits.ts` | **Remaining gap:** the set has no side-view art — left/right frames are copies of the front frames (the character faces the camera when strafing). Side art, when drawn, drops into the same directory with zero code changes. Frame mapping: eyes-open front = idle, eyes-closed front = walk frame (reads as a blink), two back views = the up walk cycle. The hanger art lives on as `icon.png`, the creator chip's picture. |
 | `Mushra.png` | Refreshed Mushra artwork (the mushroom villager) | Replace or supplement `public/assets/npcs/` Mushra sprites | Compare against the current mushroom NPC art first — the wreath workshop dialogue may also deserve a pass if her look changed materially. |
 | `It's just nice.PNG` | Hand-drawn floral wreath with mushroom-house and toadstool motifs | The **wreath workshop** quest (`data/questHandlers/mushraWreathHandler.ts`, `WREATH_ITEM_IDS`) — as a crafted decoration sprite or quest-completion art | Square, clean transparency — would also work as a UI frame. Confirm intent before integrating. |
 | `Untitled - 2 September 2026 …{, copy}.png` (2 files) | Elf character (dark-haired, purple gown, jewellery) — two near-identical frames, likely a blink/two-frame set | Needs identification — possibly a redraw of the elf child seen in the photo library, or a new NPC | Ask Mark who this is before wiring; could be a second frame for an existing NPC or a new villager. |
@@ -40,6 +40,11 @@ the PR + art-review workflow in §4.
 
 ## 3. Known polish items (small, code-level)
 
+- **Side-view art for the polka-dot dress.** The costume shipped with front and
+  back views only; its left/right frames are copies of the front frames, so the
+  Girl faces the camera while strafing. Drawing `left_{0,1}.png`/`right_{0,1}.png`
+  profiles and dropping them into `public/assets/character2/outfits/polka_dress/`
+  (then `npm run optimize-assets`) replaces the copies with no code change.
 - **Kitten's daily spot updates only at game load.** `getDailyKittenSpot()` is drawn when
   the map definition is built; a session that crosses an in-game day keeps yesterday's
   spot until the next load. Fix shape: a day-change hook (compare

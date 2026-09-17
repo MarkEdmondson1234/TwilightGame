@@ -24,6 +24,12 @@ export { runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
+  /**
+   * Worn costume id (see utils/characterOutfits.ts). Optional: absent/'everyday'
+   * means the base art, and unknown ids resolve to the base art on read — old
+   * saves must keep loading untouched.
+   */
+  outfit?: string;
   name: string;
   skin: string;
   hairStyle: string;

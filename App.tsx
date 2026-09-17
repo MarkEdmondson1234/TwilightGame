@@ -540,6 +540,7 @@ const App: React.FC = () => {
     return {
       name: character.name,
       characterId: character.characterId || 'character1',
+      outfit: character.outfit,
       position: playerPosRef.current,
       direction: live.direction,
       sizeTier: live.playerSizeTier,

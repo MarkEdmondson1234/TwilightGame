@@ -45,6 +45,24 @@ describe('Custom character sprite detection', () => {
     }
   });
 
+  it('recognises costume URLs too (nested under outfits/)', () => {
+    const sprites = generateCharacterSprites({
+      ...DEFAULT_CHARACTER,
+      characterId: 'character2',
+      outfit: 'polka_dress',
+    });
+
+    for (const direction of DIRECTIONS) {
+      for (const url of sprites[direction]) {
+        expect(
+          isCustomCharacterSprite(url),
+          `"${url}" — a costume frame — was not recognised as custom character artwork. ` +
+            'The nested /character2/outfits/ path must still match /character\\d+//.'
+        ).toBe(true);
+      }
+    }
+  });
+
   it('still recognises inline SVG placeholders', () => {
     expect(isCustomCharacterSprite('data:image/svg+xml;base64,QUJD')).toBe(true);
   });

@@ -20,6 +20,7 @@ import { eventBus, GameEvent } from '../utils/EventBus';
 import { interpolateAt, pushSample } from './interpolation';
 import { CHAT_BUBBLE_DURATION_MS, truncateForBubble } from './chat';
 import { decodeDirection, isGhostRecord } from './wire';
+import { resolveOutfit } from '../utils/characterOutfits';
 import type { EmoteId } from './emotes';
 import type { PresenceSample, PresenceWire, RemotePlayer } from './types';
 import { debugLog } from '../utils/debugLog';
@@ -28,6 +29,8 @@ interface RemotePlayerState {
   uid: string;
   name: string;
   characterId: string;
+  /** Resolved worn costume ('everyday' unless a valid costume id arrived) */
+  outfit: string;
   sizeTier: number;
   fairyForm: boolean;
   emote: EmoteId | null;
@@ -89,6 +92,7 @@ class RemotePlayerManagerClass {
         uid,
         name: wire.n,
         characterId: wire.c,
+        outfit: resolveOutfit(wire.c, wire.o),
         sizeTier: wire.s,
         fairyForm: wire.ff,
         emote: null,
@@ -109,6 +113,7 @@ class RemotePlayerManagerClass {
     } else {
       state.name = wire.n;
       state.characterId = wire.c;
+      state.outfit = resolveOutfit(wire.c, wire.o);
       state.sizeTier = wire.s;
       state.fairyForm = wire.ff;
       state.buffer = pushSample(state.buffer, sample, MULTIPLAYER.SAMPLE_BUFFER_SIZE);
@@ -211,6 +216,7 @@ class RemotePlayerManagerClass {
         uid: state.uid,
         name: state.name,
         characterId: state.characterId,
+        outfit: state.outfit,
         position: state.position,
         direction: state.direction,
         sizeTier: state.sizeTier,

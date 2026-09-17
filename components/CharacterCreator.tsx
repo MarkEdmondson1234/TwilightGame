@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { CharacterCustomization, gameState } from '../GameState';
+import {
+  DEFAULT_OUTFIT,
+  getOutfits,
+  getSpriteDir,
+  resolveOutfit,
+} from '../utils/characterOutfits';
 import { Z_CHARACTER_CREATOR, zClass } from '../zIndex';
 
 interface CharacterCreatorProps {
@@ -16,12 +22,25 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
   const isEditMode = existingCharacter !== null;
 
   const [selectedId, setSelectedId] = useState(existingCharacter?.characterId || 'character1');
+  // Worn costume — only meaningful for characters with outfits in the registry.
+  // Resolved on read so a save carrying an unknown/foreign id starts sensibly.
+  const [outfitId, setOutfitId] = useState(() =>
+    existingCharacter
+      ? resolveOutfit(existingCharacter.characterId, existingCharacter.outfit)
+      : DEFAULT_OUTFIT
+  );
   const [name, setName] = useState(existingCharacter?.name || '');
+
+  const outfitChoices = getOutfits(selectedId);
+  /** Card/chip preview: the chosen costume's set, or the character's base art. */
+  const previewUrl = (characterId: string, outfit: string) =>
+    `/TwilightGame/assets/${getSpriteDir(characterId, outfit)}/down_0.png`;
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     onComplete({
       characterId: selectedId,
+      outfit: outfitId,
       name: name.trim(),
       // Defaults for backward compatibility with CharacterCustomization interface
       skin: 'medium',
@@ -52,7 +71,12 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
           {CHARACTER_OPTIONS.map((option) => (
             <button
               key={option.id}
-              onClick={() => setSelectedId(option.id)}
+              onClick={() => {
+                setSelectedId(option.id);
+                // A costume belongs to one character — reset rather than carry
+                // a foreign id into the next selection.
+                setOutfitId(DEFAULT_OUTFIT);
+              }}
               className={`flex flex-col items-center p-4 sm:p-6 rounded-xl border-3 transition-all flex-1 max-w-[200px] ${
                 selectedId === option.id
                   ? 'border-teal-400 bg-slate-700 shadow-lg shadow-teal-500/20 scale-105'
@@ -61,7 +85,11 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
             >
               <div className="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center mb-3">
                 <img
-                  src={`/TwilightGame/assets/${option.id}/base/down_0.png`}
+                  src={
+                    selectedId === option.id && outfitChoices.length > 0
+                      ? previewUrl(option.id, outfitId)
+                      : `/TwilightGame/assets/${option.id}/base/down_0.png`
+                  }
                   alt={option.label}
                   className="w-full h-full object-contain"
                 />
@@ -76,6 +104,45 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
             </button>
           ))}
         </div>
+
+        {/* Outfit Picker — shown when the selected character has costumes */}
+        {outfitChoices.length > 0 && (
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button
+              onClick={() => setOutfitId(DEFAULT_OUTFIT)}
+              className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all w-24 ${
+                outfitId === DEFAULT_OUTFIT
+                  ? 'border-teal-400 bg-slate-700'
+                  : 'border-slate-600 bg-slate-800 hover:border-slate-400'
+              }`}
+            >
+              <img
+                src={previewUrl(selectedId, DEFAULT_OUTFIT)}
+                alt="Everyday"
+                className="w-14 h-14 object-contain"
+              />
+              <span className="text-xs font-bold text-slate-300 mt-1">Everyday</span>
+            </button>
+            {outfitChoices.map((outfit) => (
+              <button
+                key={outfit.id}
+                onClick={() => setOutfitId(outfit.id)}
+                className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all w-24 ${
+                  outfitId === outfit.id
+                    ? 'border-teal-400 bg-slate-700'
+                    : 'border-slate-600 bg-slate-800 hover:border-slate-400'
+                }`}
+              >
+                <img
+                  src={outfit.iconUrl ?? previewUrl(selectedId, outfit.id)}
+                  alt={outfit.label}
+                  className="w-14 h-14 object-contain"
+                />
+                <span className="text-xs font-bold text-slate-300 mt-1">{outfit.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Name Input */}
         <div className="w-full max-w-sm">

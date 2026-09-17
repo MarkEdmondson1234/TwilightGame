@@ -31,6 +31,7 @@ import {
   weatherVaneAssets,
 } from '../assets';
 import { getCharacterSpriteUrls } from './assetPreloader';
+import { resolveOutfit } from './characterOutfits';
 import { mapManager } from '../maps/MapManager';
 import type { MapDefinition, NPC } from '../types';
 import { TileType } from '../types';
@@ -73,14 +74,21 @@ function collect(out: Set<string>, ...values: Array<string | string[] | undefine
  * Textures needed on every map: inventory icons (always in the HUD), weather
  * particles, cooking sprites and the farming soil states.
  */
-export function getCoreTextureUrls(characterId = 'character1'): string[] {
+export function getCoreTextureUrls(
+  characterId = 'character1',
+  outfit?: string
+): string[] {
   const urls = new Set<string>();
   // The player is on screen on every map, in every frame. Pinning these stops a
   // map transition evicting the character and re-fetching it mid-walk.
   //
-  // Only the *selected* character: the other one is never rendered locally, and
-  // a remote player using it is handled on demand by RemotePlayerLayer.
-  collect(urls, getCharacterSpriteUrls(characterId));
+  // Only the *selected* character (and the costume they are wearing — an
+  // unworn costume is handled on demand): a remote player using another
+  // character/outfit is fetched on demand by RemotePlayerLayer.
+  collect(
+    urls,
+    getCharacterSpriteUrls(characterId, resolveOutfit(characterId, outfit))
+  );
   collect(urls, ...Object.values(itemAssets));
   collect(urls, ...Object.values(particleAssets));
   collect(urls, ...Object.values(cookingAssets));
@@ -218,10 +226,14 @@ export function getTexturesForMap(mapId: string, season: SeasonKey = 'spring'): 
 export function getResidentTextureUrls(
   mapId: string,
   season: SeasonKey = 'spring',
-  characterId = 'character1'
+  characterId = 'character1',
+  outfit?: string
 ): string[] {
   return [
-    ...new Set([...getCoreTextureUrls(characterId), ...getTexturesForMap(mapId, season)]),
+    ...new Set([
+      ...getCoreTextureUrls(characterId, outfit),
+      ...getTexturesForMap(mapId, season),
+    ]),
   ];
 }
 
