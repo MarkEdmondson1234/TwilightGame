@@ -351,6 +351,21 @@ export class DarknessLayer {
     this._compositeDarkness();
   }
 
+  /**
+   * Follow a window resize. The overlay is composited into an offscreen canvas
+   * sized to the viewport; left at the old size after a resize, the newly
+   * revealed strip of screen stays undarkened (a visible "frame" at night).
+   */
+  resize(viewportWidth: number, viewportHeight: number): void {
+    if (viewportWidth === this.viewportWidth && viewportHeight === this.viewportHeight) return;
+    this.viewportWidth = viewportWidth;
+    this.viewportHeight = viewportHeight;
+    this.offCanvas.width = Math.ceil((viewportWidth + CANVAS_MARGIN * 2) * this.compositeScale);
+    this.offCanvas.height = Math.ceil((viewportHeight + CANVAS_MARGIN * 2) * this.compositeScale);
+    this.darknessSprite.scale.set(1 / this.compositeScale);
+    this._compositeDarkness();
+  }
+
   updateLights(lightSources: LightSource[], cameraX: number, cameraY: number, zoom = 1): void {
     const hasLightSources = lightSources.length > 0;
     const hadLights = this.hasLights;
