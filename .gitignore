@@ -38,3 +38,6 @@ perf-report.md
 regression-detected
 # Local output of scripts/art-review.mjs (contact sheets are attached to PRs, not committed)
 art-review/
+
+# Art staging folder — originals only; integrated copies live under public/assets/
+incoming-art/

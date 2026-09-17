@@ -10,107 +10,72 @@ All game art is placed in `/public/assets/`. This folder is organized by categor
 .
 ├── public/
 │   └── assets/
-│       ├── character1/        (Layered character customization system)
+│       ├── character1/        (Player character — frame sets; see Player Sprites below)
 │       │   ├── base/
+│       │   ├── fairy/
 │       │   └── variations/
 │       │
+│       ├── character2/        (Second player character, plus outfits/ costume sets)
+│       │
 │       ├── npcs/              (NPC sprites)
-│       │   ├── elder.svg
-│       │   ├── shopkeeper.svg
-│       │   └── child.svg
+│       │   └── ...
 │       │
 │       ├── tiles/             (Tile sprites)
 │       │   ├── grass_0.png
 │       │   ├── grass_1.png
-│       │   ├── grass_2.png
 │       │   ├── rock_0.png
-│       │   ├── water_0.png
-│       │   ├── path_0.png
-│       │   ├── shop_door_0.png
-│       │   └── mine_entrance_0.png
+│       │   └── ...
 │       │
 │       └── animations/        (Animated GIF effects)
-│           ├── cherry_spring_petals.gif
-│           ├── rain.gif        (future)
-│           └── fireflies.gif   (future)
+│           └── ...
 │
 ├── index.html
 └── ... (other project files)
 ```
 
-## Player Sprites (`/public/assets/character1/`)
+## Player Sprites (`/public/assets/character{1,2}/`)
 
-The player sprite system now supports **layered customization**! Each character customization option (skin, hair, clothes, etc.) can have its own sprite layer that gets composited together.
+The player is drawn as a **complete hand-drawn character per direction frame** — not a
+layered composite. Each playable character owns a directory of frames, and which one
+renders is decided by the chosen `characterId` (see `components/CharacterCreator.tsx`).
 
-### Simple Setup (Single Sprite)
-If you want a simple single-sprite system:
+### How the system actually works
 
--   **File Naming:** Please name files exactly as `[direction]_[frameNumber].png`. For example: `up_0.png`, `right_2.png`. The directions are `up`, `down`, `left`, `right`.
--   **Frame 0:** The `_0` frame is special. It's the "idle" or "standing still" pose. The game will show this frame when the player is not moving.
--   **Animation Frames:** Frames `_1`, `_2`, `_3`, etc., are for the walking animation. The engine is currently set up for 4 frames per direction (0 for idle, 1-3 for walking).
--   **Transparency:** All player sprites **must** have a transparent background.
--   **Size:** All player sprites should be the same dimensions (e.g., 32x32 pixels, or 64x64 for higher resolution). Consistency is key.
+- **Directories:** `public/assets/characterN/base/` holds `{up,down,left,right}_{frame}.png`.
+  Frame `_0` is the idle pose; frames `_1+` are the walk cycle, which **ping-pongs**
+  (0 → 1 → 2 → 3 → 2 → 1 → 0). Frame counts are per-character and per-direction — set in
+  `CHARACTER_SPRITE_CONFIGS` in `utils/characterSprites.ts` (character1 has 3-frame
+  up/down and 4-frame sides; character2 has 2-frame up/down).
+- **Costumes:** a character may have full sprite-set costumes in
+  `public/assets/characterN/outfits/<outfitId>/`, registered in
+  `utils/characterOutfits.ts`. Costumes are bought as clothing items
+  (`data/items/clothing.ts`) and worn from the bag; the character-creator outfit
+  chips only show owned outfits. A costume may ship fewer frames — its
+  `frameCounts` override the character's per direction.
+- **Registration:** no `assets.ts` entry is needed for character frames — the sprite
+  URLs are built in code (`utils/characterSprites.ts`, `utils/assetPreloader.ts`) and
+  must stay in step (they are pinned per map in `utils/mapTextureSet.ts`).
+- **Sizing:** draw large (the current sources are 2064×2064). The optimiser normalises
+  every frame to 1024×1024 at showcase quality, and the game renders them at 3× via
+  `isCustomCharacterSprite()` — guarded by `tests/characterSpriteScale.test.ts`,
+  because a broken path match renders the player a third of its size **with nothing
+  throwing**.
+- **Transparency:** all frames need a transparent background and identical dimensions
+  across a character's set (costume sets included).
+- **Fairy form** is a shared sprite set in `public/assets/characterN/fairy/`, replacing
+  the character sprite while transformed.
 
-### Advanced Setup (Layered Customization)
-For character customization support, organize sprites by layer:
+### Adding a costume (the current extension path)
 
-```
-public/assets/
-├── character1/
-│   ├── base/                    # Base body outline (required)
-│   │   ├── down_0.png
-│   │   ├── down_1.png
-│   │   └── ... (all directions/frames)
-│   │
-│   ├── skin/                    # Skin tone layers
-│   │   ├── pale/
-│   │   │   ├── down_0.png
-│   │   │   └── ... (all directions/frames)
-│   │   ├── light/
-│   │   ├── medium/
-│   │   ├── tan/
-│   │   ├── dark/
-│   │   └── deep/
-│   │
-│   ├── hair/                    # Hair styles and colors
-│   │   ├── short_black/
-│   │   │   ├── down_0.png
-│   │   │   └── ...
-│   │   ├── short_brown/
-│   │   ├── long_blonde/
-│   │   ├── curly_red/
-│   │   └── ... (style_color combinations)
-│   │
-│   ├── clothes/                 # Clothing styles and colors
-│   │   ├── shirt_blue/
-│   │   │   ├── down_0.png
-│   │   │   └── ...
-│   │   ├── tunic_green/
-│   │   ├── dress_pink/
-│   │   └── ... (style_color combinations)
-│   │
-│   ├── shoes/                   # Footwear styles and colors
-│   │   ├── boots_brown/
-│   │   │   ├── down_0.png
-│   │   │   └── ...
-│   │   ├── sneakers_white/
-│   │   └── ... (style_color combinations)
-│   │
-│   └── glasses/                 # Glasses (optional layer)
-│       ├── round/
-│       │   ├── down_0.png
-│       │   └── ...
-│       ├── square/
-│       └── sunglasses/
-```
+1. Draw the frames into `public/assets/characterN/outfits/<outfitId>/` —
+   `{direction}_{frame}.png` (+ the item icon under `public/assets/items/clothing/`).
+2. Register one entry in `OUTFITS` in `utils/characterOutfits.ts` (label, icon, frame counts).
+3. Add the clothing item and put it in a shop's stock — buying it is what unlocks the outfit.
+4. Add the outfit id to the `o` validation in `database.rules.json` (presence field).
+5. `npm run optimize-assets`, then `make verify`.
 
-**How Layering Works:**
-1. The game stacks layers in order: base → skin → clothes → shoes → hair → glasses
-2. Each layer must have transparency where other layers show through
-3. All sprites for the same frame/direction must be the same size
-4. The system defined in `utils/characterSprites.ts` handles automatic layer composition
-
-**Currently Using:** Placeholder sprites (color-coded). The system is ready to swap in custom layered sprites when you add them to the folders above.
+The polka-dot dress (`character2/outfits/polka_dress/`) is the worked example — see
+`design_docs/planned/COSTUMES_SPRINT.md`.
 
 ## Tile Sprites (`/public/assets/tiles/`)
 

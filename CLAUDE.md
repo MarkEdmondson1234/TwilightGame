@@ -1094,7 +1094,7 @@ Example: `G` for grass, `R` for rock, `#` for walls, `F` for floor, `D` for door
 See `ASSETS.md` for complete asset guidelines. Key points:
 
 - Assets go in `/public/assets/` (organized into character1/, npcs/, tiles/, and farming/ subdirectories)
-- Player sprites: Layered system in `/public/assets/character1/`
+- Player sprites: per-character frame sets in `/public/assets/character{1,2}/base/` (frame counts in `utils/characterSprites.ts`); costumes under `characterN/outfits/<id>/` — see `utils/characterOutfits.ts`
 - NPC sprites: SVG files in `/public/assets/npcs/`
 - Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`) in `/public/assets/tiles/`
 - Farming sprites: In `/public/assets/farming/` (e.g., `fallow_soil_1.png`, `tilled.png`)

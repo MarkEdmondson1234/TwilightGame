@@ -1,6 +1,14 @@
 # PixiJS Migration Design Document
 
-**Status**: Planned
+> **Status: Implemented.** This was the pre-migration plan; the migration has shipped
+> (PixiJS v8 renders the game — `USE_PIXI_RENDERER` in `constants.ts`). The API
+> sketches below are historical: the implemented system differs in the details that
+> mattered in practice — textures are **scoped per map** (`utils/mapTextureSet.ts`, not
+> a startup preload of everything), characters have per-character frame sets rather
+> than a `playerAssets` registry, and texture budget rules live in CLAUDE.md. Read
+> `utils/pixi/` for the real layer system.
+
+**Status**: Historical — implemented (details drifted; see note above)
 **Priority**: High
 **Estimated Effort**: 2-3 days
 **Performance Gain**: 10-100x faster rendering
