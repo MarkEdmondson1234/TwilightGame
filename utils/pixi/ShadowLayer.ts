@@ -34,7 +34,7 @@ const SHADOW_CONFIG = {
   // Base shadow properties
   baseAlpha: 0.25, // Base shadow opacity
   color: 0x112115, // Shadow color (dark green)
-  blur: 8, // Shadow blur amount
+  blur: 8, // Soft-edge spread in px (formerly a BlurFilter radius; now grows the soft disc)
 
   // Shadow size relative to sprite
   widthRatio: 0.7, // Shadow width as fraction of sprite width
@@ -69,8 +69,46 @@ const CAVE_SHADOW_PARAMS = {
 };
 const CAVE_SHADOW_COLOR = 0x0a0a14; // Dark blue-black (matches cave palette)
 
+/**
+ * Pixel size of the shared soft-disc texture every shadow is drawn from.
+ * Shadows are 40–500 px wide on screen and mostly transparent, so a small
+ * texture scaled up is indistinguishable from a blurred vector ellipse.
+ */
+const SHADOW_TEXTURE_SIZE = 64;
+
+/**
+ * How much of the disc's radius is the soft edge. Stands in for the 8 px
+ * BlurFilter the shadows used to carry: a filter meant a render-to-texture and
+ * four blur passes for every shadow on screen, every frame, which on an old
+ * iPad was the single largest GPU cost in the game
+ * (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.2). A pre-softened texture
+ * costs one sprite in the batch.
+ */
+const SHADOW_EDGE_SOFTNESS = 0.35;
+
+let sharedShadowTexture: PIXI.Texture | null = null;
+
+/** A white disc with a soft edge; tinted and scaled per shadow. Built once. */
+function getShadowTexture(): PIXI.Texture {
+  if (sharedShadowTexture) return sharedShadowTexture;
+  const size = SHADOW_TEXTURE_SIZE;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const half = size / 2;
+  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(1 - SHADOW_EDGE_SOFTNESS, 'rgba(255,255,255,1)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  sharedShadowTexture = PIXI.Texture.from(canvas);
+  return sharedShadowTexture;
+}
+
 export class ShadowLayer extends PixiLayer {
-  private shadows: Map<string, PIXI.Graphics> = new Map();
+  private shadows: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
 
   constructor() {
@@ -227,7 +265,7 @@ export class ShadowLayer extends PixiLayer {
         if (renderedKeys.has(key)) continue;
         renderedKeys.add(key);
 
-        this.renderShadow(x, y, spriteMetadata, shadowParams, finalAlpha, shadowColor);
+        this.renderShadow(x, y, spriteMetadata, shadowParams, finalAlpha, shadowColor, visibleRange);
       }
     }
 
@@ -248,7 +286,8 @@ export class ShadowLayer extends PixiLayer {
     metadata: SpriteMetadata,
     params: { offsetX: number; offsetY: number; stretch: number; alpha: number },
     finalAlpha: number,
-    color: number = SHADOW_CONFIG.color
+    color: number,
+    visibleRange: { minX: number; maxX: number; minY: number; maxY: number }
   ): void {
     // Check if shadow is disabled for this sprite
     if (metadata.shadowEnabled === false) {
@@ -257,18 +296,16 @@ export class ShadowLayer extends PixiLayer {
 
     const key = `${anchorX},${anchorY}`;
 
-    // Get or create shadow graphics
+    // Get or create the shadow sprite
     let shadow = this.shadows.get(key);
 
     if (!shadow) {
-      shadow = new PIXI.Graphics();
+      shadow = new PIXI.Sprite(getShadowTexture());
+      shadow.anchor.set(0.5);
       shadow.zIndex = Z_SHADOWS;
       this.container.addChild(shadow);
       this.shadows.set(key, shadow);
     }
-
-    // Clear previous drawing
-    shadow.clear();
 
     // Use per-sprite shadow ratios if defined, otherwise use defaults
     const widthRatio = metadata.shadowWidthRatio ?? SHADOW_CONFIG.widthRatio;
@@ -289,25 +326,29 @@ export class ShadowLayer extends PixiLayer {
     const shadowX = spriteBaseX + params.offsetX * TILE_SIZE;
     const shadowY = spriteBaseY + params.offsetY * TILE_SIZE;
 
-    // Draw elliptical shadow
-    shadow.ellipse(0, 0, shadowWidth / 2, shadowHeight / 2);
-    shadow.fill({ color, alpha: finalAlpha });
+    // Size the soft disc into an ellipse. The blur used to spread the edge
+    // outward, so grow the ellipse by the old blur radius to keep its footprint.
+    shadow.width = shadowWidth + SHADOW_CONFIG.blur * 2;
+    shadow.height = shadowHeight + SHADOW_CONFIG.blur * 2;
+    shadow.tint = color;
+    shadow.alpha = finalAlpha;
 
     // Position shadow
     shadow.x = shadowX;
     shadow.y = shadowY - shadowHeight / 4; // Slight upward shift so it appears at sprite base
 
-    // Apply blur filter if not already applied
-    if (!shadow.filters || shadow.filters.length === 0) {
-      shadow.filters = [
-        new PIXI.BlurFilter({
-          strength: SHADOW_CONFIG.blur,
-          quality: 2,
-        }),
-      ];
-    }
-
-    shadow.visible = true;
+    // The scan runs a 10-tile margin past the viewport so a large sprite
+    // anchored off screen still casts onto it; the shadow itself is much
+    // smaller than that margin, so most of what the scan visits is off screen.
+    // Only draw the ones whose ellipse actually reaches the visible tiles.
+    const halfW = shadow.width / 2;
+    const halfH = shadow.height / 2;
+    const onScreen =
+      (shadow.x + halfW) / TILE_SIZE >= visibleRange.minX &&
+      (shadow.x - halfW) / TILE_SIZE <= visibleRange.maxX + 1 &&
+      (shadow.y + halfH) / TILE_SIZE >= visibleRange.minY &&
+      (shadow.y - halfH) / TILE_SIZE <= visibleRange.maxY + 1;
+    shadow.visible = onScreen;
   }
 
   /**

@@ -24,7 +24,7 @@ would make the game fast everywhere rather than tuned for one device.
 | 1 ✅ | **The whole React tree re-renders every frame**, and each of those renders **rebuilds the entire PixiJS scene** because of a one-line object allocation. | `App.tsx:1942`, `usePixiRenderer.ts:880-897`; iPad hits exactly 30 fps in a room with 4 sprites (§2) | Low-hanging (one line) + architectural (§6A) |
 | 2 ✅ | **Three GPU features that are ruinous on mobile**: a live blur filter on every shadow, a full-viewport canvas re-uploaded to the GPU per frame for darkness, and a full-screen mask on fog. | `ShadowLayer.ts:301-308`, `DarknessLayer.ts:355-357,540`, `WeatherLayer.ts:347` | Low-hanging (each is a small change) |
 | 3 ✅ | **Memory pressure**: ~440 MB of decoded audio, ~300 MB of textures, ~144 MB of duplicate character bitmaps, all resident at once on an iPad. | `AudioManager.ts:392-420`, `assetPreloader.ts:109-124`, `tests/mapTextureBudget` output | Low-hanging + pipeline (§6C) |
-| 4 | **Stalls**: first-draw texture uploads after a transition, a full-save `JSON.stringify` to localStorage every second while walking, 2–4 s texture batches. | Sentry `game.operation`: `texture_batch` 0.4–4.7 s, `local_save` up to 257 ms; worst frames 800–1095 ms in the village on iPad | Pipeline + persistence |
+| 4 ✅ | **Stalls**: first-draw texture uploads after a transition, a full-save `JSON.stringify` to localStorage every second while walking, 2–4 s texture batches. | Sentry `game.operation`: `texture_batch` 0.4–4.7 s, `local_save` up to 257 ms; worst frames 800–1095 ms in the village on iPad | Pipeline + persistence |
 
 **Recommended order:** §4 (a day of one-line and small fixes, most of the win),
 then §5 (a few days), then §6 (the architecture, one sprint per area). Each
@@ -52,6 +52,36 @@ column is unchanged because the player position still goes through React
 state every moving frame (cause B), which is the §6A refactor and its own PR;
 each App render costs ~19 ms at 4× throttle, so on the iPad it is a dropped
 frame per step until that lands.
+
+**Day 2 (the GPU) — done 2026-09-17**, §4 items 4, 5, 6, 7, 13, plus the CI gate.
+
+- Shadows are tinted soft-disc sprites from one shared 64 px texture instead of
+  a `Graphics` with its own `BlurFilter`: zero filter passes, and they now
+  batch with everything else. Off-screen shadows in the 10-tile scan margin are
+  culled (89 of 159 in the village at rest were off screen).
+- The darkness overlay composites at a fraction of the viewport (0.25 on
+  mobile, 0.5 on desktop; `darknessCompositeScale` in the tier) and the flicker
+  tick no longer re-uploads on top of a camera-frame composite. The lit
+  village checks out visually at both scales.
+- The fog/mist sprite mask is gone (it only vignetted the screen corners).
+- Phones never get the HIGH render profile (`resolution` 1.5, no MSAA, 8-step
+  glows), whatever their core count; the tier label is unchanged for Sentry.
+- Weather particle pools and emit rates scale with the tier (0.4 on mobile).
+- **The CI performance gate can now see this kind of change.** Scene cost
+  gains `filteredNodes`/`maskedNodes` (any non-zero from a zero baseline is a
+  regression), and a new **work-rate** table counts App commits, scene
+  rebuilds, NPC draws, darkness uploads and save flushes at the source
+  (`WorkCounters` in `utils/PerformanceMonitor.ts`) and grades them like scene
+  cost. The harness pins the in-game clock and weather (`--time`, `--weather`)
+  so runs are comparable, and the `movement` scenario walks *during* the
+  measurement (it used to finish walking before sampling began). Day one, which
+  the old gate read as "neutral", reads on this gate as App commits idle
+  60 → ~1 /s, scene rebuilds idle 25 → 0 /s, save flushes 60 → 12 /min.
+- Found on the way: the harness "teleported" by calling `mapManager.loadMap()`
+  directly, which changes the manager but not React's map state. It only ever
+  appeared to work because the scene was being rebuilt every frame; every
+  `bear_cave` and `witch_hut` number CI has reported so far was a village
+  measurement. It now goes through the real transition (`window.debugTeleport`).
 
 ---
 
@@ -273,15 +303,15 @@ overlay when it lands.
 | 2 | **Emit `NPC_MOVED` only on spawn/despawn/season/animation-state change.** Have `NPCLayer` poll `npcManager.getCurrentMapNPCs()` from `updateAnimations` the way `RemotePlayerLayer` already does (CLAUDE.md multiplayer rule 1). Keep a ≤10 Hz throttled React trigger for the DOM indicators. | `NPCManager.ts:1009`, `useGameEvents.ts:60`, `usePixiRenderer.ts:257-304, 1107-1136` | M | Removes the idle-time 60 Hz App render on every map with wanderers. | Idle in village: App render count (React DevTools profiler) goes from 60/s to ~0. |
 | 3 | **Accumulate stamina in `StaminaManager` and commit to `gameState` at most once per second** (or on a ≥1-point change). Same for the late-night drain. | `utils/StaminaManager.ts:71-88`, `App.tsx:1462` | S | Ends the per-frame HUD and StaminaBar renders and the continuous 1 Hz full-save serialise. | `local_save` operations become rare; kitchen worst frame <50 ms. |
 | 4 | **Replace the per-shadow `BlurFilter` with a pre-blurred radial-gradient texture** drawn as a tinted `Sprite` (build once with Canvas2D exactly as `DarknessLayer.ts:183-198` does). Stop-gap: `enableShadows: false` when `isMobile`. | `ShadowLayer.ts:263-308` | S | Zero filter passes; shadows batch with everything else; the per-pass `clear()+ellipse()+fill()` goes too. Largest GPU win. | Village fps on iPad; GPU time in a Safari timeline. |
-| 5 | **Darkness: composite at ¼ resolution on mobile and on one clock.** `updateLights` stores positions and sets a dirty flag; the existing 20 Hz flicker tick is the sole caller of `_compositeDarkness`. Skip when nothing changed. | `DarknessLayer.ts:337-363, 474-548, 596-604` | S | Upload shrinks 16×, and from 60+20 Hz to ≤20 Hz. Caves, mines and the village at night. | Cave fps on iPad. |
-| 6 | **Drop the fog/mist sprite mask** (at least on mobile); bake any edge feather into the fog PNG alpha. | `WeatherLayer.ts:323-348` | S | Removes a full-screen RTT + filter per frame and the W×H JS loop on setup/resize. | Fog/mist weather fps. |
-| 7 | **Never give mobile the HIGH render profile.** When `isMobile && tier === HIGH`, return MEDIUM render settings (`resolution ≤ 1.5`, `antialias: false`, `glowSteps: 8`) with the HIGH memory policy. Add a `tests/performanceTier.test.ts` case. | `utils/performanceTier.ts:183-248` | S | Reaches every iPhone 8/X or newer, which today gets 2× resolution + MSAA + 32-step glows + blurred shadows. | `game.session_start` on iPhones shows `graphics.resolution: 1.5`. |
+| 5 ✅ | **Darkness: composite at ¼ resolution on mobile and on one clock.** `updateLights` stores positions and sets a dirty flag; the existing 20 Hz flicker tick is the sole caller of `_compositeDarkness`. Skip when nothing changed. | `DarknessLayer.ts:337-363, 474-548, 596-604` | S | Upload shrinks 16×, and from 60+20 Hz to ≤20 Hz. Caves, mines and the village at night. | Cave fps on iPad. |
+| 6 ✅ | **Drop the fog/mist sprite mask** (at least on mobile); bake any edge feather into the fog PNG alpha. | `WeatherLayer.ts:323-348` | S | Removes a full-screen RTT + filter per frame and the W×H JS loop on setup/resize. | Fog/mist weather fps. |
+| 7 ✅ | **Never give mobile the HIGH render profile.** When `isMobile && tier === HIGH`, return MEDIUM render settings (`resolution ≤ 1.5`, `antialias: false`, `glowSteps: 8`) with the HIGH memory policy. Add a `tests/performanceTier.test.ts` case. | `utils/performanceTier.ts:183-248` | S | Reaches every iPhone 8/X or newer, which today gets 2× resolution + MSAA + 32-step glows + blurred shadows. | `game.session_start` on iPhones shows `graphics.resolution: 1.5`. |
 | 8 | **Load audio lazily.** `loadBatch` only SFX at boot; ambient/music per map on `playAmbient`/`playMusic` (the `pendingAmbients`/`pendingMusic` queues already handle "requested before loaded"). Cap concurrency. Convert stereo ambients to mono. | `gameInitializer.ts:217-223`, `AudioManager.ts:392-420` | S–M | Frees ~400 MB from every session and removes 53 fetches competing with the 6-slot texture loader at boot. | `game.performance` JS heap; iPhone reloads stop. |
 | 9 | **Preload only the selected character and worn outfit, and drop `imageCache`.** `getCoreTextureUrls` already scopes correctly. | `utils/assetPreloader.ts:18,38,109-124`, `gameInitializer.ts:205` | S | ~144 MB of duplicate bitmaps gone; faster boot. | Same. |
 | 10 | **Downsize player and NPC frames to 512².** | `scripts/optimize-assets.js:57-58` (`SPRITE_SIZE`, `NPC_SIZE`) | S (re-run optimiser) | Player pinned set 64 → 16 MB; village NPCs 86 → 22 MB; forest/lake sets −75%. Still ≥1.7× at resolution 2. Fixes the mipmap-less cache thrash for the sprites drawn every frame. Review with `npm run art-review`. | Budget test totals; village fps. |
 | 11 ✅ | **Read `playerPos` from a ref in `useAmbientVFX` and `useVFX`** so the interval is created once and `triggerVFX` is stable. | `hooks/useAmbientVFX.ts:107-170`, `hooks/useVFX.ts:38-63` | S | Fixes both the per-frame interval churn and the "ambient VFX never fires while walking" bug; stabilises `magicEffectCallbacks`. | — |
 | 12 ✅ | **gameLoop deps → refs** (`activeNPC`, `isCutscenePlaying`, `activeChainPopup`, `ui.miniGame`; the file already does this for `currentMapIdRef`), and split the rAF effect from the shared-sync lifecycle. | `App.tsx:1483-1495, 1585-1609` | S–M | No Firestore flush/re-subscribe and no rAF restart on every conversation. | Open/close dialogue in the village: no `stopSharedSync` log. |
-| 13 | **Scale weather by tier**: multiply `maxParticles`/`emitRate` by ~0.4 on mobile; drop the per-particle `Math.random()` alpha jitter there. | `WeatherLayer.ts:262-292, 440-463`, `data/weatherConfig.ts:200-247` | S | Rain/storm on a 2–4 core device. | Rain fps on iPad. |
+| 13 ✅ | **Scale weather by tier**: multiply `maxParticles`/`emitRate` by ~0.4 on mobile; drop the per-particle `Math.random()` alpha jitter there. | `WeatherLayer.ts:262-292, 440-463`, `data/weatherConfig.ts:200-247` | S | Rain/storm on a 2–4 core device. | Rain fps on iPad. |
 | 14 | **Firebase off the boot critical path**: start `safeInitializeFirebase` and `globalEventManager.initialise()` in parallel with asset loading; do not await them before the first map. | `gameInitializer.ts:167-172` | S | Removes an 824 KB download, init, and a network round-trip from time-to-first-frame. | Splash-to-world time on iPad. |
 | 15 | **Do not generate three procedural maps or register `debugNPCs` at boot; validate maps once, not twice; move `runSelfTests`' cross-map position validation into `tests/`.** | `maps/index.ts:67, 88-90`, `MapManager.ts:24-27, 59`, `utils/testUtils.ts:13-35` | S | Hundreds of ms off boot on a throttled CPU. | Same. |
 | 16 ✅ | **Throttle in-loop checks** to tile changes or a few Hz: `checkSeasonChange`, `getLavaLakeAnchor` (only on maps with lava), `getRestingFurnitureEffect` (on tile change or `PLACED_ITEMS_CHANGED`), cutscene and fairy checks; cache `getCurrentMapNPCs()` once per frame inside `updateNPCs`. | `App.tsx:1394-1449`, `NPCManager.ts:654-663` | S each | Small individually, worthwhile together on a slow CPU. | — |

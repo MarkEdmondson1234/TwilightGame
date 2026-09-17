@@ -80,16 +80,36 @@ describe('desktop capability profiles', () => {
     vi.spyOn(window, 'devicePixelRatio', 'get').mockReturnValue(1);
     expect(getPerformanceSettings().resolution).toBe(1);
   });
-  it('preserves the fast iPhone profile and mobile memory policy', () => {
+  it('a fast iPhone keeps the HIGH tier label and mobile memory policy but renders with the MEDIUM profile', () => {
+    // Every iPhone from the 8/X onward has 6+ cores and Safari hides
+    // deviceMemory, so they detect as HIGH. Their GPUs cannot afford 2×
+    // resolution plus MSAA plus 32-step glows; the render profile is capped
+    // (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §4 item 7).
     device('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Mobile Safari/605', 6, undefined, true);
     expect(getPerformanceSettings()).toMatchObject({
       tier: 'high',
       isMobile: true,
-      antialias: true,
-      glowSteps: 32,
+      antialias: false,
+      resolution: 1.5,
+      glowSteps: 8,
+      darknessCompositeScale: 0.25,
+      particleScale: 0.4,
       generateMipmaps: false,
       textureBudgetMB: 384,
       maxConcurrentTextureLoads: 6,
+    });
+  });
+
+  it('a desktop HIGH tier keeps the full render profile', () => {
+    device('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) Chrome/140', 8, 8);
+    expect(getPerformanceSettings()).toMatchObject({
+      tier: 'high',
+      isMobile: false,
+      antialias: true,
+      resolution: 2,
+      glowSteps: 32,
+      darknessCompositeScale: 0.5,
+      particleScale: 1,
     });
   });
 });

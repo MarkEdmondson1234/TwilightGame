@@ -79,3 +79,22 @@ describe('measureSceneCost', () => {
     expect(measureSceneCost(stage).textureMB).toBe(4);
   });
 });
+
+describe('measureSceneCost: filters and masks', () => {
+  // A filter or a mask is a render-to-texture per node per frame — the most
+  // expensive thing a node can do on a mobile GPU, and invisible to the other
+  // counts. Shadows used to be thirty filtered nodes; fog used to be masked.
+  it('counts drawn nodes carrying filters or masks, and ignores hidden ones', () => {
+    const stage: SceneNode = {
+      children: [
+        sprite(1, 64, 64, { filters: [{}] }),
+        sprite(2, 64, 64, { mask: {} }),
+        sprite(3, 64, 64, { filters: [], mask: null }),
+        sprite(4, 64, 64, { filters: [{}], visible: false }),
+      ],
+    };
+    const cost = measureSceneCost(stage);
+    expect(cost.filteredNodes).toBe(1);
+    expect(cost.maskedNodes).toBe(1);
+  });
+});

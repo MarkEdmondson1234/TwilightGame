@@ -45,6 +45,7 @@ import {
   Z_DEPTH_SORTED_BASE,
 } from '../../zIndex';
 import { debugLog } from '../debugLog';
+import { performanceMonitor } from '../PerformanceMonitor';
 
 /** Check if a tile type is any farm soil variant (fallow through dead) */
 const isSoilTile = (type: TileType): boolean =>
@@ -191,6 +192,8 @@ export class TileLayer extends PixiLayer {
       debugLog('TileLayer', `Skipping tile rendering for background-image map: ${mapId}`);
       return;
     }
+
+    performanceMonitor.count('sceneRebuilds');
 
     // Clear color cache if season changed (to allow seasonal color updates)
     if (this.currentSeason !== seasonKey) {

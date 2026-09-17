@@ -79,6 +79,29 @@ const SCENE_BUDGETS = {
   textures: { label: 'Textures', regressionPct: 20, warningPct: 10, minAbs: 4 },
   textureMB: { label: 'Texture memory', regressionPct: 20, warningPct: 10, minAbs: 8, unit: ' MB' },
   maxDepth: { label: 'Tree depth', regressionPct: 25, warningPct: 15, minAbs: 2 },
+  // A filter or mask is a render-to-texture per node per frame — the costliest
+  // thing a node can do on a mobile GPU, and invisible to the counts above.
+  filteredNodes: { label: 'Filtered nodes', regressionPct: 0, warningPct: 0, minAbs: 1 },
+  maskedNodes: { label: 'Masked nodes', regressionPct: 0, warningPct: 0, minAbs: 1 },
+};
+
+/**
+ * Work-rate budgets -- how often the code does something expensive, from
+ * counters incremented at the source (WorkCounters in utils/PerformanceMonitor.ts).
+ *
+ * These exist because the scene-cost gate above could not see the change that
+ * removed most of the per-frame CPU work: the scene was identical, it was just
+ * being rebuilt sixty times a second instead of once. A rate of work is a
+ * property of the code, so it compares across machines the way a count does.
+ * `unit` picks the rate: per frame for work that should happen at most once a
+ * frame, per second for work driven by play (a tile crossing at walking speed).
+ */
+const WORK_BUDGETS = {
+  appRenders: { label: 'App renders', unit: 'perFrame', suffix: ' /frame', regressionPct: 25, warningPct: 10, minAbs: 0.05 },
+  sceneRebuilds: { label: 'Scene rebuilds', unit: 'perSecond', suffix: ' /s', regressionPct: 25, warningPct: 10, minAbs: 1 },
+  npcDraws: { label: 'NPC draws', unit: 'perFrame', suffix: ' /frame', regressionPct: 25, warningPct: 10, minAbs: 0.05 },
+  darknessUploads: { label: 'Darkness uploads', unit: 'perSecond', suffix: ' /s', regressionPct: 25, warningPct: 10, minAbs: 2 },
+  saveFlushes: { label: 'Save flushes', unit: 'perSecond', suffix: ' /s', regressionPct: 25, warningPct: 10, minAbs: 0.05 },
 };
 
 function loadJson(filename) {
@@ -134,8 +157,12 @@ function getStatusEmoji(status) {
  * Scene-cost status, with the absolute-delta floor applied.
  */
 function getSceneStatus(current, baseline, budget) {
-  if (baseline === undefined || baseline === null || baseline === 0) return 'neutral';
+  if (baseline === undefined || baseline === null) return 'neutral';
   if (Math.abs(current - baseline) < budget.minAbs) return 'neutral';
+  // A zero baseline has no percentage to compare against, but going from none
+  // to some (a filter appearing, a rebuild per frame returning) is exactly the
+  // regression these counts exist to catch.
+  if (baseline === 0) return current > 0 ? 'regression' : 'neutral';
   return getRegressionStatus(current, baseline, budget, false);
 }
 
@@ -192,6 +219,35 @@ frame rate, decide whether this check passes.
   return out;
 }
 
+/**
+ * The work-rate table. Absent on results from before the counters existed.
+ */
+function workTable(rows, hasBaseline) {
+  if (rows.length === 0) return '';
+  let out = `
+### Work Rates (during scenario)
+
+How often the code did something expensive, counted at the source. Like scene
+cost these are counts, not timings, so they read the same on every machine —
+and unlike scene cost they move when a change stops rebuilding the world or
+re-rendering the UI on every frame.
+
+| Metric | Current | ${hasBaseline ? 'Baseline | Change | ' : ''}Status |
+|--------|---------|${hasBaseline ? '---------|--------|' : ''}--------|
+`;
+  for (const row of rows) {
+    const baseCell = hasBaseline
+      ? `${row.base ?? 'n/a'}${row.base != null ? row.budget.suffix : ''} | ${row.base != null ? formatChange(row.current, row.base) : ''} | `
+      : '';
+    out += `| **${row.budget.label}** | ${row.current}${row.budget.suffix} | ${baseCell}${getStatusEmoji(row.status)} |\n`;
+  }
+  return out;
+}
+
+function workOf(run) {
+  return run?.work ?? null;
+}
+
 function softwareCaveat(results) {
   return `
 > Measured on \`${results.renderer.name}\`, a **software rasteriser** on a shared
@@ -223,6 +279,22 @@ function generateReport(results, baseline) {
       if (status === 'regression') hasRegression = true;
       if (status === 'warning') hasWarning = true;
       sceneRows.push({ budget, current, base, status });
+    }
+  }
+
+  // Work rates -- gate like scene cost; both are counts.
+  const work = workOf(results);
+  const baseWork = hasBaseline ? workOf(baseline) : null;
+  const workRows = [];
+  if (work) {
+    for (const [key, budget] of Object.entries(WORK_BUDGETS)) {
+      const current = work[key]?.[budget.unit];
+      if (current == null) continue;
+      const base = baseWork?.[key]?.[budget.unit] ?? null;
+      const status = getSceneStatus(current, base, budget);
+      if (status === 'regression') hasRegression = true;
+      if (status === 'warning') hasWarning = true;
+      workRows.push({ budget, current, base, status });
     }
   }
 
@@ -261,7 +333,7 @@ ${overallStatus}
 
 **Scenario:** ${results.scenario} | **Duration:** ${results.duration / 1000}s | **Samples:** ${results.sampleCount}
 **Renderer:** \`${results.renderer?.name || 'unknown'}\`${software ? ' — **software rasteriser, no GPU**' : ''}${(results.cpuThrottle || 1) > 1 ? ` | **CPU throttle:** ${results.cpuThrottle}x` : ''}
-${sceneTable(sceneRows, hasBaseline, results)}
+${sceneTable(sceneRows, hasBaseline, results)}${workTable(workRows, hasBaseline && !!baseWork)}
 ### Frame Timings${software ? ' — advisory only' : ''}
 ${software ? softwareCaveat(results) : ''}
 

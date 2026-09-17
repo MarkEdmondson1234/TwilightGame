@@ -38,6 +38,8 @@ const CONFIG = {
   url: getArg('url') || 'http://localhost:4000/TwilightGame/',
   warmupMs: parseInt(getArg('warmup') || '5000', 10),
   durationMs: parseInt(getArg('duration') || '10000', 10),
+  time: getArg('time') || '10', // in-game hour to pin (see pinWorld)
+  weather: getArg('weather') || 'clear',
   scenario: getArg('scenario') || 'idle',
   map: getArg('map'), // e.g., 'village', 'deep_forest', 'witch_hut'
   saveFile: getArg('save'),
@@ -478,23 +480,26 @@ async function verifyInGame(page) {
 async function navigateToMap(page, mapId) {
   log(`Navigating to map: ${mapId}`, 'cyan');
 
-  // Use the game's map manager to teleport to a specific map
+  // Teleport through the game's own transition path (window.debugTeleport,
+  // bound by App.tsx). Calling mapManager.loadMap() directly, as this used to,
+  // changes the manager but not React's map state: the HUD label changed and
+  // the scene kept drawing the village, and every "bear_cave" number this
+  // harness ever reported was a village measurement.
   const result = await page.evaluate((targetMap) => {
-    // Access the mapManager through the window (if exposed)
-    if (typeof window.mapManager !== 'undefined') {
-      try {
-        window.mapManager.loadMap(targetMap);
-        const currentMap = window.mapManager.getCurrentMap();
-        return {
-          success: true,
-          mapId: currentMap?.id || 'unknown',
-          mapSize: currentMap ? `${currentMap.width}x${currentMap.height}` : 'unknown',
-        };
-      } catch (e) {
-        return { success: false, error: e.message };
-      }
+    if (typeof window.debugTeleport !== 'function') {
+      return { success: false, error: 'window.debugTeleport not available' };
     }
-    return { success: false, error: 'mapManager not available' };
+    try {
+      window.debugTeleport(targetMap);
+      const currentMap = window.mapManager?.getCurrentMap();
+      return {
+        success: true,
+        mapId: currentMap?.id || 'unknown',
+        mapSize: currentMap ? `${currentMap.width}x${currentMap.height}` : 'unknown',
+      };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
   }, mapId);
 
   if (result.success) {
@@ -563,12 +568,57 @@ async function setupTestCharacter(page, url) {
   log('  Injected test character into localStorage', 'dim');
 }
 
+async function pinWorld(page) {
+  const hour = parseInt(CONFIG.time, 10);
+  const applied = await page.evaluate(({ hour, weather }) => {
+    const tm = window.TimeManager;
+    const gs = window.gameState;
+    if (!tm || !gs) return null;
+    tm.setTimeOverride({ season: 'Spring', day: 5, hour, minute: 0 });
+    gs.setAutomaticWeather(false);
+    gs.setWeather(weather);
+    return { time: tm.getCurrentTime().timeOfDay, weather: gs.getWeather() };
+  }, { hour, weather: CONFIG.weather });
+  if (applied) {
+    log(`  World pinned: spring day 5, ${hour}:00 (${applied.time}), weather ${applied.weather}`, 'dim');
+  } else {
+    log('  Warning: could not pin world time/weather (globals missing)', 'yellow');
+  }
+}
+
 async function getMetrics(page) {
   return await page.evaluate(() => {
     const monitor = window.__PERF_MONITOR__;
     if (!monitor) return null;
     return monitor.getMetrics();
   });
+}
+
+/** Background walker for the 'movement' scenario: one key held at a time, turning every second. */
+const WALK_KEYS = ['KeyW', 'KeyD', 'KeyS', 'KeyA'];
+let walker = null;
+
+function startWalker(page) {
+  let i = 0;
+  let held = null;
+  const step = async () => {
+    try {
+      if (held) await page.keyboard.up(held);
+      held = WALK_KEYS[i++ % WALK_KEYS.length];
+      await page.keyboard.down(held);
+    } catch {
+      // page gone — stopWalker will clear the timer
+    }
+  };
+  walker = { timer: setInterval(step, 1000), release: async () => { if (held) await page.keyboard.up(held).catch(() => {}); } };
+  void step();
+}
+
+async function stopWalker() {
+  if (!walker) return;
+  clearInterval(walker.timer);
+  await walker.release();
+  walker = null;
 }
 
 async function runScenario(page, scenario) {
@@ -580,19 +630,13 @@ async function runScenario(page, scenario) {
       break;
 
     case 'movement':
-      // Simulate player movement (WASD)
-      await page.keyboard.down('KeyW');
-      await new Promise((r) => setTimeout(r, 1000));
-      await page.keyboard.up('KeyW');
-      await page.keyboard.down('KeyD');
-      await new Promise((r) => setTimeout(r, 1000));
-      await page.keyboard.up('KeyD');
-      await page.keyboard.down('KeyS');
-      await new Promise((r) => setTimeout(r, 1000));
-      await page.keyboard.up('KeyS');
-      await page.keyboard.down('KeyA');
-      await new Promise((r) => setTimeout(r, 1000));
-      await page.keyboard.up('KeyA');
+      // Walk for the whole measurement window, not just before it. This used
+      // to press W/D/S/A for a second each and return, so the 15 s that were
+      // then measured were of a player standing still — and "movement" graded
+      // an idle scene. The walker below runs until cleanupScenario() and turns
+      // every second so the player paces a small square rather than wandering
+      // off the map.
+      startWalker(page);
       break;
 
     case 'continuous-movement':
@@ -741,6 +785,14 @@ function analyseResults(samples) {
     // The reproducible one — see where AT_REST is captured.
     sceneAtRest: AT_REST,
 
+    // Work rates — how often the code did something expensive during the
+    // scenario, from counters incremented at the source (WorkCounters in
+    // utils/PerformanceMonitor.ts). Counts, like scene cost, so they compare
+    // across machines; expressed per second and per frame because some work
+    // scales with time (a tile-boundary crossing at walking speed) and some
+    // with frames (a React render per moving frame).
+    work: workSummary(samples),
+
     // Final snapshot values
     finalMetrics: samples[samples.length - 1],
   };
@@ -762,7 +814,7 @@ function sceneSummary(samples) {
     return sorted[Math.floor(sorted.length / 2)];
   };
 
-  const fields = ['nodes', 'sprites', 'visibleSprites', 'containers', 'maxDepth', 'textures', 'textureMB'];
+  const fields = ['nodes', 'sprites', 'visibleSprites', 'containers', 'maxDepth', 'textures', 'textureMB', 'filteredNodes', 'maskedNodes'];
   const out = {};
   for (const field of fields) {
     const values = scenes.map((s) => s[field] ?? 0);
@@ -771,6 +823,31 @@ function sceneSummary(samples) {
       peak: Math.round(Math.max(...values) * 10) / 10,
     };
   }
+  return out;
+}
+
+/**
+ * Turn the cumulative work counters into rates over the sampled window.
+ * Returns null when the build predates the counters (older baselines).
+ */
+function workSummary(samples) {
+  const first = samples.find((s) => s.work);
+  const last = [...samples].reverse().find((s) => s.work);
+  if (!first || !last || first === last) return null;
+  const seconds = (last.timestamp - first.timestamp) / 1000;
+  const frames = (last.frameCount ?? 0) - (first.frameCount ?? 0);
+  if (seconds <= 0) return null;
+  const out = {};
+  for (const key of Object.keys(last.work)) {
+    const delta = (last.work[key] ?? 0) - (first.work[key] ?? 0);
+    out[key] = {
+      total: delta,
+      perSecond: Math.round((delta / seconds) * 100) / 100,
+      perFrame: frames > 0 ? Math.round((delta / frames) * 1000) / 1000 : null,
+    };
+  }
+  out.frames = frames;
+  out.seconds = Math.round(seconds * 10) / 10;
   return out;
 }
 
@@ -812,6 +889,17 @@ function printResults(results) {
     logMetric('Tree depth', results.scene.maxDepth.peak);
     logMetric('Textures (peak)', results.scene.textures.peak);
     logMetric('Texture memory', results.scene.textureMB.peak, ' MB');
+    logMetric('Filtered nodes', results.scene.filteredNodes?.peak ?? 0);
+    logMetric('Masked nodes', results.scene.maskedNodes?.peak ?? 0);
+  }
+  if (results.work) {
+    log('\nWork Rates (hardware-independent):', 'yellow');
+    const w = results.work;
+    log(`  App renders          ${w.appRenders.perFrame} /frame  (${w.appRenders.perSecond} /s)`);
+    log(`  Scene rebuilds       ${w.sceneRebuilds.perSecond} /s`);
+    log(`  NPC draws            ${w.npcDraws.perFrame} /frame`);
+    log(`  Darkness uploads     ${w.darknessUploads.perSecond} /s`);
+    log(`  Save flushes         ${Math.round(w.saveFlushes.perSecond * 60 * 10) / 10} /min`);
   }
 
   log('\n========================================\n', 'cyan');
@@ -1096,6 +1184,15 @@ async function main() {
       await logCurrentGameState(page);
     }
 
+    // Pin the world clock and the weather. In-game time follows the real clock,
+    // so an unpinned run measures whatever hour CI happened to start at: at
+    // night the village lamp is lit and the darkness overlay uploads on every
+    // camera frame, by day it does nothing; rain adds a thousand particles. The
+    // scene-cost and work-rate gates are only comparable run to run if every
+    // run sees the same world. `--time HH` and `--weather X` override for
+    // measuring a specific condition (e.g. `--time 22` for the lit village).
+    await pinWorld(page);
+
     // Warmup period
     log(`Warming up for ${CONFIG.warmupMs / 1000}s...`, 'dim');
     await new Promise((r) => setTimeout(r, CONFIG.warmupMs));
@@ -1120,6 +1217,7 @@ async function main() {
     const samples = await collectPerformanceData(page, CONFIG.durationMs);
 
     // Cleanup scenario
+    await stopWalker(page);
     if (CONFIG.scenario === 'continuous-movement') {
       await page.keyboard.up('KeyW');
       await page.keyboard.up('KeyD');

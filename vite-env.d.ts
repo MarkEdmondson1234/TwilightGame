@@ -52,6 +52,12 @@ interface Window {
   /** Console testing for the Yule celebration — see utils/gameInitializer.ts's dev commands log */
   yuleCelebrationManager?: typeof import('./utils/YuleCelebrationManager').yuleCelebrationManager;
   TimeManager?: typeof import('./utils/TimeManager').TimeManager;
+  /**
+   * Teleport through the game's real transition path (App's handleMapTransition).
+   * Used by scripts/perf-test.js. `mapManager.loadMap()` alone changes the
+   * manager but not React's map state, so the scene keeps drawing the old map.
+   */
+  debugTeleport?: (mapId: string, spawn?: { x: number; y: number }) => void;
   Season?: typeof import('./utils/TimeManager').Season;
   ColorResolver?: typeof import('./utils/ColorResolver').ColorResolver;
 }

@@ -227,6 +227,14 @@ import { reportMessageOnce } from './utils/errorReporting';
 const ZERO_GRID_OFFSET = Object.freeze({ x: 0, y: 0 });
 
 const App: React.FC = () => {
+  // Counted, not timed: how often this 3,000-line component commits is the
+  // single best proxy for CPU cost per frame, and it reads the same on every
+  // machine (see WorkCounters in utils/PerformanceMonitor.ts). An effect with
+  // no dependencies runs once per commit; counting in the render body would
+  // double-count under StrictMode's development double render.
+  useEffect(() => {
+    performanceMonitor.count('appRenders');
+  });
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
   const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen, isAnyUIOpen } = useUIState();
 
@@ -807,6 +815,23 @@ const App: React.FC = () => {
       'success'
     );
   };
+
+  // Test hook: the headless harness (scripts/perf-test.js) and the console
+  // teleport through the real transition path. Calling mapManager.loadMap()
+  // directly changes the manager but not React's map state, so the scene keeps
+  // drawing the previous map — which went unnoticed while the scene was being
+  // rebuilt on every frame anyway. Re-bound every commit (no deps) so it never
+  // captures a stale handler.
+  useEffect(() => {
+    window.debugTeleport = (mapId: string, spawn?: Position) => {
+      const map = mapManager.getMap(mapId);
+      if (!map) throw new Error(`debugTeleport: unknown map '${mapId}'`);
+      handleMapTransition(mapId, spawn ?? map.spawnPoint);
+    };
+    return () => {
+      delete window.debugTeleport;
+    };
+  });
 
   // Map transition handler
   const handleMapTransition = (mapId: string, spawnPos: Position) => {

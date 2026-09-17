@@ -24,6 +24,7 @@ import { Season, TimeOfDay, TimeManager } from '../TimeManager';
 import { Z_WEATHER_TINT } from '../../zIndex';
 import { TILE_SIZE } from '../../constants';
 import { debugLog } from '../debugLog';
+import { performanceMonitor } from '../PerformanceMonitor';
 
 /** Light source descriptor — passed from the renderer to describe each active light */
 export interface LightSource {
@@ -142,6 +143,17 @@ const GRADIENT_TEXTURE_SIZE = 128;
 // Margin (px) added to each edge of the offscreen canvas to prevent edge clipping
 const CANVAS_MARGIN = 100;
 
+/**
+ * Resolution of the offscreen darkness canvas relative to the viewport.
+ *
+ * The canvas is nothing but a flat fill with soft radial holes, which looks the
+ * same drawn at a quarter of the size and scaled up, and it is re-uploaded to
+ * the GPU (a full texImage2D) on every camera frame while any light is on
+ * screen. At 1366×904 that was a 7.7 MB upload per frame; at 0.25 it is 0.5 MB.
+ * Tier-dependent — see utils/performanceTier.ts (mobile gets the smallest).
+ */
+export const DEFAULT_DARKNESS_COMPOSITE_SCALE = 0.5;
+
 // ─── Per-torch flicker state ──────────────────────────────────────────────────
 
 interface TorchFlicker {
@@ -232,9 +244,12 @@ export class DarknessLayer {
   private lastTimeOfDay = '';
   private darknessColor: number = DEFAULT_DARKNESS_COLOR;
   private hasLights = false;
+  private compositeScale = DEFAULT_DARKNESS_COMPOSITE_SCALE;
+  private lastCompositeAt = 0;
 
-  constructor(color?: number) {
+  constructor(color?: number, compositeScale = DEFAULT_DARKNESS_COMPOSITE_SCALE) {
     if (color !== undefined) this.darknessColor = color;
+    this.compositeScale = compositeScale;
 
     this.container = new PIXI.Container();
     this.container.zIndex = Z_WEATHER_TINT;
@@ -327,8 +342,10 @@ export class DarknessLayer {
     this.lastTimeOfDay = String(timeOfDay);
 
     if (sizeChanged) {
-      this.offCanvas.width = viewportWidth + CANVAS_MARGIN * 2;
-      this.offCanvas.height = viewportHeight + CANVAS_MARGIN * 2;
+      this.offCanvas.width = Math.ceil((viewportWidth + CANVAS_MARGIN * 2) * this.compositeScale);
+      this.offCanvas.height = Math.ceil((viewportHeight + CANVAS_MARGIN * 2) * this.compositeScale);
+      // The sprite covers the viewport at full size whatever the canvas resolution.
+      this.darknessSprite.scale.set(1 / this.compositeScale);
     }
 
     this._compositeDarkness();
@@ -491,6 +508,9 @@ export class DarknessLayer {
     const h = this.offCanvas.height;
     const ctx = this.offCtx;
 
+    this.lastCompositeAt = performance.now();
+    const k = this.compositeScale;
+
     // 1. Fill with darkness colour at darkness alpha
     ctx.clearRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'source-over';
@@ -507,9 +527,9 @@ export class DarknessLayer {
         const f = this.torchFlickers[i];
         if (!f) continue;
 
-        const radius = f.baseRadius * f.radiusScale * this.currentZoom;
-        const cx = pos.x + CANVAS_MARGIN + f.jitterX * this.currentZoom;
-        const cy = pos.y + CANVAS_MARGIN + f.jitterY * this.currentZoom;
+        const radius = f.baseRadius * f.radiusScale * this.currentZoom * k;
+        const cx = (pos.x + CANVAS_MARGIN + f.jitterX * this.currentZoom) * k;
+        const cy = (pos.y + CANVAS_MARGIN + f.jitterY * this.currentZoom) * k;
 
         // Intensity affects the centre alpha of the gradient
         const centreAlpha = Math.min(f.intensity * f.baseIntensity, 1.0);
@@ -536,6 +556,7 @@ export class DarknessLayer {
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1.0;
 
+    performanceMonitor.count('darknessUploads');
     if (this.darknessTexture) {
       this.darknessTexture.source.resource = this.offCanvas;
       this.darknessTexture.source.update();
@@ -597,7 +618,12 @@ export class DarknessLayer {
     this.flickerTimer = setInterval(() => {
       this._tickFlicker();
       if (this.hasLights) {
-        this._compositeDarkness();
+        // While the camera is moving, updateLights() already composites every
+        // frame and will pick up this tick's flicker values; compositing here
+        // as well was a second full upload on top of that one.
+        if (performance.now() - this.lastCompositeAt >= FLICKER_TICK_MS - 1) {
+          this._compositeDarkness();
+        }
         this._updateGlowSprites();
       }
     }, FLICKER_TICK_MS);

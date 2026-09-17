@@ -514,7 +514,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
         // Create weather layer
         try {
-          const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight);
+          const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight, perfSettings.particleScale);
           weatherLayerRef.current = weatherLayer;
           await weatherLayer.loadTextures();
           app.stage.addChild(weatherLayer.getContainer());
@@ -537,7 +537,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         }
 
         // Create darkness layer (+ warm glow container above it)
-        const darknessLayer = new DarknessLayer();
+        const darknessLayer = new DarknessLayer(undefined, perfSettings.darknessCompositeScale);
         darknessLayerRef.current = darknessLayer;
         app.stage.addChild(darknessLayer.getContainer());
         const glowContainer = darknessLayer.getGlowContainer();

@@ -37,7 +37,49 @@ export interface SceneCost {
   maxDepth: number; // deepest nesting — proxy for transform/sort work
   textures: number; // distinct texture sources referenced by visible sprites
   textureMB: number; // estimated GPU residency of those sources (RGBA)
+  /**
+   * Drawn nodes carrying a filter. Each one is a render-to-texture plus one
+   * pass per filter per frame — on a mobile GPU the most expensive thing a
+   * node can do, and invisible to every other count here. Shadows used to be
+   * thirty of these.
+   */
+  filteredNodes: number;
+  /** Drawn nodes carrying a sprite/graphics mask: a full render-to-texture each. */
+  maskedNodes: number;
 }
+
+/**
+ * How much work the code does per unit of play, as opposed to how much the
+ * scene contains. Counters, incremented at the source by `count()`, cumulative
+ * since `reset()`. The headless harness turns them into rates.
+ *
+ * Why these exist: the day-one performance PR removed most of the per-frame CPU
+ * work and the scene-cost gate did not move, because the scene was the same —
+ * it was just being rebuilt sixty times a second instead of once. Timing is a
+ * property of the machine; counts of work are a property of the code.
+ */
+export interface WorkCounters {
+  /** React renders of the App component. Should be ~0 per frame while idle. */
+  appRenders: number;
+  /** Full tile-layer rebuilds (TileLayer.renderTiles doing work). */
+  sceneRebuilds: number;
+  /** NPC layer draws. At most one per frame; ~0 while nothing moves. */
+  npcDraws: number;
+  /** Darkness overlay canvas → GPU uploads (a full texImage2D each). */
+  darknessUploads: number;
+  /** Full save serialisations to localStorage. */
+  saveFlushes: number;
+}
+
+export type WorkCounter = keyof WorkCounters;
+
+export const EMPTY_WORK_COUNTERS: WorkCounters = {
+  appRenders: 0,
+  sceneRebuilds: 0,
+  npcDraws: 0,
+  darknessUploads: 0,
+  saveFlushes: 0,
+};
 
 export interface PerformanceMetrics {
   // Frame timing
@@ -58,6 +100,9 @@ export interface PerformanceMetrics {
   // Scene cost — see SceneCost. Hardware-independent, so unlike fps these
   // survive being measured on a software renderer.
   scene: SceneCost;
+
+  // Work done since reset() — see WorkCounters. Also hardware-independent.
+  work: WorkCounters;
 
   // Timing
   timestamp: number;
@@ -81,6 +126,8 @@ export interface SceneNode {
   renderable?: boolean;
   alpha?: number;
   texture?: { source?: { uid?: number | string; width?: number; height?: number } } | null;
+  filters?: readonly unknown[] | null;
+  mask?: unknown;
 }
 
 export const EMPTY_SCENE_COST: SceneCost = {
@@ -91,6 +138,8 @@ export const EMPTY_SCENE_COST: SceneCost = {
   maxDepth: 0,
   textures: 0,
   textureMB: 0,
+  filteredNodes: 0,
+  maskedNodes: 0,
 };
 
 /**
@@ -122,6 +171,11 @@ export function measureSceneCost(stage: SceneNode | null | undefined): SceneCost
       node.visible !== false &&
       node.renderable !== false &&
       (node.alpha === undefined || node.alpha > 0);
+
+    if (drawn) {
+      if (node.filters && node.filters.length > 0) cost.filteredNodes++;
+      if (node.mask) cost.maskedNodes++;
+    }
 
     const source = node.texture?.source;
     if (source) {
@@ -167,6 +221,15 @@ class PerformanceMonitor {
   // The live PixiJS stage, registered by usePixiRenderer. Held as a plain
   // reference and cleared on teardown; never walked on the frame path.
   private _stage: SceneNode | null = null;
+  private _work: WorkCounters = { ...EMPTY_WORK_COUNTERS };
+
+  /**
+   * Record one unit of work at its source. Cheap enough for hot paths (a
+   * property increment); see WorkCounters for what to count and why.
+   */
+  count(counter: WorkCounter, n = 1): void {
+    this._work[counter] += n;
+  }
 
   constructor() {
     this.startTime = performance.now();
@@ -273,6 +336,7 @@ class PerformanceMonitor {
       spriteCount: this._spriteCount || scene.sprites,
       domNodeCount,
       scene,
+      work: { ...this._work },
       timestamp: now,
       uptime: (now - this.startTime) / 1000,
       frameCount: this.frameCount,
@@ -315,6 +379,7 @@ class PerformanceMonitor {
     this.startTime = performance.now();
     this.frameCount = 0;
     this.snapshots = [];
+    this._work = { ...EMPTY_WORK_COUNTERS };
   }
 
   /**
