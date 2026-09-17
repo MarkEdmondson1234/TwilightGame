@@ -8,8 +8,9 @@ This directory contains design documents for planned features and architectural 
 
 ### 📱 Performance on Every Device
 
-**Status**: Planned (investigation complete, 2026-09-17)
-**Documents**: [PERFORMANCE_MOBILE_PLAN.md](./PERFORMANCE_MOBILE_PLAN.md)
+**Status**: In progress — days 1–3 shipped 2026-09-17 (PRs #136, #138, #139); next is §6A
+**Documents**: [PERFORMANCE_MOBILE_PLAN.md](./PERFORMANCE_MOBILE_PLAN.md) (investigation and ranked list, with a Progress section),
+[PERFORMANCE_HANDOVER.md](./PERFORMANCE_HANDOVER.md) (**start here** in a fresh session: state, how to measure, what's next, traps)
 
 Why the old iPad and iPhone are still jerky, with real-device numbers from Sentry:
 the React tree re-renders and rebuilds the PixiJS scene every frame, three GPU

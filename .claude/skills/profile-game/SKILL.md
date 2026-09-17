@@ -29,6 +29,24 @@ Invoke this skill when:
 - Before/after making significant code changes
 - User mentions slowdowns or crashes
 
+## CPU-side changes: use the profile, not fps
+
+Headless fps is fill-rate bound under SwiftShader and cannot see a change that
+removes per-frame CPU work (it moved 39.7 → 42.5 for a change that halved React
+work). For those, run a V8 sampling profile under CPU throttling on `main` and
+on the branch and compare inclusive ms/s by function:
+
+```bash
+node scripts/perf-cpu-profile.mjs http://localhost:4000/TwilightGame/ branch
+node scripts/perf-cpu-profile.mjs http://localhost:4001/TwilightGame/ main   # main served from a scratch worktree
+node scripts/perf-cpu-profile.mjs --who-sets-state                            # which code asks React to re-render
+```
+
+CI's performance job grades **work rates** (App renders/frame, scene
+rebuilds/s, ...) and **filtered/masked node counts** alongside scene cost, so
+these changes show in the PR comment. See
+`design_docs/planned/PERFORMANCE_HANDOVER.md`.
+
 ## Important: Software vs Hardware WebGL
 
 Headless Chrome uses **software WebGL rendering** (SwiftShader) because there's no GPU available. This means:
