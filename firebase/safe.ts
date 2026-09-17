@@ -24,6 +24,7 @@ import type { AlbumEntry } from './sharedAlbumService';
 import type { NpcSpeechWire } from '../multiplayer/npcSpeech';
 import type { BattleWire, CheerWire } from '../multiplayer/battle';
 import type { Gift } from '../multiplayer/gifts';
+import type { PaintingLoadResult, PaintingSaveResult } from './paintingStorage';
 import { debugLog } from '../utils/debugLog';
 
 /** Stub authService when Firebase is not available */
@@ -97,8 +98,8 @@ const stubSyncManager = {
 
 /** Stub paintingStorageService when Firebase is not available */
 const stubPaintingStorage = {
-  saveImage: async () => false as boolean,
-  loadImage: async () => null as string | null,
+  saveImage: async (): Promise<PaintingSaveResult> => ({ status: 'signed-out' }),
+  loadImage: async (): Promise<PaintingLoadResult> => ({ status: 'signed-out' }),
   deleteImage: async () => {},
   loadAllImages: async () => new Map<string, string>(),
 };

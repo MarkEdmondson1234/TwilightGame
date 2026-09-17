@@ -20,6 +20,7 @@ import { eventBus, GameEvent } from '../utils/EventBus';
 import { interpolateAt, pushSample } from './interpolation';
 import { CHAT_BUBBLE_DURATION_MS, truncateForBubble } from './chat';
 import { decodeDirection, isGhostRecord } from './wire';
+import { serverNow } from './serverClock';
 import { resolveOutfit } from '../utils/characterOutfits';
 import type { EmoteId } from './emotes';
 import type { PresenceSample, PresenceWire, RemotePlayer } from './types';
@@ -76,7 +77,8 @@ class RemotePlayerManagerClass {
     // it would show a player standing in the village who is not there, and our
     // own staleness eviction could not save us: it counts from local receipt,
     // so a ghost looks alive for the first 45 seconds after we walk in.
-    if (isGhostRecord(wire, now, MULTIPLAYER.GHOST_AFTER_MS)) {
+    // `now` is the local clock; `t` is the server's. See multiplayer/serverClock.ts.
+    if (isGhostRecord(wire, serverNow(now), MULTIPLAYER.GHOST_AFTER_MS)) {
       if (DEBUG.MULTIPLAYER) debugLog('Multiplayer', `Ignoring ghost record from ${uid}`);
       return;
     }

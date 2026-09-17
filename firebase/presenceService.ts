@@ -22,6 +22,7 @@ import {
   onChildChanged,
   onChildRemoved,
   onDisconnect,
+  onValue,
   serverTimestamp,
   type DatabaseReference,
 } from 'firebase/database';
@@ -29,8 +30,9 @@ import { getRealtimeDb, isRealtimeConfigured } from './realtimeConfig';
 import { isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG, MULTIPLAYER } from '../constants';
-import { reportError } from '../utils/errorReporting';
+import { reportError, reportMessageOnce } from '../utils/errorReporting';
 import { encodePresence, decodePresence, isGhostRecord } from '../multiplayer/wire';
+import { serverNow, setServerTimeOffset, isServerTimeOffsetKnown } from '../multiplayer/serverClock';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState, PresenceEvent } from '../multiplayer/types';
 
@@ -49,6 +51,7 @@ class PresenceService {
   private listeners = new Set<(event: PresenceEvent) => void>();
   /** Publish runs at 5 Hz — report the first failure only, not 300 a minute. */
   private reportedPublishFailure = false;
+  private unsubscribeClock: (() => void) | null = null;
 
   /** True when presence can actually be published — Firebase up and signed in. */
   isAvailable(): boolean {
@@ -121,6 +124,7 @@ class PresenceService {
     if (!db || !uid) return false;
 
     try {
+      this.#watchServerClock(db);
       const roomRef = ref(db, `${PRESENCE_ROOT}/${mapId}`);
       this.selfRef = ref(db, `${PRESENCE_ROOT}/${mapId}/${uid}`);
       this.roomMapId = mapId;
@@ -132,11 +136,20 @@ class PresenceService {
       const handle = (type: 'joined' | 'changed') => (snapshot: ChildSnapshot) => {
         const otherUid = snapshot.key;
         if (!otherUid || otherUid === uid) return;
-        const wire = decodePresence(snapshot.val());
+        const raw = snapshot.val();
+        const wire = decodePresence(raw);
         if (!wire) {
-          if (DEBUG.MULTIPLAYER) {
-            console.warn(`[Presence] Dropped malformed record from ${otherUid}`);
-          }
+          // Every dropped record is a player somebody cannot see. Say so once
+          // per player, whatever the debug flags: a drop that only logs when
+          // asked is what made "she can see me but I can't see her" untraceable.
+          const keys = raw && typeof raw === 'object' ? Object.keys(raw).join(',') : typeof raw;
+          console.warn(`[Presence] Dropped malformed record from ${otherUid} (fields: ${keys})`);
+          reportMessageOnce(
+            'Presence record dropped: malformed',
+            'presence',
+            { room: mapId, uid: otherUid, fields: keys },
+            `malformed:${otherUid}`
+          );
           return;
         }
 
@@ -145,8 +158,29 @@ class PresenceService {
         // walks in sees the same ghost for as long as it sits there. The rules
         // allow anyone to delete a demonstrably stale record, and a live player
         // heartbeats every 15 s, so this cannot evict somebody who is present.
-        if (isGhostRecord(wire, Date.now(), MULTIPLAYER.GHOST_AFTER_MS)) {
-          if (DEBUG.MULTIPLAYER) console.log(`[Presence] Sweeping ghost record ${otherUid}`);
+        //
+        // Judged on the *server's* clock (multiplayer/serverClock.ts): `t` is a
+        // server timestamp, and a tablet running minutes fast would otherwise
+        // see every live player as a ghost. Both ages go in the report so that
+        // case is recognisable — a large raw age with a small corrected one.
+        const localNow = Date.now();
+        if (isGhostRecord(wire, serverNow(localNow), MULTIPLAYER.GHOST_AFTER_MS)) {
+          const ageMs = serverNow(localNow) - wire.t;
+          console.warn(
+            `[Presence] Sweeping ghost record ${otherUid} (${Math.round(ageMs / 1000)} s old)`
+          );
+          reportMessageOnce(
+            'Presence record dropped as ghost',
+            'presence',
+            {
+              room: mapId,
+              uid: otherUid,
+              ageMs: Math.round(ageMs),
+              rawAgeMs: Math.round(localNow - wire.t),
+              serverOffsetKnown: isServerTimeOffsetKnown(),
+            },
+            `ghost:${otherUid}`
+          );
           void this.#sweepGhost(mapId, otherUid);
           return;
         }
@@ -172,6 +206,40 @@ class PresenceService {
       this.roomMapId = null;
       this.selfRef = null;
       return false;
+    }
+  }
+
+  /**
+   * Learn how far this device's clock is from the server's. Subscribed once
+   * per session; the SDK keeps it current across reconnects. A clock that is
+   * well out is reported, because it is the one fault that makes the shared
+   * world look broken on a single device — and nobody checks the clock.
+   */
+  #watchServerClock(db: NonNullable<ReturnType<typeof getRealtimeDb>>): void {
+    if (this.unsubscribeClock) return;
+    try {
+      this.unsubscribeClock = onValue(ref(db, '.info/serverTimeOffset'), (snapshot) => {
+        const offset = snapshot.val();
+        if (typeof offset !== 'number') return;
+        setServerTimeOffset(offset);
+        if (Math.abs(offset) > MULTIPLAYER.CLOCK_SKEW_WARN_MS) {
+          const seconds = Math.round(offset / 1000);
+          console.warn(
+            `[Presence] This device's clock is ${Math.abs(seconds)} s ${seconds > 0 ? 'behind' : 'ahead of'} the server.`
+          );
+          reportMessageOnce(
+            'Device clock differs from server',
+            'presence',
+            { offsetMs: Math.round(offset) },
+            'clock-skew'
+          );
+        } else if (DEBUG.MULTIPLAYER) {
+          console.log(`[Presence] Server clock offset ${Math.round(offset)} ms`);
+        }
+      });
+    } catch (error) {
+      // Diagnostics only — the ghost check falls back to the local clock.
+      if (DEBUG.MULTIPLAYER) console.warn('[Presence] Could not read server clock:', error);
     }
   }
 
@@ -251,6 +319,8 @@ class PresenceService {
   async destroy(): Promise<void> {
     await this.leaveRoom();
     this.listeners.clear();
+    this.unsubscribeClock?.();
+    this.unsubscribeClock = null;
   }
 }
 

@@ -10,7 +10,7 @@
  */
 
 import { isFirebaseLoaded, getPaintingStorageService } from '../firebase/safe';
-import { reportErrorOnce } from './errorReporting';
+import { reportErrorOnce, reportMessageOnce } from './errorReporting';
 import { debugLog } from './debugLog';
 
 // ===== Constants =====
@@ -132,9 +132,23 @@ export function getLocalPaintingCount(): number {
 
 // ===== Orchestration (local + cloud) =====
 
+/** The encoding a data URL carries — `image/webp` normally, `image/png` where
+ * the browser could not encode WebP. Reported with failures because a PNG is
+ * several times the size and is what pushes a picture past the Firestore cap. */
+function dataUrlFormat(dataUrl: string): string {
+  const match = /^data:([^;,]+)/.exec(dataUrl);
+  return match?.[1] ?? 'unknown';
+}
+
 /**
  * Save a painting image to localStorage and (if authenticated) Firestore.
  * Returns the data URL string.
+ *
+ * A picture that stays local is invisible to every other player, and the
+ * failure used to be silent: `saveImage()` returned false when nobody was
+ * signed in (which is the case for the first seconds of every session, while
+ * Firebase restores the account) and the game carried on. So every outcome
+ * that leaves the cloud without the picture is said out loud and reported.
  */
 export async function savePaintingImage(
   paintingId: string,
@@ -147,43 +161,80 @@ export async function savePaintingImage(
     console.warn('[PaintingImageService] Could not save locally — localStorage full');
   }
 
-  // Try Firestore if Firebase is loaded
-  if (isFirebaseLoaded()) {
-    try {
-      const storage = getPaintingStorageService();
-      await storage.saveImage(paintingId, dataUrl, name);
-    } catch (e) {
-      console.warn('[PaintingImageService] Cloud save failed (will retry on sync):', e);
-    }
+  const sizeKB = Math.round(getImageSizeKB(dataUrl));
+  const details = { paintingId, name, sizeKB, format: dataUrlFormat(dataUrl) };
+
+  if (!isFirebaseLoaded()) {
+    // Either no Firebase at all (a legitimately offline game) or the dynamic
+    // import has not settled yet. Not reported: without Firebase there is no
+    // Sentry either, and the loaded-but-signed-out case below is the one that
+    // actually happens to players.
+    debugLog('PaintingImageService', `"${name}" kept local only: Firebase not loaded`);
+    return dataUrl;
+  }
+
+  const storage = getPaintingStorageService();
+  const result = await storage.saveImage(paintingId, dataUrl, name);
+  if (result.status === 'signed-out') {
+    console.warn(
+      `[PaintingImageService] "${name}" was not uploaded: not signed in. Other players will not see it.`
+    );
+    reportMessageOnce('Painting image not uploaded: not signed in', 'persistence', details);
+  } else if (result.status === 'error') {
+    console.warn(
+      `[PaintingImageService] "${name}" was not uploaded (${sizeKB} KB). Other players will not see it.`
+    );
+    reportErrorOnce(result.error, 'persistence', details);
   }
 
   return dataUrl;
+}
+
+/** Where a picture came from, or why it did not. */
+export type PaintingLoadReason =
+  | 'local'
+  | 'shared'
+  | 'legacy'
+  | 'missing'
+  | 'signed-out'
+  | 'firebase-not-loaded'
+  | 'error';
+
+export interface PaintingLoadOutcome {
+  dataUrl: string | null;
+  reason: PaintingLoadReason;
+}
+
+/**
+ * Load a painting image and say where it came from. Tries localStorage first,
+ * then Firestore. The reason is what turns "I can't see her wreath" into a
+ * diagnosis: `missing` means the picture was never uploaded by whoever made it,
+ * `signed-out` means *we* could not ask for it yet.
+ */
+export async function loadPaintingImageDetailed(paintingId: string): Promise<PaintingLoadOutcome> {
+  const local = loadImageLocally(paintingId);
+  if (local) return { dataUrl: local, reason: 'local' };
+
+  if (!isFirebaseLoaded()) return { dataUrl: null, reason: 'firebase-not-loaded' };
+
+  const storage = getPaintingStorageService();
+  const result = await storage.loadImage(paintingId);
+  if (result.status === 'found') {
+    // Cache locally for next time
+    saveImageLocally(paintingId, result.dataUrl);
+    return { dataUrl: result.dataUrl, reason: result.source };
+  }
+  if (result.status === 'error') {
+    reportErrorOnce(result.error, 'persistence', { paintingId, action: 'load' });
+  }
+  return { dataUrl: null, reason: result.status };
 }
 
 /**
  * Load a painting image. Tries localStorage first, then Firestore.
  */
 export async function loadPaintingImage(paintingId: string): Promise<string | null> {
-  // Try localStorage first (fast)
-  const local = loadImageLocally(paintingId);
-  if (local) return local;
-
-  // Try Firestore
-  if (isFirebaseLoaded()) {
-    try {
-      const storage = getPaintingStorageService();
-      const cloudData = await storage.loadImage(paintingId);
-      if (cloudData) {
-        // Cache locally for next time
-        saveImageLocally(paintingId, cloudData);
-        return cloudData;
-      }
-    } catch (e) {
-      console.warn('[PaintingImageService] Cloud load failed:', e);
-    }
-  }
-
-  return null;
+  return (await loadPaintingImageDetailed(paintingId)).dataUrl;
 }
 
 /**

@@ -32,6 +32,25 @@ import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { debugLog } from '../utils/debugLog';
 
+/**
+ * Why a save or load did not produce a picture. Every outcome is named, because
+ * each one has led to "she can see the wreath and I can't" and the old
+ * `false`/`null` returns made them indistinguishable from each other and from
+ * an offline game — see utils/paintingImageService.ts for who reports what.
+ */
+export type PaintingSaveResult =
+  | { status: 'saved' }
+  /** Firebase is up but nobody is signed in: the picture stays local only. */
+  | { status: 'signed-out' }
+  | { status: 'error'; error: unknown };
+
+export type PaintingLoadResult =
+  | { status: 'found'; dataUrl: string; source: 'shared' | 'legacy' }
+  /** Neither the shared nor the legacy document exists — never uploaded. */
+  | { status: 'missing' }
+  | { status: 'signed-out' }
+  | { status: 'error'; error: unknown };
+
 // Firestore path: shared/world/paintings/{paintingId}
 const SHARED_PAINTINGS_COLLECTION = 'shared/world/paintings';
 
@@ -49,13 +68,10 @@ function legacyPaintingDoc(userId: string, paintingId: string): string {
 }
 
 class PaintingStorageService {
-  /**
-   * Save a painting image to Firestore.
-   * Returns true on success, false on failure.
-   */
-  async saveImage(paintingId: string, dataUrl: string, name: string): Promise<boolean> {
+  /** Save a painting image to Firestore. Never throws; the result says why not. */
+  async saveImage(paintingId: string, dataUrl: string, name: string): Promise<PaintingSaveResult> {
     const userId = this.getUserId();
-    if (!userId) return false;
+    if (!userId) return { status: 'signed-out' };
 
     try {
       const db = getFirebaseDb();
@@ -67,33 +83,33 @@ class PaintingStorageService {
         createdAt: serverTimestamp(),
       });
       debugLog('PaintingStorage', `Saved painting "${name}" to Firestore`);
-      return true;
+      return { status: 'saved' };
     } catch (e) {
       console.warn('[PaintingStorage] Save failed:', e);
-      return false;
+      return { status: 'error', error: e };
     }
   }
 
-  /**
-   * Load a single painting image from Firestore.
-   */
-  async loadImage(paintingId: string): Promise<string | null> {
+  /** Load a single painting image from Firestore. Never throws; the result says why not. */
+  async loadImage(paintingId: string): Promise<PaintingLoadResult> {
     const userId = this.getUserId();
-    if (!userId) return null;
+    if (!userId) return { status: 'signed-out' };
 
     try {
       const db = getFirebaseDb();
       const shared = await getDoc(doc(db, sharedPaintingDoc(paintingId)));
-      if (shared.exists()) return (shared.data().imageData as string) ?? null;
+      const sharedData = shared.exists() ? (shared.data().imageData as string | undefined) : null;
+      if (sharedData) return { status: 'found', dataUrl: sharedData, source: 'shared' };
 
       // Painted before paintings were shared — still ours to load.
       const legacy = await getDoc(doc(db, legacyPaintingDoc(userId, paintingId)));
-      if (legacy.exists()) return (legacy.data().imageData as string) ?? null;
+      const legacyData = legacy.exists() ? (legacy.data().imageData as string | undefined) : null;
+      if (legacyData) return { status: 'found', dataUrl: legacyData, source: 'legacy' };
 
-      return null;
+      return { status: 'missing' };
     } catch (e) {
       console.warn('[PaintingStorage] Load failed:', e);
-      return null;
+      return { status: 'error', error: e };
     }
   }
 

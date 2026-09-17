@@ -22,7 +22,8 @@ import { eventBus, GameEvent } from '../utils/EventBus';
 import { gameState } from '../GameState';
 import { getSharedPlacedItemsService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
-import { loadPaintingImage } from '../utils/paintingImageService';
+import { loadPaintingImageDetailed } from '../utils/paintingImageService';
+import { reportMessageOnce } from '../utils/errorReporting';
 import type { PlacedItem } from '../types';
 import { debugLog } from '../utils/debugLog';
 
@@ -159,7 +160,7 @@ export function useSharedPlacedItemsController(
 
         hydrating.add(item.paintingId);
         const paintingId = item.paintingId;
-        void loadPaintingImage(paintingId).then((dataUrl) => {
+        void loadPaintingImageDetailed(paintingId).then(({ dataUrl, reason }) => {
           if (cancelled) return;
           if (!dataUrl) {
             // Not there — yet. Release the id so a later snapshot can try
@@ -174,6 +175,23 @@ export function useSharedPlacedItemsController(
               window.setTimeout(() => {
                 if (!cancelled) hydratePaintings();
               }, HYDRATE_RETRY_MS);
+            } else if (attempts === MAX_HYDRATE_ATTEMPTS + 1) {
+              // Out of retries: from here the item draws as its icon. Said
+              // once, out loud and to Sentry, because "I can see her wreath
+              // and she can't see mine" has no other trace — the placed item
+              // syncs fine, only its picture is absent, and the reason names
+              // which side lost it (`missing` = never uploaded by its maker;
+              // `signed-out` = we could not ask yet).
+              console.warn(
+                `[SharedItems] No picture for ${item.itemId} (${paintingId}) after ${MAX_HYDRATE_ATTEMPTS} attempts: ${reason}. Showing its icon instead.`
+              );
+              reportMessageOnce('Shared placed item picture unavailable', 'shared_world', {
+                paintingId,
+                itemId: item.itemId,
+                mapId,
+                reason,
+                signedIn: getAuthService().getState().isAuthenticated,
+              });
             }
             return;
           }
