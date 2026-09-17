@@ -242,16 +242,20 @@ Allow warmup period (default 5s). Use longer duration for stable readings.
 The performance tests run automatically in GitHub Actions on every push/PR. See `.github/workflows/performance.yml`.
 
 **CI runs these tests:**
-1. Village baseline with movement (15s)
-2. Bear cave and witch hut maps (10s each)
-3. Device-throttled tests (iPad simulations)
-
-Results are posted as PR comments and artifacts.
+One browser session; every map in `perf/budgets.json` (village, bear cave,
+witch hut, Mum's kitchen) is teleported to, settled, read at rest for scene
+cost, then walked for ~15 s for work rates. Each number is compared with the
+ceiling committed in `perf/budgets.json`; over the ceiling fails the job and
+the PR comment names the row. Frame rate is recorded, never gated (CI draws
+in software). Improved a number? Lower its ceiling in the same PR, or
+regenerate all of them with `npm run perf:budgets` and check the diff.
 
 ## Files
 
-- `scripts/perf-test.js` - Puppeteer test runner
-- `scripts/perf-report.js` - Report generator for CI
+- `scripts/perf-ci.mjs` - The CI gate (budgets, report, exit code)
+- `perf/budgets.json` - The committed ceilings, per map and metric
+- `scripts/perf-test.js` - Ad-hoc measurement (device profiles, scenarios, screenshots)
+- `scripts/lib/perfHarness.mjs` - Shared boot/teleport/pin helpers for both
+- `scripts/perf-cpu-profile.mjs` - CPU attribution under throttle (`--tsx` for components)
 - `utils/PerformanceMonitor.ts` - In-game metrics tracking
-- `perf-baseline.json` - Saved baseline (created by perf:baseline)
 - `.github/workflows/performance.yml` - CI workflow

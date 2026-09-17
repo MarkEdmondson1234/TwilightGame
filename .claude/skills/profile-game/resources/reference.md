@@ -129,17 +129,16 @@ The project includes a full CI workflow at `.github/workflows/performance.yml` t
 2. **Injects a test character** - Skips character creation automatically
 3. **Tests on village map** (30x30) with movement scenario
 4. **Compares against baseline** - Downloaded from previous main branch runs
-5. **Posts PR comments** - Shows regression report with emoji indicators
-6. **Updates baseline on merge** - New baseline uploaded for future comparisons
+5. **Posts PR comments** - Each map's numbers against the ceilings in `perf/budgets.json`
 
 ### NPM Scripts for CI
 
 ```bash
-# Run CI-style test (used by GitHub Actions)
+# What GitHub Actions runs: every map in perf/budgets.json, one browser session
 npm run perf:ci
 
-# Generate markdown report from results
-npm run perf:report
+# Rewrite the ceilings from a local run (then review the diff before committing)
+npm run perf:budgets
 ```
 
 ### Manual Baseline Workflow
@@ -193,7 +192,8 @@ If memory growth > 10MB over 30s test:
 | `utils/PerformanceMonitor.ts` | In-game metrics tracking singleton |
 | `scripts/perf-test.js` | Puppeteer test runner |
 | `utils/gameInitializer.ts` | Exposes mapManager and perfMonitor to window |
-| `perf-baseline.json` | Saved baseline (git-ignored recommended) |
+| `perf/budgets.json` | Committed ceilings the CI gate compares against |
+| `scripts/perf-ci.mjs` | The CI gate |
 
 ## Global Window Objects
 

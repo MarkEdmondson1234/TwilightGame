@@ -2,8 +2,8 @@
  * Work counters are what lets the CI performance gate see a change that
  * removes per-frame work: the scene-cost counts were identical before and
  * after the day-one performance PR, because the scene was the same — it was
- * just being rebuilt sixty times a second. scripts/perf-test.js turns these
- * into rates and scripts/perf-report.js grades them like scene cost.
+ * just being rebuilt sixty times a second. scripts/perf-ci.mjs turns these
+ * into rates and gates them against perf/budgets.json.
  */
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach } from 'vitest';

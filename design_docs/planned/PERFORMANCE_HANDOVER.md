@@ -61,16 +61,21 @@ Query as in §2 and compare by `release`.
    worktree on another port) and put both tables in the PR. Headless fps
    cannot see CPU changes (SwiftShader is fill-bound); this can. Add
    `--who-sets-state` to see which code asks React to re-render.
-3. **Regression gate → CI's performance job** (`scripts/perf-test.js` +
-   `scripts/perf-report.js`). Grades **counts**, not timings: scene cost
-   (sprites, nodes, textures, texture MB, depth, **filtered nodes, masked
-   nodes**) and **work rates** (App commits/frame, scene rebuilds/s, NPC
-   draws/frame, darkness uploads/s, save flushes/s). Counters live in
-   `utils/PerformanceMonitor.ts` (`WorkCounters`) and are incremented at the
-   source. The harness pins the in-game clock and weather (`--time 10`,
-   `--weather clear`; use `--time 22` for the lit village) and the `movement`
-   scenario walks during the measurement. Baseline comparison starts working
-   for a metric once a `main` run has recorded it.
+3. **Regression gate → CI's performance job** (`scripts/perf-ci.mjs` against
+   `perf/budgets.json`, since PR #146). One browser session, every map in the
+   budgets file: scene cost **at rest** (sprites, nodes, textures, texture MB,
+   **filtered nodes, masked nodes**) and **work rates while walking** (App
+   renders/s, scene rebuilds/s, NPC draws/frame, save flushes/min), each
+   compared with a ceiling committed in the repo. Over = the job fails and the
+   PR comment names the row; improved = lower the ceiling in the same PR
+   (`npm run perf:budgets` regenerates them all — review the diff). Measures
+   by frames with a time floor, so a slow runner takes longer instead of
+   producing "No performance data collected", which is what the old
+   clock-sampled harness did on 2026-09-17. Counters live in
+   `utils/PerformanceMonitor.ts` (`WorkCounters`). Frame rate is recorded,
+   never gated. App renders are gated **per second**, not per frame: the
+   player snapshot is on a 10 Hz clock, so per-frame renders rise as the
+   runner's fps falls. Darkness uploads are recorded, not gated (boot lerp).
 
 The number that mattered most, **App renders /frame while walking**, went from
 ≈0.8–1.0 to ≈0.08 with §6A (PR #141). What is left of it is the snapshot
@@ -191,6 +196,12 @@ settings toggle, §6F minimal startup.
 - **The stamina test's clock**: `Date.now()` mocked at a fixed value puts the
   in-game hour past bedtime, so a frame applies two drains. Tolerances in
   `tests/staminaCommitCadence.test.ts` account for it.
+- **The CI walker barely walks in the village.** From the saved spawn it
+  spends most of the window against walls, so the village's "walking" work
+  rates are near idle (App ~0.1–3 /s). The witch hut and kitchen windows walk
+  properly. A benchmark map with a wall-free ring route (the owner's idea,
+  queued next) fixes this for good; until then read the village's rate rows
+  as a floor, not a walking measurement.
 - **Full test runs time out under load.** Two dev servers plus headless Chrome
   running alongside `make verify` produced 5 s timeouts in unrelated tests.
   Rerun the file alone before believing a failure.

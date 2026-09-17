@@ -18,13 +18,11 @@ permissions:
 jobs:
   performance:
     runs-on: ubuntu-latest
-    # 35 covered six sub-tests; the three device-throttled ones are gone (see
-    # below), leaving three. 25 keeps headroom for the slow case: the harness
-    # enters the world properly, so every CDP round-trip queues behind real
-    # frames, and on a bad runner those frames take seconds.
-    timeout-minutes: 45  # three in-world map runs — sized for the 2026-09-04
-    # slow-runner day (~25 min against the usual ~9); a cap too close to the
-    # happy path cancels the job mid-run instead of failing a real regression
+    # One browser session for every map (boot once, teleport between them):
+    # ~3 min on a normal runner. Each map's measurement waits for frames rather
+    # than seconds, so a slow runner takes longer rather than producing nothing;
+    # the caps in scripts/perf-ci.mjs bound it at ~1.5 min per map.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -48,51 +46,12 @@ jobs:
           # Wait for server to be ready
           npx wait-on http://localhost:4000/TwilightGame/ --timeout 60000
 
-      - name: Download baseline (if exists)
-        uses: actions/download-artifact@v8
-        with:
-          name: perf-baseline
-          path: .
-        continue-on-error: true
-
-      - name: Run performance tests
-        id: perf
-        run: |
-          # Run test on village map with movement scenario (baseline)
-          echo "## Testing village map (baseline)..."
-          npm run perf:ci || true
-
-          # Compare against baseline if it exists
-          if [ -f perf-baseline.json ]; then
-            echo "baseline_exists=true" >> $GITHUB_OUTPUT
-            node scripts/perf-test.js --map village --scenario movement --duration 15000 --compare perf-baseline.json --github || true
-          else
-            echo "baseline_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run multi-map tests
-        run: |
-          echo "## Testing bear_cave map..."
-          node scripts/perf-test.js --map bear_cave --scenario explore --duration 10000 --github --save perf-bear.json || true
-
-          echo "## Testing witch_hut map..."
-          node scripts/perf-test.js --map witch_hut --scenario explore --duration 10000 --github --save perf-witch.json || true
-
-      # The simulated-iPad runs (4x and 6x CPU throttle) were removed here on
-      # 2026-09-03. They applied a CPU throttle on top of a software rasteriser,
-      # which is not a slow tablet — it is two unrelated slowdowns multiplied,
-      # and the resulting fps described neither device. What CI can compare is
-      # scene cost, and scene cost does not change with CPU speed: those runs
-      # produced the same counts as the unthrottled runs of the same maps, at
-      # roughly five minutes of runner time each.
-      #
-      # Device emulation is still genuinely useful on a real machine, where a
-      # throttle models a slow CPU against a real GPU. It lives on as
-      # `npm run perf:ipad` / `perf:ipad-old` / `perf:android`.
-
-      - name: Generate performance report
-        id: report
-        run: node scripts/perf-report.js
+      # One browser session, every map in perf/budgets.json, each measured
+      # against a ceiling committed in that file. Writes perf-report.md and
+      # perf-results.json; exits 1 on a breach. `|| true` so the report is still
+      # posted and uploaded — the final step turns the breach into the failure.
+      - name: Measure against budgets
+        run: node scripts/perf-ci.mjs || true
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
@@ -136,28 +95,18 @@ jobs:
           name: perf-results
           path: |
             perf-results.json
-            perf-bear.json
-            perf-witch.json
-            perf-screenshot.png
+            perf-report.md
           retention-days: 30
 
-      - name: Update baseline on main
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/upload-artifact@v7
-        with:
-          name: perf-baseline
-          path: perf-results.json
-          retention-days: 90
-
-      # What this gates on, since 2026-09-03: scene cost — the number of sprites,
-      # nodes and textures the map asks the renderer to draw. Frame rate is
-      # recorded but never gates, because CI has no GPU and this game is GPU
-      # render-bound; four main-branch runs of identical code spanned 1.4 to
-      # 49.6 fps, so the old fps gate fired on the runner's mood. Full reasoning
-      # in the header of scripts/perf-report.js.
+      # What this gates on: scene cost at rest (sprites, nodes, textures,
+      # texture MB, filter and mask passes) and work rates while walking (App
+      # renders/s, scene rebuilds/s, NPC draws/frame, save flushes/min), each
+      # against the ceiling in perf/budgets.json. Frame rate is recorded and
+      # never gates: CI has no GPU and this game is GPU render-bound — four
+      # main-branch runs of identical code once spanned 1.4 to 49.6 fps.
       - name: Check for regressions
         run: |
           if [ -f regression-detected ]; then
-            echo "::error::Scene-cost regression detected — the maps got more expensive to draw. Check the PR comment."
+            echo "::error::Over the performance budget — see the rows marked OVER in the PR comment, and perf/budgets.json."
             exit 1
           fi

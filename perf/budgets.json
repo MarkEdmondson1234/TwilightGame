@@ -1,0 +1,73 @@
+{
+  "$comment": "Ceilings for scripts/perf-ci.mjs. Each map is measured once per CI run (boot once, teleport between maps); a value over its ceiling fails the job. Improve a number, lower its ceiling in the same PR. Regenerate all of them with `node scripts/perf-ci.mjs --update` and check the diff. `hour` pins the in-game clock (10 = day; caves are measured by day because SwiftShader cannot draw the lit cave); `walk: false` measures at rest.",
+  "maps": {
+    "village": {
+      "hour": 10,
+      "walk": true,
+      "ceilings": {
+        "spritesDrawn": 777,
+        "nodes": 1240,
+        "textures": 60,
+        "textureMB": 123,
+        "filteredNodes": 0,
+        "maskedNodes": 0,
+        "appRendersPerFrame": 0.08,
+        "sceneRebuildsPerSec": 1.1,
+        "npcDrawsPerFrame": 1.51,
+        "saveFlushesPerMin": 9,
+        "appRendersPerSec": 3.5
+      }
+    },
+    "bear_cave": {
+      "hour": 10,
+      "walk": true,
+      "ceilings": {
+        "spritesDrawn": 642,
+        "nodes": 1187,
+        "textures": 25,
+        "textureMB": 40,
+        "filteredNodes": 0,
+        "maskedNodes": 0,
+        "appRendersPerFrame": 0.14,
+        "sceneRebuildsPerSec": 1.1,
+        "npcDrawsPerFrame": 1.51,
+        "saveFlushesPerMin": 13,
+        "appRendersPerSec": 3.5
+      }
+    },
+    "witch_hut": {
+      "hour": 10,
+      "walk": true,
+      "ceilings": {
+        "spritesDrawn": 621,
+        "nodes": 1150,
+        "textures": 30,
+        "textureMB": 67,
+        "filteredNodes": 0,
+        "maskedNodes": 0,
+        "appRendersPerFrame": 0.31,
+        "sceneRebuildsPerSec": 3,
+        "npcDrawsPerFrame": 1.52,
+        "saveFlushesPerMin": 17,
+        "appRendersPerSec": 8
+      }
+    },
+    "mums_kitchen": {
+      "hour": 10,
+      "walk": true,
+      "ceilings": {
+        "spritesDrawn": 8,
+        "nodes": 52,
+        "textures": 5,
+        "textureMB": 14,
+        "filteredNodes": 0,
+        "maskedNodes": 0,
+        "appRendersPerFrame": 0.09,
+        "sceneRebuildsPerSec": 1,
+        "npcDrawsPerFrame": 1.52,
+        "saveFlushesPerMin": 17,
+        "appRendersPerSec": 6.5
+      }
+    }
+  }
+}
