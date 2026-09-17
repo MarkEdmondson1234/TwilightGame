@@ -1,4 +1,5 @@
 import { startDiagnosticOperation } from './utils/sessionDiagnostics';
+import { performanceMonitor } from './utils/PerformanceMonitor';
 /**
  * GameState - Single Source of Truth for all persistent game data
  *
@@ -339,6 +340,7 @@ class GameStateManager {
   }
 
   flushSave(): void {
+    performanceMonitor.count('saveFlushes');
     const finishDiagnostic = startDiagnosticOperation('local_save');
     this.savePending = false;
     try {

@@ -20,7 +20,6 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { attachMask, disposeMask } from './maskUtils';
 import { TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
@@ -34,53 +33,12 @@ import {
 import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
 import { debugLog } from '../debugLog';
 
-// Edge feathering for fog/mist — how many pixels at each edge fade to transparent
-const FOG_EDGE_FEATHER = 120;
-
 interface Particle {
   sprite: PIXI.Sprite;
   velocityX: number;
   velocityY: number;
   life: number;
   maxLife: number;
-}
-
-/**
- * Create an alpha mask texture with feathered edges.
- * Fully opaque in the centre, fading to transparent at all four edges.
- * Per-pixel alpha = product of horizontal and vertical distance-to-edge factors,
- * so corners fade correctly without double-darkening.
- */
-function createFogEdgeMask(width: number, height: number, feather: number): PIXI.Texture {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
-
-  const imageData = ctx.createImageData(width, height);
-  const data = imageData.data;
-
-  for (let y = 0; y < height; y++) {
-    let fy = 1;
-    if (y < feather) fy = y / feather;
-    else if (y > height - feather) fy = (height - y) / feather;
-
-    for (let x = 0; x < width; x++) {
-      let fx = 1;
-      if (x < feather) fx = x / feather;
-      else if (x > width - feather) fx = (width - x) / feather;
-
-      const alpha = Math.floor(fx * fy * 255);
-      const idx = (y * width + x) * 4;
-      data[idx] = 255;
-      data[idx + 1] = 255;
-      data[idx + 2] = 255;
-      data[idx + 3] = alpha;
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-  return PIXI.Texture.from(canvas);
 }
 
 export class WeatherLayer {
@@ -93,8 +51,6 @@ export class WeatherLayer {
   private particlePool: PIXI.Sprite[] = [];
 
   private fogSprite: PIXI.TilingSprite | null = null;
-  private fogMaskSprite: PIXI.Sprite | null = null;
-  private fogMaskTexture: PIXI.Texture | null = null;
 
   private viewportWidth: number;
   private viewportHeight: number;
@@ -109,10 +65,17 @@ export class WeatherLayer {
   private transitionProgress = 0;
   private pendingWeather: WeatherType = 'clear';
   private emitRateMultiplier = 1.0;
+  /**
+   * Device scale on particle counts and emit rates (from the performance
+   * tier). Rain pools 1,000 full sprites and keeps ~200 alive; a 2–4 core
+   * phone gets 40% of that and the weather still reads as rain.
+   */
+  private particleScale = 1.0;
 
-  constructor(viewportWidth: number, viewportHeight: number) {
+  constructor(viewportWidth: number, viewportHeight: number, particleScale = 1.0) {
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
+    this.particleScale = particleScale;
 
     // Main container - must have a high z-index on the stage so weather
     // renders above all game world elements (tiles, sprites, buildings)
@@ -277,7 +240,7 @@ export class WeatherLayer {
     }
 
     // Create initial particle pool
-    for (let i = 0; i < config.maxParticles; i++) {
+    for (let i = 0; i < this.maxParticles(config); i++) {
       const sprite = new PIXI.Sprite(texture);
       sprite.anchor.set(0.5);
       sprite.visible = false;
@@ -287,7 +250,7 @@ export class WeatherLayer {
 
     debugLog(
       'WeatherLayer',
-      `✓ Created particle pool: ${config.maxParticles} sprites for ${weather}`
+      `✓ Created particle pool: ${this.maxParticles(config)} sprites for ${weather}`
     );
   }
 
@@ -302,11 +265,7 @@ export class WeatherLayer {
       return;
     }
 
-    // Tear down any previous fog + mask first. Overwriting this.fogSprite below without this
-    // would leak the old (still-masked) sprite; _applyFogMask would then destroy its mask
-    // sprite out from under it, and Pixi's next bounds/cull pass crashes in
-    // AlphaMask.addLocalBounds ("this.mask is null"). clearFog() is null-safe, so calling it
-    // here is harmless on the paths that already cleared.
+    // Tear down any previous fog first so the old sprite is not leaked.
     this.clearFog();
 
     // Create tiling fog sprite (seamless scrolling)
@@ -320,31 +279,12 @@ export class WeatherLayer {
 
     this.fogContainer.addChild(this.fogSprite);
 
-    // Apply feathered edge mask to prevent sharp rectangular cutoff
-    this._applyFogMask();
-  }
-
-  /**
-   * Create and apply an alpha mask with feathered edges to the fog sprite.
-   * Prevents the hard rectangular boundary that's visible at viewport edges.
-   */
-  private _applyFogMask(): void {
-    if (!this.fogSprite) return;
-
-    // Clean up old mask (disposeMask clears fogSprite.mask before destroying the sprite).
-    if (this.fogMaskTexture) {
-      this.fogMaskTexture.destroy(true);
-      this.fogMaskTexture = null;
-    }
-    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
-
-    this.fogMaskTexture = createFogEdgeMask(
-      this.viewportWidth,
-      this.viewportHeight,
-      FOG_EDGE_FEATHER
-    );
-    this.fogMaskSprite = new PIXI.Sprite(this.fogMaskTexture);
-    attachMask(this.fogSprite, this.fogMaskSprite, this.fogContainer);
+    // No edge mask. The fog used to carry a sprite alpha mask that feathered
+    // its four edges, but the sprite covers the whole viewport, so all the
+    // mask did was vignette the screen corners — at the price of routing the
+    // full-screen fog through a render-to-texture and a filter pass on every
+    // frame, and a per-pixel JS loop over the viewport on every setup and
+    // resize (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.2).
   }
 
   /**
@@ -437,6 +377,10 @@ export class WeatherLayer {
   /**
    * Update particle systems
    */
+  private maxParticles(config: ParticleConfig): number {
+    return Math.max(1, Math.round(config.maxParticles * this.particleScale));
+  }
+
   private updateParticles(deltaTime: number): void {
     const config = PARTICLE_CONFIGS[this.currentWeather];
     if (!config) return;
@@ -446,13 +390,14 @@ export class WeatherLayer {
 
     // Emit new particles (scaled by transition multiplier)
     this.timeSinceLastEmit += deltaTime;
-    const effectiveEmitRate = config.emitRate * this.emitRateMultiplier;
+    const effectiveEmitRate = config.emitRate * this.emitRateMultiplier * this.particleScale;
 
     if (effectiveEmitRate > 0) {
       const emitInterval = 1 / effectiveEmitRate;
+      const maxParticles = this.maxParticles(config);
       while (
         this.timeSinceLastEmit >= emitInterval &&
-        this.particles.length < config.maxParticles
+        this.particles.length < maxParticles
       ) {
         this.emitParticle(config);
         this.timeSinceLastEmit -= emitInterval;
@@ -605,18 +550,12 @@ export class WeatherLayer {
   }
 
   /**
-   * Clear fog overlay and its edge mask
+   * Clear fog overlay
    */
   private clearFog(): void {
-    // Detach + destroy the mask first (clears fogSprite.mask safely), then the fog sprite.
-    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
     if (this.fogSprite) {
       this.fogSprite.destroy();
       this.fogSprite = null;
-    }
-    if (this.fogMaskTexture) {
-      this.fogMaskTexture.destroy(true);
-      this.fogMaskTexture = null;
     }
     this.fogContainer.removeChildren();
   }
@@ -628,7 +567,7 @@ export class WeatherLayer {
     this.viewportWidth = width;
     this.viewportHeight = height;
 
-    // Recreate fog if active (mask will be regenerated via setupFog)
+    // Recreate fog if active at the new viewport size
     if (this.currentWeather === 'fog' || this.currentWeather === 'mist') {
       const currentAlpha = this.fogSprite?.alpha ?? 1;
       this.clearFog();

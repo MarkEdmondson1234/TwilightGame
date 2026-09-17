@@ -23,6 +23,7 @@ import { Position, Direction, NPC } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 import { npcSpeechManager } from '../../multiplayer/npcSpeech';
+import { performanceMonitor } from '../PerformanceMonitor';
 import { getPresenceService } from '../../firebase/safe';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
@@ -100,6 +101,7 @@ export class NPCLayer extends PixiLayer {
   ): Promise<void> {
     const offsetX = gridOffset?.x ?? 0;
     const offsetY = gridOffset?.y ?? 0;
+    performanceMonitor.count('npcDraws');
 
     // Track which NPCs we've rendered this frame
     const renderedIds = new Set<string>();

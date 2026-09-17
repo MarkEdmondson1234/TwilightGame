@@ -18,11 +18,13 @@ interface PerformanceSettings {
    * Whether this is a phone/tablet, tracked separately from `tier`.
    *
    * A modern iPhone lands on HIGH (6+ cores, and Safari doesn't expose
-   * navigator.deviceMemory so it defaults to 4) — which is the right call for
-   * *render* quality but the wrong one for *memory*. iOS caps the entire web
+   * navigator.deviceMemory so it defaults to 4). iOS caps the entire web
    * content process well below a desktop's VRAM and kills the tab when it is
    * exceeded, with no JS error and nothing reportable to Sentry. So the texture
-   * policy below keys on this flag, never on the tier.
+   * policy below keys on this flag, never on the tier — and so does the render
+   * profile: a phone's GPU has neither the fill rate for 2× resolution plus
+   * MSAA nor the bandwidth for full-size overlays, however many cores it has,
+   * so HIGH on a phone renders with the MEDIUM settings.
    */
   isMobile: boolean;
   resolution: number;
@@ -30,6 +32,14 @@ interface PerformanceSettings {
   glowSteps: number;
   enableGlows: boolean;
   enableShadows: boolean;
+  /**
+   * Resolution of the darkness overlay's offscreen canvas relative to the
+   * viewport. It is re-uploaded to the GPU every camera frame when a light is
+   * on screen, so this is upload bandwidth (see DarknessLayer).
+   */
+  darknessCompositeScale: number;
+  /** Multiplier on weather particle counts and emit rates (1 = as authored). */
+  particleScale: number;
 
   // ---- Texture memory policy (see isMobile) ----
   /**
@@ -207,7 +217,11 @@ export function getPerformanceSettings(): PerformanceSettings {
           maxConcurrentTextureLoads: 16,
         };
 
-  switch (tier) {
+  // A phone never renders with the HIGH profile (see isMobile above). The
+  // reported tier is unchanged so diagnostics still say what was detected.
+  const renderTier = isMobile && tier === PerformanceTier.HIGH ? PerformanceTier.MEDIUM : tier;
+
+  switch (renderTier) {
     case PerformanceTier.LOW:
       return {
         tier,
@@ -218,6 +232,8 @@ export function getPerformanceSettings(): PerformanceSettings {
         glowSteps: 0, // Disable glows entirely
         enableGlows: false,
         enableShadows: false, // Disable shadows too
+        darknessCompositeScale: 0.25,
+        particleScale: 0.4,
       };
 
     case PerformanceTier.MEDIUM:
@@ -230,6 +246,8 @@ export function getPerformanceSettings(): PerformanceSettings {
         glowSteps: 8, // Reduced glow quality
         enableGlows: true,
         enableShadows: true,
+        darknessCompositeScale: 0.25,
+        particleScale: isMobile ? 0.4 : 0.7,
       };
 
     case PerformanceTier.HIGH:
@@ -243,6 +261,8 @@ export function getPerformanceSettings(): PerformanceSettings {
         glowSteps: 32, // Full glow quality
         enableGlows: true,
         enableShadows: true,
+        darknessCompositeScale: 0.5,
+        particleScale: 1,
       };
   }
 }
