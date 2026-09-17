@@ -74,9 +74,9 @@ const SETTLE_MAX_MS = 20_000;
  * rates' — a save flush every ~5 s read as 30/min over a 2 s window), up to
  * the cap. A fast machine hits the seconds first, a slow runner the frames.
  */
-const MEASURE_FRAMES = 240;
+const MEASURE_FRAMES = 120;
 const MEASURE_MIN_MS = 15_000;
-const MEASURE_MAX_MS = 60_000;
+const MEASURE_MAX_MS = 45_000;
 /** Below this many frames the work rates are too noisy to gate; scene counts still are. */
 const MIN_FRAMES_FOR_RATES = 60;
 /**
@@ -215,7 +215,12 @@ function compare(mapId, values, context, budget) {
     const value = values[metric.key];
     const ceiling = budget?.[metric.key];
     let status = 'ok';
-    if (ceiling === undefined) status = 'no budget';
+    // A map that drew nothing is not "within budget", it is a blank canvas —
+    // the failure mode a ceiling cannot see.
+    if (metric.key === 'spritesDrawn' && ceiling > 0 && value === 0) {
+      status = 'NOTHING DRAWN';
+      breached = true;
+    } else if (ceiling === undefined) status = 'no budget';
     else if (metric.rate && context.frames < MIN_FRAMES_FOR_RATES) status = 'too few frames';
     else if (value > ceiling) {
       status = 'OVER';
@@ -254,7 +259,12 @@ function renderReport(results, renderer, budgetsPath) {
     );
     lines.push('| Metric | Value | Ceiling | |', '|---|---:|---:|---|');
     for (const row of r.rows) {
-      const mark = row.status === 'OVER' ? '❌ OVER' : row.status === 'ok' ? '✅' : `⚪ ${row.status}`;
+      const mark =
+        row.status === 'OVER' || row.status === 'NOTHING DRAWN'
+          ? `❌ ${row.status}`
+          : row.status === 'ok'
+            ? '✅'
+            : `⚪ ${row.status}`;
       lines.push(`| ${row.metric.label} | ${fmt(row.metric, row.value)} | ${fmt(row.metric, row.ceiling)} | ${mark} |`);
     }
   }
@@ -298,9 +308,10 @@ async function main() {
       measured[mapId] = { values, context };
       results.push(compare(mapId, values, context, spec.ceilings));
     }
-    // One picture of the last map, so a run that measured a blank canvas is
-    // visible in the artifacts rather than silently "within budget".
-    await page.screenshot({ path: resolve(ROOT, 'perf-screenshot.png') });
+    // No end-of-run screenshot: on the runner a CDP screenshot queues behind
+    // SwiftShader frames and took five and a half minutes — longer than the
+    // four measurements together. A blank canvas is caught by the "nothing
+    // drawn" check in compare() instead.
   } finally {
     await stopWalker();
     await browser.close();

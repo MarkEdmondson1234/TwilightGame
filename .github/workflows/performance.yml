@@ -96,7 +96,6 @@ jobs:
           path: |
             perf-results.json
             perf-report.md
-            perf-screenshot.png
           retention-days: 30
 
       # What this gates on: scene cost at rest (sprites, nodes, textures,
