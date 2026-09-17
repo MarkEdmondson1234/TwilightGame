@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { uiAssets } from '../assets';
 import { Z_HUD, zClass } from '../zIndex';
-import { magicManager } from '../utils/MagicManager';
-import { inventoryManager } from '../utils/inventoryManager';
 import GameIcon from './GameIcon';
 import MobileMenuShell from './MobileMenuShell';
 import { Z_HELP_BROWSER } from '../zIndex';
@@ -10,9 +8,10 @@ import { Z_HELP_BROWSER } from '../zIndex';
 interface BookshelfProps {
   onClose?: () => void;
   isTouchDevice?: boolean;
-  playerPosition?: { x: number; y: number };
-  currentMapId?: string;
-  nearbyNPCs?: string[];
+  /** Player has met the Witch. A prop rather than a manager read so the memo sees it change. */
+  magicBookUnlocked: boolean;
+  /** Player owns a camera (required to use the photo album). */
+  cameraOwned: boolean;
   onRecipeBookOpen?: () => void;
   onMagicBookOpen?: () => void;
   onJournalOpen?: () => void;
@@ -27,17 +26,14 @@ interface BookshelfProps {
  */
 const Bookshelf: React.FC<BookshelfProps> = ({
   isTouchDevice,
+  magicBookUnlocked,
+  cameraOwned,
   onClose,
   onRecipeBookOpen,
   onMagicBookOpen,
   onJournalOpen,
   onPhotoAlbumOpen,
 }) => {
-  // Check if magic book is unlocked (player talked to Witch)
-  const magicBookUnlocked = magicManager.isMagicBookUnlocked();
-  // Check if player owns a camera (required to use the photo album)
-  const cameraOwned = inventoryManager.hasItem('camera', 1);
-
   // Track which book is expanded (for touch devices - tap to expand, tap again to open)
   const [expandedBook, setExpandedBook] = useState<string | null>(null);
 
@@ -301,4 +297,5 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   );
 };
 
-export default Bookshelf;
+// Memoised: always mounted, and App commits ~10 times a second while the player walks (PERFORMANCE_MOBILE_PLAN.md §5 M10).
+export default React.memo(Bookshelf);

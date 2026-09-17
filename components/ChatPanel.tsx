@@ -221,4 +221,5 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   );
 };
 
-export default ChatPanel;
+// Memoised: always mounted, and App commits ~10 times a second while the player walks (PERFORMANCE_MOBILE_PLAN.md §5 M10).
+export default React.memo(ChatPanel);

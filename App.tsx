@@ -63,6 +63,7 @@ import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRes
 import { buildInventoryActions, hasInventoryActions } from './utils/inventoryActions';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
+import { magicManager } from './utils/MagicManager';
 import { npcGardenManager } from './utils/NpcGardenManager';
 import { audioManager } from './utils/AudioManager';
 import { cookingManager } from './utils/CookingManager';
@@ -297,6 +298,22 @@ const App: React.FC = () => {
     },
     []
   );
+
+  // The quick slot bar and the HUD are memoised (PERFORMANCE_MOBILE_PLAN.md
+  // §5 M10), which only holds if what they are handed keeps its identity: the
+  // nine-slot slice is memoised on the inventory, and the handlers below are
+  // stable. An inline arrow or a fresh `.slice()` here re-renders them on every
+  // one of App's ~10 commits a second while the player walks.
+  const quickSlotItems = useMemo(() => inventoryItems.slice(0, 9), [inventoryItems]);
+  const handleQuickSlotContextMenu = useCallback(
+    (slotIndex: number, at: { clientX: number; clientY: number }) => {
+      // The bar shows the first nine inventory slots, so its index is the slot index.
+      const item = inventoryItems[slotIndex];
+      if (item) openItemActionMenu(item, slotIndex, at);
+    },
+    [inventoryItems, openItemActionMenu]
+  );
+  const cameraOwned = useMemo(() => inventoryItems.some((item) => item.id === 'camera'), [inventoryItems]);
 
   // Yule celebration state
   const [isYuleCelebrationActive, setIsYuleCelebrationActive] = useState(false);
@@ -624,6 +641,46 @@ const App: React.FC = () => {
 
   // Stable identity: useKeyboardControls captures its handler once at mount.
   const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
+
+  // Stable handlers for the memoised Bookshelf and GameUIControls (§5 M10).
+  const bookshelfActions = useMemo(
+    () => ({
+      close: () => closeUI('bookshelf'),
+      openRecipeBook: () => {
+        closeUI('bookshelf');
+        openUI('recipeBook');
+      },
+      openMagicBook: () => {
+        closeUI('bookshelf');
+        openUI('magicBook');
+      },
+      openJournal: () => {
+        closeUI('bookshelf');
+        openUI('journal');
+      },
+      openPhotoAlbum: () => {
+        closeUI('bookshelf');
+        openUI('photoAlbum');
+      },
+    }),
+    [closeUI, openUI]
+  );
+  const uiControlActions = useMemo(
+    () => ({
+      openBooks: () => openUI('bookshelf'),
+      toggleHelpBrowser: () => {
+        setHelpInitialTab(isTouchDevice ? 'settings' : 'getting-started');
+        toggleUI('helpBrowser');
+      },
+      openAccount: () => {
+        setHelpInitialTab('account');
+        openUI('helpBrowser');
+      },
+      toggleCollisionBoxes: () => setShowCollisionBoxes((visible) => !visible),
+      toggleInventory: () => toggleUI('inventory'),
+    }),
+    [openUI, toggleUI, isTouchDevice]
+  );
 
   /**
    * Right-clicking (or long-pressing) yourself opens the emote picker — the mouse
@@ -2616,6 +2673,10 @@ const App: React.FC = () => {
         <CloudShadows
           cameraX={cameraX}
           cameraY={cameraY}
+          viewFrameRef={viewFrameRef}
+          season={currentSeason}
+          day={currentTime.day}
+          year={currentTime.year}
           mapWidth={currentMap.width}
           mapHeight={currentMap.height}
           weather={currentWeather}
@@ -2654,6 +2715,7 @@ const App: React.FC = () => {
         <>
           <HUD
             compact={isTouchDevice}
+            mapName={currentMap?.name ?? 'Loading...'}
             selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
             selectedItemQuantity={
               selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.quantity : undefined
@@ -2664,14 +2726,10 @@ const App: React.FC = () => {
           <QuickSlotBar
             compact={isCompactMode}
             isTouchDevice={isTouchDevice}
-            items={inventoryItems.slice(0, 9)}
+            items={quickSlotItems}
             selectedSlot={selectedItemSlot}
             onSlotClick={setSelectedItemSlot}
-            // The bar shows the first nine inventory slots, so its index is the slot index.
-            onSlotContextMenu={(slotIndex, at) => {
-              const item = inventoryItems[slotIndex];
-              if (item) openItemActionMenu(item, slotIndex, at);
-            }}
+            onSlotContextMenu={handleQuickSlotContextMenu}
           />
         </>
       )}
@@ -2680,56 +2738,27 @@ const App: React.FC = () => {
       {!activeNPC && !ui.miniGame && !isCutscenePlaying && (!isTouchDevice || ui.bookshelf) && (
         <Bookshelf
           isTouchDevice={isTouchDevice}
-          onClose={() => closeUI('bookshelf')}
-          playerPosition={playerPos}
-          currentMapId={currentMap.id}
-          nearbyNPCs={(() => {
-            // Get NPCs within 2 tiles of player
-            const range = 2;
-            return allNPCs
-              .filter((npc) => {
-                const dx = Math.abs(npc.position.x - playerPos.x);
-                const dy = Math.abs(npc.position.y - playerPos.y);
-                return dx <= range && dy <= range;
-              })
-              .map((npc) => npc.id);
-          })()}
-          onRecipeBookOpen={() => {
-            closeUI('bookshelf');
-            openUI('recipeBook');
-          }}
-          onMagicBookOpen={() => {
-            closeUI('bookshelf');
-            openUI('magicBook');
-          }}
-          onJournalOpen={() => {
-            closeUI('bookshelf');
-            openUI('journal');
-          }}
-          onPhotoAlbumOpen={() => {
-            closeUI('bookshelf');
-            openUI('photoAlbum');
-          }}
+          magicBookUnlocked={magicManager.isMagicBookUnlocked()}
+          cameraOwned={cameraOwned}
+          onClose={bookshelfActions.close}
+          onRecipeBookOpen={bookshelfActions.openRecipeBook}
+          onMagicBookOpen={bookshelfActions.openMagicBook}
+          onJournalOpen={bookshelfActions.openJournal}
+          onPhotoAlbumOpen={bookshelfActions.openPhotoAlbum}
         />
       )}
 
       {/* Game UI Controls - hidden during dialogue, books, minigames, or cutscenes */}
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
-          onOpenBooks={() => openUI('bookshelf')}
+          onOpenBooks={uiControlActions.openBooks}
           onOpenEmotes={toggleEmoteWheel}
           showHelpBrowser={ui.helpBrowser}
-          onToggleHelpBrowser={() => {
-            setHelpInitialTab(isTouchDevice ? 'settings' : 'getting-started');
-            toggleUI('helpBrowser');
-          }}
-          onOpenAccount={() => {
-            setHelpInitialTab('account');
-            openUI('helpBrowser');
-          }}
+          onToggleHelpBrowser={uiControlActions.toggleHelpBrowser}
+          onOpenAccount={uiControlActions.openAccount}
           showCollisionBoxes={showCollisionBoxes}
-          onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
-          onToggleInventory={() => toggleUI('inventory')}
+          onToggleCollisionBoxes={uiControlActions.toggleCollisionBoxes}
+          onToggleInventory={uiControlActions.toggleInventory}
           isTouchDevice={isTouchDevice}
         />
       )}

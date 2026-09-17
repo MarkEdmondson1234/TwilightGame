@@ -282,4 +282,17 @@ const AnalogClock: React.FC<AnalogClockProps> = ({ currentTime, size = 80 }) => 
   );
 };
 
-export default AnalogClock;
+/**
+ * Memoised on the fields it draws. The HUD hands it a fresh GameTime object
+ * every second and re-renders on every game-state commit; the SVG below is
+ * costly enough that redrawing it only when a hand would move matters
+ * (PERFORMANCE_MOBILE_PLAN.md §5 M10). Exported so tests/hudMemo.test.tsx can
+ * hold it to that.
+ */
+export const areAnalogClockPropsEqual = (prev: AnalogClockProps, next: AnalogClockProps): boolean =>
+  prev.size === next.size &&
+  prev.currentTime.hour === next.currentTime.hour &&
+  prev.currentTime.minute === next.currentTime.minute &&
+  prev.currentTime.timeOfDay === next.currentTime.timeOfDay;
+
+export default React.memo(AnalogClock, areAnalogClockPropsEqual);

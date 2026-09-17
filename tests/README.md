@@ -80,6 +80,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `palette.test.ts` | Palette definitions stay consistent | Changing the colour palette |
 | `farmManager.test.ts` / `cropGrowth.test.ts` | Planting, watering, growth stages, crop economics | Touching farming |
 | `walkAnimation.test.ts` | Frame sequencing and direction handling | Touching player movement or sprites |
+| `hudMemo.test.tsx` | The HUD re-rendering on every App commit or every game-state commit again — the two SVG clocks cost more per commit than App itself, ~110 ms/s at 4× throttle while walking | Touching `HUD`, the clocks, `useGameState`, or handing a memoised child an inline arrow |
 | `playerPosSnapshot.test.tsx` | The player position going back through React state per frame — 60 App commits a second while walking, ~19 ms each on an iPad. The ref must move every frame; React gets a snapshot on tile change, at most every `TIMING.PLAYER_SNAPSHOT_MS`, and on stopping | Touching `usePlayerMovement`, `useMovementController`, or anything that calls `setState` from the game loop |
 | `deterministicWeather.test.ts` | Weather is reproducible from its seed | Touching weather |
 | `globalEvents.test.ts` / `eventChains.test.ts` | Event and quest chain definitions load and validate | Adding events or quest chains |
