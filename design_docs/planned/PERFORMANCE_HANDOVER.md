@@ -171,6 +171,12 @@ settings toggle, §6F minimal startup.
   headless harness (`scripts/perf-test.js --scenario idle --duration 3000`
   plus `perf-screenshot.png`) is a fine substitute for "does it still
   render". Delete `perf-screenshot.png` afterwards; it is not tracked.
+- **`Darkness uploads` in the work-rate table is noise for a few seconds after
+  boot.** The harness pins the clock to `--time` *after* the game has booted at
+  the real in-game hour, and the darkness layer then lerps toward the pinned
+  value at 20 composites/s — the 5 s warm-up does not always outlast it. It
+  read 9.5/s on one branch run and 11.4/s on a `main` idle run minutes later
+  with nothing changed. Compare it only between long-warm-up idle runs.
 - **The stamina test's clock**: `Date.now()` mocked at a fixed value puts the
   in-game hour past bedtime, so a frame applies two drains. Tolerances in
   `tests/staminaCommitCadence.test.ts` account for it.
