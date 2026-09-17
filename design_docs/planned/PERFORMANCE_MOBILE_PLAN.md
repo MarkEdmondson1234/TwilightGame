@@ -159,6 +159,33 @@ device variant rather than a global downsize).
   `tests/hudMemo.test.tsx` fails if the HUD re-renders on a parent commit
   or on a game-state commit that changes nothing it shows.
 
+**Day 6 (§5 M1, part 1: the DOM effect layers) — done 2026-09-17.**
+
+- The weather tint is a rectangle in `WeatherLayer`'s batch
+  (`utils/pixi/WeatherTint.ts`, crossfading over `WEATHER_TRANSITION_S`,
+  `multiply` for rain/storm and `screen` for fog/mist/snow — `lighten` has no
+  native WebGL blend). The cloud shadows are tinted sprites of one soft-disc
+  texture in a world-space `CloudShadowLayer` (`Z_CLOUD_SHADOWS` = 240, above
+  the world so a cloud shades the player too, below the crowns), drifted from
+  `updateAnimations`. The parallax crowns are seven sprites in a screen-fixed
+  `ForegroundParallaxLayer` placed from `syncView`; their textures are now
+  counted by the map texture budget (`data/foregroundParallax.ts`), which put
+  the debug NPC showcase over the mobile ceiling — it opts out with the new
+  `foregroundParallax: false` map field.
+- Three DOM components deleted. `tests/domEffectBudget.test.ts` fails if a
+  CSS blur or blend mode returns to a game component.
+- Two things look better, not just cheaper: the crowns are inside the fog
+  instead of popping out of it, and the shadows scroll with the canvas
+  instead of in 48 px steps.
+- Measured: React while walking 109 → 91 ms/s (the remaining DOM overlay is
+  the GIF `AnimationOverlay`, part 2); no filtered/masked nodes added. The
+  real win — no blurred/blended DOM layer composited over the canvas every
+  frame — is a compositor cost the headless profile cannot see; it needs a
+  device.
+- **Part 2 (the GIFs)** is still open: `AnimationOverlay` decodes four GIFs
+  (313 frames) on the main thread as `<img>`s; they need an atlas pipeline
+  and `AnimatedSprite`s.
+
 ---
 
 ## 2. What the devices are actually doing (Sentry, last 14 days)

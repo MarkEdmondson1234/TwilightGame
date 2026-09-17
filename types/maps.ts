@@ -206,6 +206,12 @@ export interface MapDefinition {
   transitions: Transition[]; // Exit/entrance definitions
   npcs?: NPC[]; // NPCs in this map (optional)
   hasClouds?: boolean; // Show cloud shadows (default: false, set true for outdoor areas)
+  /**
+   * Show the parallax tree crowns framing the bottom of the screen. Defaults
+   * by colour scheme (village, forest, water_area — see data/foregroundParallax.ts);
+   * set explicitly to override.
+   */
+  foregroundParallax?: boolean;
   ambientClouds?: AmbientCloudConfig[]; // Slow-drifting decorative sky clouds (optional)
   borderTileType?: TileType; // Tile rendered outside map bounds (e.g. OAK_TREE for a forest clearing)
 

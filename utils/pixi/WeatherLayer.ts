@@ -31,6 +31,7 @@ import {
   ParticleConfig,
 } from '../../data/weatherConfig';
 import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
+import { WeatherTint } from './WeatherTint';
 import { debugLog } from '../debugLog';
 
 interface Particle {
@@ -51,6 +52,9 @@ export class WeatherLayer {
   private particlePool: PIXI.Sprite[] = [];
 
   private fogSprite: PIXI.TilingSprite | null = null;
+  // The full-viewport colour wash (rain, fog, ...). Was a DOM div with
+  // mix-blend-mode over the canvas; now one rectangle in this batch.
+  private tint: WeatherTint;
 
   private viewportWidth: number;
   private viewportHeight: number;
@@ -92,6 +96,10 @@ export class WeatherLayer {
     this.fogContainer = new PIXI.Container();
     this.fogContainer.zIndex = Z_WEATHER_TINT;
     this.container.addChild(this.fogContainer);
+
+    // Colour wash under the fog texture and the particles.
+    this.tint = new WeatherTint(viewportWidth, viewportHeight, Z_WEATHER_TINT - 1);
+    this.container.addChild(this.tint.getContainer());
   }
 
   /**
@@ -162,6 +170,7 @@ export class WeatherLayer {
     if (this.currentWeather === weather) {
       return;
     }
+    this.tint.setWeather(weather, immediate);
 
     debugLog(
       'WeatherLayer',
@@ -291,6 +300,8 @@ export class WeatherLayer {
    * Update weather effects (called each frame)
    */
   update(deltaTime: number): void {
+    this.tint.update(deltaTime);
+
     // Drive the transition state machine
     if (this.transitionState !== 'idle') {
       this._updateTransition(deltaTime);
@@ -564,6 +575,7 @@ export class WeatherLayer {
    * Update viewport size (for window resize)
    */
   resize(width: number, height: number): void {
+    this.tint.resize(width, height);
     this.viewportWidth = width;
     this.viewportHeight = height;
 

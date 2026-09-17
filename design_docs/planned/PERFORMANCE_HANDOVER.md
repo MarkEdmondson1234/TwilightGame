@@ -25,6 +25,8 @@ Three PRs merged to `main` today, all deployed to production
 
 | #142 | **Day 5, §5 M10.** Always-mounted children memoised with stable props; `useGameState` selects and compares; `CloudShadows` drives its divs from its rAF via refs, camera from `viewFrameRef`. `perf-cpu-profile.mjs --tsx` lists every component function; anonymous frames are attributed by line. | React while walking 325 → **109 ms/s**, idle 90 → **13 ms/s** (4× throttle). |
 
+| #143 | **Day 6, §5 M1 part 1.** Weather tint, cloud shadows and parallax crowns drawn by Pixi (`WeatherTint`, `CloudShadowLayer`, `ForegroundParallaxLayer`); the three DOM components deleted; `tests/domEffectBudget.test.ts` bans CSS blur/blend in game components. | No DOM layer composited over the canvas per frame (a compositor cost the headless profile cannot see). React walking 109 → 91 ms/s. |
+
 **Not yet confirmed on a real device.** Every number above is from the
 headless profile or arithmetic. Sentry will show the truth within a session of
 play on today's release: see §2.
@@ -122,10 +124,11 @@ at 10–15 Hz they are fine.
 
 ### B. Plan §5, the medium items (days each; pick by payoff)
 
-- **M1** effects into Pixi: `CloudShadows` (own rAF + `setState` per frame +
-  `blur(20px)` DOM divs on 10 maps), `WeatherTintOverlay` (`mix-blend-mode`
-  over the canvas), `AnimationOverlay` GIFs (main-thread decode;
-  `dragonfly_stream.gif` has 209 frames), `ForegroundParallax`.
+- **M1** effects into Pixi — part 1 done (PR #143: cloud shadows, weather
+  tint, parallax crowns). **Part 2 open:** `AnimationOverlay` GIFs
+  (main-thread decode as `<img>`; `dragonfly_stream.gif` has 209 frames,
+  313 across the four) → atlases built by the optimiser + `AnimatedSprite`s
+  in a Pixi layer, counted by the texture budget.
 - **M3** GPU warm-up during the loading screen (bind each kept texture after
   `loadUrls` in `usePixiRenderer`'s residency effect) — kills the first-draw
   upload hitch after transitions.
