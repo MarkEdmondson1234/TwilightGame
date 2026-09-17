@@ -27,7 +27,6 @@ import type { EmoteId } from '../multiplayer/emotes';
 import { PRESENCE_REASON_TEXT } from '../multiplayer/presenceStatus';
 import type { PresenceUnavailableReason } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState } from '../multiplayer/types';
-import { debugLog } from '../utils/debugLog';
 
 export interface UseMultiplayerControllerProps {
   /** Map the player is currently on */
@@ -194,9 +193,10 @@ export function useMultiplayerController(
       activeRef.current = joined;
       setIsActive(joined);
       if (joined) {
-        // One line per map, always on: the counterpart to the warning above, so
-        // a bug report can show presence working as well as failing.
-        debugLog('Multiplayer', `Presence active on "${currentMapId}" as ${status.uid}`);
+        // One line per map, always on (console.info, not debugLog — which is
+        // off in production): the counterpart to the warning above, so a bug
+        // report can show presence working as well as failing.
+        console.info(`[Multiplayer] Presence active on "${currentMapId}" as ${status.uid}`);
       } else {
         console.warn(`[Multiplayer] Could not join the presence room for "${currentMapId}"`);
       }

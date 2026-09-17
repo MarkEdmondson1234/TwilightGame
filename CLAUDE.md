@@ -148,7 +148,17 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
    it, which makes it look intermittent. This is what made NPC conversations and
    shared furniture look broken. Copy the `authTick` pattern from
    `useMultiplayerController`; `tests/sharedWorldAuthRetry.test.ts` fails without it.
-7. **Shared battles: the mini-game imports no Firebase.** `CombatEncounter` emits
+7. **Presence timestamps are server time; never compare them with `Date.now()`.**
+   `multiplayer/serverClock.ts` holds RTDB's `.info/serverTimeOffset` and
+   `serverNow()` is the clock to judge a record's `t` by. A tablet running five
+   minutes fast otherwise sees every live player as a ghost and stands alone in
+   a village everyone else can see her in — nothing throws, nothing logs.
+   Every dropped inbound record and any clock more than
+   `MULTIPLAYER.CLOCK_SKEW_WARN_MS` out is reported to Sentry (`presence`), as is
+   a placed item whose picture could not be fetched (`shared_world`, with a
+   `reason` naming which side lost it) and a picture that never reached the
+   cloud (`persistence`). `tests/sharedWorldObservability.test.ts` guards all of it.
+8. **Shared battles: the mini-game imports no Firebase.** `CombatEncounter` emits
    `BATTLE_PROGRESSED`/`BATTLE_ENDED` on the EventBus and `useBattleController` owns
    the transport. Only the fighter's client simulates the fight; spectators get a
    summary panel (`components/BattleSpectator.tsx`) and a cheer button, and a cheer

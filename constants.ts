@@ -94,6 +94,15 @@ export const MULTIPLAYER = {
    */
   GHOST_AFTER_MS: 5 * 60 * 1000,
 
+  /**
+   * A device clock this far from the server's is worth saying out loud and
+   * reporting: it is the kind of fault that makes the shared world look
+   * broken on one device only. The ghost check itself is clock-safe (see
+   * multiplayer/serverClock.ts), so this is diagnosis, not a threshold that
+   * changes behaviour.
+   */
+  CLOCK_SKEW_WARN_MS: 60 * 1000,
+
   /** Render remote players this far in the past, so interpolation always has two samples */
   INTERPOLATION_DELAY_MS: 120,
 
