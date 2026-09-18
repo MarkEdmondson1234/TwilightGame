@@ -157,3 +157,30 @@ describe('accelerating trail and wolf attacks', () => {
     expect(crossesContact(240, 220, 230, -180, -80, 45)).toBe(false);
   });
 });
+
+import { deerWalkPose } from '../minigames/skiing/rules';
+describe('walking deer', () => {
+  it('crosses towards the opposite side without tracking or turning at the centre', () => {
+    expect(deerWalkPose(-100, 2).x).toBe(100);
+    expect(deerWalkPose(100, 2).x).toBe(-100);
+    expect(deerWalkPose(-100, 3).velocity).toBe(100);
+    expect(deerWalkPose(100, 3).velocity).toBe(-100);
+  });
+  it('walks at the same pace under different simulation frame rates', () => {
+    const advance = (fps: number) => {
+      let elapsed = 0;
+      for (let i = 0; i < fps * 3; i++) elapsed += 1 / fps;
+      return deerWalkPose(-400, elapsed).x;
+    };
+    expect(advance(30)).toBeCloseTo(advance(120), 6);
+  });
+  it('cycles the existing leg poses', () => {
+    expect([0, 0.5, 0.9, 1.3].map((t) => deerWalkPose(-400, t).frame)).toEqual([0, 1, 2, 0]);
+  });
+  it('detects a crossing deer at contact, including a player steering the other way', () => {
+    const before = deerWalkPose(-60, 0.5).x - 15;
+    const after = deerWalkPose(-60, 0.7).x + 15;
+    expect(crossesContact(250, 210, 230, before, after, 20)).toBe(true);
+    expect(crossesContact(250, 240, 230, before, after, 20)).toBe(false);
+  });
+});

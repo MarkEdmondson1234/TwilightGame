@@ -21,6 +21,7 @@ import {
   wolfLeapPose,
   type WolfLeap,
   crossesContact,
+  deerWalkPose,
   pickObstacleX,
   emptyWood,
   forestLevel,
@@ -57,6 +58,7 @@ interface WorldObj {
   worldZ: number;
   passed?: boolean;
   leap?: WolfLeap;
+  walk?: { startX: number; elapsed: number };
 }
 
 const OBSTACLE_KINDS: ObstacleKind[] = [
@@ -210,7 +212,12 @@ type ImageKey =
   | 'wood_poor'
   | 'wood_medium'
   | 'wood_fine'
+  | 'deerStep2'
+  | 'deerStep3'
   | 'player';
+
+const DEER_FRAMES: ImageKey[] = ['deer', 'deerStep2', 'deerStep3'];
+const DEER_FRAME_PADDING = [0.192, 0.179, 0.176];
 
 // =============================================================================
 // Component
@@ -332,6 +339,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ['player', skiingAssets.player],
       ['wolf', skiingAssets.wolf],
       ['deer', skiingAssets.deer],
+      ['deerStep2', skiingAssets.deerStep2],
+      ['deerStep3', skiingAssets.deerStep3],
       ['dead_spruce', skiingAssets.deadSpruce],
       ['small_spruce', skiingAssets.smallSpruce],
       ['hazel', skiingAssets.hazel],
@@ -465,11 +474,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         : Math.random() < tuning.deerChance
           ? 'deer'
           : TRAIL_OBSTACLES[Math.floor(Math.random() * TRAIL_OBSTACLES.length)];
-    // Every obstacle goes through the lane-reservation helper, which guarantees at least one
-    // clear lane stays open among simultaneous threats — there's no separate decorative band
-    // to fall back to anymore, so if only one lane remains this spawn is simply skipped rather
-    // than overcrowding the reachable field. Pickups always spawn within reach so every one is
-    // collectible.
+    // Reserve a clear lane at spawn; skip overcrowded bands. Moving wildlife can
+    // cross that lane later, so its approach stays visible. Pickups remain reachable.
     let worldX: number | null;
     if (isObstacle) {
       worldX = pickObstacleX(objectsRef.current, worldZ);
@@ -520,6 +526,14 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         if (z <= 0) continue;
         const contact = getContact(obj.kind);
         const previousObjX = obj.worldX;
+        let lateralVelocity = 0;
+        if (obj.kind === 'deer') {
+          obj.walk ??= { startX: obj.worldX, elapsed: 0 };
+          obj.walk.elapsed += dt;
+          const pose = deerWalkPose(obj.walk.startX, obj.walk.elapsed);
+          obj.worldX = pose.x;
+          lateralVelocity = pose.velocity;
+        }
         if (obj.kind === 'wolf' && !obj.passed) {
           obj.leap ??= beginWolfLeap(
             obj.worldZ - previousZ - contact.z,
@@ -565,7 +579,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           OBSTACLE_KINDS.includes(obj.kind as ObstacleKind) &&
           timeToContact > 0 &&
           timeToContact < WARNING_SECONDS &&
-          Math.abs(offset) < contact.halfWidth * 1.4 &&
+          Math.abs(offset + lateralVelocity * timeToContact) < contact.halfWidth * 1.4 &&
           timeToContact < nearestWarning
         ) {
           nearestWarning = timeToContact;
@@ -616,7 +630,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     const drawObj = (obj: WorldObj) => {
       const zDiff = obj.worldZ - cameraZRef.current;
       if (zDiff <= 0) return;
-      const img = images[obj.kind];
+      const walkPose = obj.walk ? deerWalkPose(obj.walk.startX, obj.walk.elapsed) : undefined;
+      const img = images[walkPose ? DEER_FRAMES[walkPose.frame] : obj.kind];
       if (!img) return;
 
       const screenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
@@ -649,6 +664,16 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         ctx.restore();
       }
       const lift = (leapPose?.lift ?? 0) * drawHeight * 0.22;
+      if (walkPose) {
+        // Align every walking frame to the same hoof plane; flip to face travel.
+        const framePadding = DEER_FRAME_PADDING[walkPose.frame];
+        ctx.save();
+        ctx.translate(screenX, screenY + drawHeight * (framePadding - GROUND_PAD_RATIO.deer));
+        ctx.scale(walkPose.velocity < 0 ? -1 : 1, 1);
+        ctx.drawImage(img, -drawWidth / 2, -drawHeight, drawWidth, drawHeight);
+        ctx.restore();
+        return;
+      }
       ctx.drawImage(
         img,
         screenX - drawWidth / 2,

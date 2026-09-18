@@ -137,3 +137,14 @@ export function wolfLeapPose(leap: WolfLeap) {
     windingUp: leap.elapsed < WOLF_WINDUP_SECONDS,
   };
 }
+
+export const DEER_WALK_SPEED = 100;
+/** A calm, committed crossing, independent of frame rate and the skier's position. */
+export function deerWalkPose(startX: number, elapsed: number) {
+  const direction = startX <= 0 ? 1 : -1;
+  return {
+    x: startX + direction * DEER_WALK_SPEED * elapsed,
+    velocity: direction * DEER_WALK_SPEED,
+    frame: Math.floor(elapsed / 0.4) % 3,
+  };
+}

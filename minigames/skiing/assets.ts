@@ -30,6 +30,8 @@ export const skiingAssets = {
   smallSpruce: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
   hazel: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_winter.png',
   deer: '/TwilightGame/assets-optimized/npcs/deer/deer_01.png',
+  deerStep2: '/TwilightGame/assets-optimized/npcs/deer/deer_02.png',
+  deerStep3: '/TwilightGame/assets-optimized/npcs/deer/deer_03.png',
   wolf: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png',
   player: `${BASE}/skiing_male_pc.png`,
 } as const;
