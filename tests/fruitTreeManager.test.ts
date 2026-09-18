@@ -86,6 +86,10 @@ describe('FruitTreeManager — Verdant Surge blessing', () => {
 
   it('a blessing applied but not yet harvested is not consumed again the following year', () => {
     mockSeason(Season.AUTUMN);
+    // Establish autumn as the manager's last known season. It took its initial
+    // one from the real clock, and on a real-world spring day the spring event
+    // below would otherwise be no change at all (the test failed on 2026-09-18).
+    eventBus.emit(GameEvent.TIME_CHANGED, { hour: 12, timeOfDay: 'day' });
     const pos = { x: treePos.x, y: treePos.y + 2 };
     fruitTreeManager.applyVerdantSurge(mapId, pos.x, pos.y);
 
