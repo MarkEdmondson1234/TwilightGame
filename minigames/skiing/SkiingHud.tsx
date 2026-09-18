@@ -168,8 +168,8 @@ export function SkiingHud({
                 </p>
                 <p>
                   A tumble returns you to the forest entrance with a quarter of your firewood,
-                  rounded up. Speed builds as you travel. From level 4, wolves prepare, then leap
-                  towards your path — boost past or dodge their landing.
+                  rounded up. Speed builds as you travel. Watch for deer from level 2. From level 4,
+                  wolves prepare, then leap towards your path — boost past or dodge their landing.
                 </p>
                 <button className="ski-primary" onClick={onStart}>
                   Start skiing

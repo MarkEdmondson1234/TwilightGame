@@ -37,7 +37,7 @@ import {
 // Types
 // =============================================================================
 
-type ObstacleKind = 'tree_needle' | 'tree_spruce' | 'tree_birch' | 'brambles' | 'wolf';
+type ObstacleKind = 'tree_needle' | 'tree_spruce' | 'tree_birch' | 'brambles' | 'wolf' | 'deer';
 type PickupKind = 'wood_poor' | 'wood_medium' | 'wood_fine';
 type ObjKind = ObstacleKind | PickupKind;
 
@@ -56,6 +56,7 @@ const OBSTACLE_KINDS: ObstacleKind[] = [
   'tree_birch',
   'brambles',
   'wolf',
+  'deer',
 ];
 
 // The painted sky and near snowbank have independent parallax.
@@ -94,6 +95,7 @@ const NO_RIDGE_OCCLUSION_KINDS = new Set<ObjKind>([
   'tree_spruce',
   'brambles',
   'wolf',
+  'deer',
   'wood_poor',
   'wood_medium',
   'wood_fine',
@@ -109,7 +111,10 @@ const WARNING_SECONDS = 0.75;
 const PICKUP_SPAWN_CHANCE = 0.16;
 // Hitboxes follow solid trunks/feet rather than transparent sprite padding and branches.
 const COLLISION_WIDTH_SCALE_DEFAULT = 1 / 3;
-const COLLISION_WIDTH_SCALE: Partial<Record<ObjKind, number>> = { tree_birch: 0.55 / 3 };
+const COLLISION_WIDTH_SCALE: Partial<Record<ObjKind, number>> = {
+  tree_birch: 0.55 / 3,
+  deer: 0.55,
+};
 
 const DRAW_BASE: Record<ObjKind, number> = {
   tree_needle: 420,
@@ -117,6 +122,7 @@ const DRAW_BASE: Record<ObjKind, number> = {
   tree_birch: 420,
   brambles: 380,
   wolf: 240,
+  deer: 320,
   wood_poor: 190,
   wood_medium: 190,
   wood_fine: 190,
@@ -129,6 +135,7 @@ const GROUND_PAD_RATIO: Record<ObjKind, number> = {
   tree_birch: 0.035,
   brambles: 0.043,
   wolf: 0.238,
+  deer: 0.192,
   wood_poor: 0.212,
   wood_medium: 0.131,
   wood_fine: 0.125,
@@ -162,6 +169,7 @@ type ImageKey =
   | 'tree_birch'
   | 'brambles'
   | 'wolf'
+  | 'deer'
   | 'wood_poor'
   | 'wood_medium'
   | 'wood_fine'
@@ -286,6 +294,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ['wood_fine', skiingAssets.woodFine],
       ['player', skiingAssets.player],
       ['wolf', skiingAssets.wolf],
+      ['deer', skiingAssets.deer],
     ];
     let cancelled = false;
     Promise.all(entries.map(([key, src]) => loadImage(src).then((img) => [key, img] as const)))
@@ -413,7 +422,9 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ? tuning.wood
       : Math.random() < tuning.wolfChance
         ? 'wolf'
-        : OBSTACLE_KINDS[Math.floor(Math.random() * 4)];
+        : Math.random() < tuning.deerChance
+          ? 'deer'
+          : OBSTACLE_KINDS[Math.floor(Math.random() * 4)];
     // Every obstacle goes through the lane-reservation helper, which guarantees at least one
     // clear lane stays open among simultaneous threats — there's no separate decorative band
     // to fall back to anymore, so if only one lane remains this spawn is simply skipped rather

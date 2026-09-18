@@ -42,6 +42,9 @@ describe('forest travel and run economy', () => {
     expect(retainedWood({ wood_poor: 1, wood_medium: 0, wood_fine: 0 }, true).wood_poor).toBe(1);
   });
   it('introduces wolves only in later levels and bounds maximum difficulty', () => {
+    expect(levelTuning(1.99).deerChance).toBe(0);
+    expect(levelTuning(2).deerChance).toBeGreaterThan(0);
+    expect(levelTuning(30).deerChance).toBeLessThanOrEqual(0.2);
     expect(levelTuning(3).wolfChance).toBe(0);
     expect(levelTuning(4).wolfChance).toBeGreaterThan(0);
     expect(levelTuning(8).speed).toBeGreaterThan(levelTuning(1).speed);
@@ -71,6 +74,7 @@ describe('rendered contact geometry', () => {
         [420, 0.65, 0.066],
         [190, 1, 0.212],
         [240, 1, 0.238],
+        [320, 1, 0.192],
       ]) {
         const contact = contactForSprite(width, height, base, aspect, pad, 1 / 3, false);
         const playerY = getPlayerCollisionAnchorY(width, height);

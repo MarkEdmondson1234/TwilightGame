@@ -42,6 +42,7 @@ export function levelTuning(level: number) {
     speed: 550 + 360 * (Math.sqrt(1 + difficulty) - 1),
     spawnMs: Math.max(300, 850 / (1 + difficulty * 0.55)),
     wood: (level < 3 ? 'wood_poor' : level < 5 ? 'wood_medium' : 'wood_fine') as WoodKind,
+    deerChance: level < 2 ? 0 : Math.min(0.2, 0.12 + (level - 2) * 0.01),
     wolfChance: level < 4 ? 0 : Math.min(0.25, 0.12 + (level - 4) * 0.035),
   };
 }
