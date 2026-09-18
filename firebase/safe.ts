@@ -535,16 +535,3 @@ export function getSkiingScoreService(): typeof import('./skiingScoreService').s
     }
   );
 }
-
-/** Trial records are optional; offline runs retain their personal best. */
-export function getAgilityScoreService(): typeof import('./agilityScoreService').agilityScoreService {
-  return (
-    firebaseModule?.agilityScoreService ?? {
-      watch: (receive) => {
-        receive([], 'signed-out');
-        return () => {};
-      },
-      submit: async () => false,
-    }
-  );
-}
