@@ -745,16 +745,9 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
   return { found: false };
 }
 
-/**
- * Handle the fireplace tea interaction in Mum's kitchen.
- * Marks the fireplace tutorial as complete on first use, then cooks tea directly
- * (no cooking UI — tea is made immediately if ingredients are available).
- */
+/** Make tea using the same saved progress and ingredient rules as the book. */
 export function handleFireplaceTea(): CookingResult {
-  // Mark tutorial as seen on first interaction with the fireplace
-  cookingManager.setFireplaceTutorialComplete();
-
-  return cookingManager.cook('tea');
+  return cookingManager.cook('tea', 0, 'mums_kitchen');
 }
 
 // ---------------------------------------------------------------------------

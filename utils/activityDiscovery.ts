@@ -21,9 +21,9 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
     id: 'cooking',
     title: 'A dish of your own',
     itemId: 'food_tea',
-    invitation: 'Mum has recipes to share.',
+    invitation: 'Mum sets a cup beside the warm kettle. “Shall we make your first tea together?”',
     directions:
-      'Talk to Mum at home and ask her to teach you to cook. She will introduce the kitchen fireplace and your recipe book. Ask her about your next lesson when you are ready.',
+      "Talk to Mum at home and ask her to teach you to cook. In Mum's kitchen, open your recipe book, select Tea and Cook, or choose Make Tea at the Fireplace. Mum helps with missing ingredients for your first practice cup after you ask her to teach you. Your tea goes into your bag. Ask Mum to teach you to cook again to choose your next lesson.",
   },
   {
     id: 'gardening',
@@ -95,6 +95,9 @@ export function getActivityCandidates(
 ): Array<{ id: ActivityLeadId; npcId?: string }> {
   const candidates: Array<{ id: ActivityLeadId; npcId?: string }> = [];
   for (const npc of ctx.nearbyNpcs) {
+    if (ctx.mapId === 'mums_kitchen' && npc.id === 'mum_kitchen') {
+      candidates.push({ id: 'cooking', npcId: npc.id });
+    }
     if (npc.name === 'Cinder the Guide') candidates.push({ id: 'lava-leap', npcId: npc.id });
     if (npc.id === 'mushra') candidates.push({ id: 'wreath-making', npcId: npc.id });
     if (npc.id === 'child' && ctx.season.toLowerCase() === 'autumn') {

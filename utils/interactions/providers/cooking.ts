@@ -40,30 +40,22 @@ export function cookingProvider(ctx: InteractionContext): AvailableInteraction[]
     }
   }
 
-  // Mum's kitchen fireplace — position-based tea interaction (no tile type needed)
-  if (currentMapId === 'mums_kitchen') {
-    const fireplacePos = { x: 4, y: 5 };
-    const { x: playerTileX, y: playerTileY } = getTileCoords(position);
-    const isAdjacentToFireplace = [
-      { x: playerTileX, y: playerTileY },
-      { x: playerTileX - 1, y: playerTileY },
-      { x: playerTileX + 1, y: playerTileY },
-      { x: playerTileX, y: playerTileY - 1 },
-      { x: playerTileX, y: playerTileY + 1 },
-    ].some((t) => t.x === fireplacePos.x && t.y === fireplacePos.y);
-
-    if (isAdjacentToFireplace) {
-      interactions.push({
-        type: 'fireplace_tea',
-        label: 'Make Tea',
-        icon: '☕',
-        color: '#92400e',
-        execute: () => {
-          const result = handleFireplaceTea();
-          config.onFireplaceTea?.(result);
-        },
-      });
-    }
+  // Keep ordinary clicks local to the fireplace. Explicit context menus and the
+  // book can reach the kettle anywhere in the room without turning floor clicks into cooks.
+  const tile = getTileCoords(position);
+  const nearFireplace = Math.abs(tile.x - 4) + Math.abs(tile.y - 5) <= 1;
+  if (currentMapId === 'mums_kitchen' && (ctx.isContextMenu || nearFireplace)) {
+    interactions.push({
+      type: 'fireplace_tea',
+      requireConfirmation: true,
+      label: 'Make Tea at the Fireplace',
+      icon: '☕',
+      color: '#92400e',
+      execute: () => {
+        const result = handleFireplaceTea();
+        config.onFireplaceTea?.(result);
+      },
+    });
   }
 
   return interactions;

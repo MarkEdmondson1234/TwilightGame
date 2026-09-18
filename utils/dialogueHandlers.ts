@@ -3,6 +3,7 @@ import { characterData } from './CharacterData';
 import { cutsceneManager } from './CutsceneManager';
 import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
+import { rememberActivityLead } from './activityLeadStorage';
 import { cookingManager } from './CookingManager';
 import { debugLog } from './debugLog';
 import { startFairyQueenQuest, markPotionReceived } from '../data/questHandlers/fairyQueenHandler';
@@ -444,11 +445,8 @@ function handleRecipeTeaching(nodeId: string): void {
     debugLog('dialogueHandlers', '📖 Recipe book unlocked! You can now access it with B key.');
   }
 
-  // Mark fireplace tutorial complete when Mum gives the fireplace intro
-  if (nodeId === 'fireplace_intro') {
-    cookingManager.setFireplaceTutorialComplete();
-    debugLog('dialogueHandlers', '🔥 Fireplace tutorial complete!');
-  }
+  // Remember the directions; hearing them does not complete the lesson.
+  if (nodeId === 'fireplace_intro') rememberActivityLead('cooking');
 
   // Unlock the Cookbook in the village shop when Mum explains how to learn more recipes
   if (nodeId === 'learn_more_recipes' && !cookingManager.isCookbookShopUnlocked()) {

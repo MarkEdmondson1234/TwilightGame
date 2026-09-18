@@ -3,7 +3,6 @@ import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../../data
 import { getItem } from '../../data/items';
 import { cookingManager, CookingResult } from '../../utils/CookingManager';
 import { audioManager } from '../../utils/AudioManager';
-import { inventoryManager } from '../../utils/inventoryManager';
 import { Position } from '../../types';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
@@ -36,7 +35,7 @@ const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
  * Displays recipes organised by category (chapters) with a list on the
  * left page and recipe details on the right page.
  */
-const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] }) => {
+const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
@@ -84,46 +83,14 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] })
     return 'Discover through gameplay';
   }, []);
 
-  // Check if player can cook (has ingredients or near Mum for Tea)
-  const canCook = useCallback(
-    (recipeId: string) => {
-      const isNearMum = nearbyNPCs.some((npcId) => npcId.includes('mum'));
-      if (isNearMum && recipeId === 'tea') return true;
-      return cookingManager.hasIngredients(recipeId);
-    },
-    [nearbyNPCs]
-  );
-
-  // Handle cooking
   const handleCook = useCallback(
     (recipeId: string) => {
-      audioManager.playSfx('sfx_frying');
-      const isNearMum = nearbyNPCs.some((npcId) => npcId.includes('mum'));
-
-      let result: CookingResult;
-
-      if (isNearMum && recipeId === 'tea') {
-        const recipe = getRecipe(recipeId);
-        if (recipe) {
-          inventoryManager.addItem(recipe.resultItemId, recipe.resultQuantity);
-          result = {
-            success: true,
-            message: `Cooked ${recipe.resultQuantity}x ${recipe.displayName} with Mum's help!`,
-            foodProduced: { itemId: recipe.resultItemId, quantity: recipe.resultQuantity },
-          };
-        } else {
-          result = { success: false, message: 'Recipe not found.' };
-        }
-      } else {
-        result = cookingManager.cook(recipeId);
-      }
-
+      const result = cookingManager.cook(recipeId, 0, currentMapId);
+      if (result.success) audioManager.playSfx('sfx_frying');
       setCookingResult(result);
       setShowResult(true);
-
-      // Popup handles its own auto-dismiss via CookingResultPopup
     },
-    [nearbyNPCs]
+    [currentMapId]
   );
 
   // Get selected recipe details
@@ -342,17 +309,16 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] })
 
               {/* Result message - now shown as popup overlay */}
 
-              {/* Mum helper hint */}
-              {canCook(selectedRecipe.id) &&
-                !cookingManager.hasIngredients(selectedRecipe.id) &&
-                nearbyNPCs.some((id) => id.includes('mum')) && (
-                  <p
-                    className="text-center text-sm italic mt-1"
-                    style={{ color: theme.accentPrimary }}
-                  >
-                    ✨ Mum is helping you cook!
-                  </p>
-                )}
+              {selectedRecipe.id === 'tea' && (
+                <p
+                  className="text-center text-sm italic mt-2"
+                  style={{ color: theme.accentPrimary }}
+                >
+                  {currentMapId === 'mums_kitchen'
+                    ? 'The kettle is ready. Cook here, or use Make Tea by the fireplace. Mum helps with missing ingredients for your first practice cup after you ask her to teach you.'
+                    : "Bring this book to Mum's kitchen to use the kettle. You can read recipes anywhere."}
+                </p>
+              )}
             </div>
           </div>
         ) : (
@@ -389,7 +355,13 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] })
         <button
           onClick={() => handleCook(selectedRecipe.id)}
           data-book-action
-          className="absolute -top-5 left-1/2 ml-32 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 z-20"
+          disabled={selectedRecipe.id === 'tea' && currentMapId !== 'mums_kitchen'}
+          title={
+            selectedRecipe.id === 'tea' && currentMapId !== 'mums_kitchen'
+              ? "Cook tea in Mum's kitchen"
+              : undefined
+          }
+          className="absolute -top-5 left-1/2 ml-32 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-20"
           style={{
             backgroundColor: theme.buttonColour,
             fontFamily: theme.fontBody,
@@ -419,6 +391,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] })
         <CookingResultPopup
           result={cookingResult}
           ingredients={selectedRecipe?.ingredients}
+          autoDismissMs={selectedRecipe?.id === 'tea' ? 10000 : undefined}
           theme={theme}
           onDismiss={() => {
             setShowResult(false);

@@ -169,7 +169,11 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
         responses: [
           { text: 'Corn flour.', nextId: 'learn_corn_flour', hiddenIfRecipeUnlocked: 'corn_flour' },
           { text: 'Corn bread.', nextId: 'learn_corn_bread', hiddenIfRecipeUnlocked: 'corn_bread' },
-          { text: 'Pumpkin pie.', nextId: 'learn_pumpkin_pie', hiddenIfRecipeUnlocked: 'pumpkin_pie' },
+          {
+            text: 'Pumpkin pie.',
+            nextId: 'learn_pumpkin_pie',
+            hiddenIfRecipeUnlocked: 'pumpkin_pie',
+          },
         ],
       },
       {
@@ -192,7 +196,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
         text: "Oh, I'd love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.",
         expression: 'happy',
         responses: [
-          // Fireplace intro — shown until player has opened the fireplace for the first time
+          // Fireplace intro — shown until the tea lesson succeeds
           {
             text: 'That sounds wonderful! Where do I start?',
             nextId: 'fireplace_intro',
@@ -282,7 +286,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
       },
       {
         id: 'fireplace_intro',
-        text: "You can make tea right here in this kitchen, using the fireplace! *She points to the crackling fire.* Click on it and give it a try — the ingredients are on the shelf. Tea warms the soul, and it's the perfect place to start.",
+        text: "*Mum points to the kettle beside the crackling fire.* Let's make a cup of tea! Open your recipe book, choose Tea, then Cook — anywhere in this kitchen. You can also choose Make Tea at the Fireplace. I'll supply anything you're missing for your first practice cup. It will go into your bag. Come back and ask me to teach you to cook again, and we'll choose your next lesson!",
         expression: 'happy',
         responses: [],
       },

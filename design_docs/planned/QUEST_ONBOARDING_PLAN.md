@@ -30,6 +30,15 @@ Still planned: direct references to durable shared decorations and other visible
 
 Test with two signed-in accounts: A cooks/brews, harvests an uncontested crop, or opens one of the four supported mini-games. Allow up to 30 seconds for the saved milestone queue to publish. B reloads/returns after A's publication and should see news after cloud sync. B can keep a lead, reopen it in the journal, choose Later and return, or mark it read. Repeating A's action must not produce another milestone of the same kind. Check B's personal quest progress remains unchanged. Local checks cover selection/cursor boundaries, retries, account changes, UI actions, idempotent transport and the contested-harvest path; live two-account testing is still needed.
 
+
+### Third release — a reliable first cup of tea
+
+Implemented for #151: the book and kitchen action now share CookingManager's ingredient, stamina, item, recipe-progress and milestone path. Tea requires Mum's kitchen, with room-wide access through the book or **Make Tea at the Fireplace** interaction. Other recipes retain their existing station behaviour for this slice. Invalid attempts spend no stamina or ingredients. After asking Mum to teach cooking, she supplies missing ingredients for one successful practice cup; the saved tea cook count prevents repeat free cups.
+
+Mum's introduction saves a journal lead rather than completing the lesson. Actual tea success completes it, confirms the tea is in the bag and directs players back to Mum for their next lesson. A nearby illustrated invitation points newcomers towards Mum. Existing tutorial unlocks stay unlocked; saved tea cooking history repairs missing lesson credit. Old book-shortcut cups had no cooking history, so they cannot be distinguished from bought or gifted tea; preserved legacy unlocks and the practice cup provide a recovery route.
+
+Validation: manager tests cover location, ingredients, stamina, practice-cup limits, reload and legacy progress; book tests cover the shared path beside Mum and disabled cooking outside the kitchen. Live first-session keyboard/iPad playtesting remains required. Test a fresh character: ask Mum to teach cooking, make Tea through the book anywhere in her kitchen, check the bag and return to Mum for a domain choice. Reload and confirm it does not ask for another cup. Repeat on another fresh save via the fireplace action. Check that village reading cannot cook tea.
+
 ## Recommendation
 
 **Presentation direction:** Lead with visual storytelling, world activity and character dialogue. Helpful UI supports those clues by remembering them, confirming actions and offering optional guidance. Players should feel invited into village life and adventures, rather than directed through a checklist of features.

@@ -48,7 +48,7 @@ export interface RecipeProgress {
 
 export interface CookingState {
   recipeBookUnlocked: boolean; // Whether player has talked to Mum to learn cooking
-  fireplaceTutorialComplete: boolean; // Whether player has opened the fireplace in Mum's kitchen
+  fireplaceTutorialComplete: boolean; // Whether the tea lesson is complete (legacy unlocks are preserved)
   unlockedRecipes: string[]; // Recipe IDs the player knows
   recipeProgress: Record<string, RecipeProgress>;
   cookingCourseCongratsShown?: boolean; // Whether the course-complete toast has already fired
@@ -132,6 +132,11 @@ class CookingManagerClass {
         );
       }
     });
+
+    // Repair old successful cooks without taking away legacy lesson unlocks.
+    if ((this.recipeProgress.get('tea')?.timesCooked ?? 0) > 0) {
+      this.fireplaceTutorialComplete = true;
+    }
 
     this.initialised = true;
     debugLog('CookingManager', `Initialised with ${this.unlockedRecipes.size} unlocked recipes`);
@@ -378,13 +383,16 @@ class CookingManagerClass {
    * Returns result with success and any produced items
    * @param recipeId - Recipe to cook
    * @param _campfireBonus - Optional parameter (unused, kept for backwards compatibility)
+   * @param mapId - Current room; tea requires Mum's kitchen. Other recipes retain existing rules.
    */
-  cook(recipeId: string, _campfireBonus = 0): CookingResult {
-    // Cooking costs stamina
-    if (!staminaManager.performActivity('cook')) {
-      return { success: false, message: "You're too tired to cook right now." };
+  cook(recipeId: string, _campfireBonus = 0, mapId?: string): CookingResult {
+    if (recipeId === 'tea' && mapId !== 'mums_kitchen') {
+      return {
+        success: false,
+        message:
+          "Take your recipe book to Mum's kitchen to use the kettle. You can make tea anywhere in that room.",
+      };
     }
-
     const recipe = getRecipe(recipeId);
     if (!recipe) {
       return { success: false, message: 'Unknown recipe.' };
@@ -398,8 +406,13 @@ class CookingManagerClass {
       };
     }
 
-    // Check ingredients
-    if (!this.hasIngredients(recipeId)) {
+    const practiceCup =
+      recipeId === 'tea' &&
+      this.isRecipeBookUnlocked() &&
+      (this.recipeProgress.get('tea')?.timesCooked ?? 0) === 0;
+
+    // Mum supplies missing ingredients for one successful practice cup.
+    if (!practiceCup && !this.hasIngredients(recipeId)) {
       const missing = this.getMissingIngredients(recipeId);
       return {
         success: false,
@@ -407,10 +420,18 @@ class CookingManagerClass {
       };
     }
 
+    // Invalid attempts must not spend stamina.
+    if (!staminaManager.performActivity('cook')) {
+      return { success: false, message: "You're too tired to cook right now." };
+    }
+
     // Consume ingredients (skip persistent items like sourdough starter)
     recipe.ingredients.forEach((ing) => {
       if (!getItem(ing.itemId)?.persistent) {
-        inventoryManager.removeItem(ing.itemId, ing.quantity);
+        inventoryManager.removeItem(
+          ing.itemId,
+          Math.min(ing.quantity, inventoryManager.getQuantity(ing.itemId))
+        );
       }
     });
 
@@ -465,15 +486,23 @@ class CookingManagerClass {
       `🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
     );
 
+    if (recipeId === 'tea') this.fireplaceTutorialComplete = true;
+
     // Save inventory and cooking state
     this.saveInventory();
     this.save();
     eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking' });
 
     // Build result message
-    const message = masteryAchieved
+    let message = masteryAchieved
       ? `Cooked ${resultQuantity}x ${recipe.displayName}! You've mastered this recipe!`
       : `Cooked ${resultQuantity}x ${recipe.displayName}!`;
+
+    if (recipeId === 'tea') {
+      message +=
+        ' Your tea is in your bag. Talk to Mum and ask her to teach you to cook to choose your next lesson.';
+      if (practiceCup) message += ' Mum helped with your practice cup!';
+    }
 
     return {
       success: true,
@@ -547,20 +576,10 @@ class CookingManagerClass {
   }
 
   /**
-   * Check if the fireplace tutorial has been completed (player has opened fireplace once)
+   * Check if the fireplace tutorial has been completed (successful tea, or a preserved legacy unlock)
    */
   isFireplaceTutorialComplete(): boolean {
     return this.fireplaceTutorialComplete;
-  }
-
-  /**
-   * Mark the fireplace tutorial as complete (called when player first uses the fireplace)
-   */
-  setFireplaceTutorialComplete(): void {
-    if (this.fireplaceTutorialComplete) return;
-    this.fireplaceTutorialComplete = true;
-    debugLog('CookingManager', '🔥 Fireplace tutorial complete!');
-    this.save();
   }
 
   /**
