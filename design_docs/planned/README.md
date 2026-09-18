@@ -8,7 +8,7 @@ This directory contains design documents for planned features and architectural 
 
 ### Quest Onboarding and Feature Discovery
 
-**Status:** Draft for review — audit completed 18 September 2026.
+**Status:** In progress — activity invitations shipped; village news and shared milestones are the next release. Audit completed 18 September 2026.
 
 **Document:** [QUEST_ONBOARDING_PLAN.md](./QUEST_ONBOARDING_PLAN.md)
 

@@ -1,3 +1,4 @@
+import { NEWS_MILESTONES, type VillageNewsResult } from '../utils/villageNews';
 /**
  * Shared Data Service
  *
@@ -21,6 +22,8 @@ import {
   limit,
   where,
   serverTimestamp,
+  documentId,
+  runTransaction,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
@@ -147,6 +150,98 @@ class SharedDataService {
       return true;
     } catch (error) {
       console.error('[SharedData] Failed to add conversation summary:', error);
+      return false;
+    }
+  }
+
+  /** Bounded recent highlights; failures must never advance a reader's cursor. */
+  async getVillageNews(): Promise<VillageNewsResult> {
+    if (!isFirebaseInitialized() || !authService.isAuthenticated())
+      return { status: 'unavailable' };
+    const uid = authService.getUserId()!;
+    try {
+      const snapshot = await getDocs(
+        query(
+          collection(getFirebaseDb(), FIRESTORE_PATHS.sharedEvents()),
+          orderBy('timestamp', 'desc'),
+          orderBy(documentId(), 'desc'),
+          limit(101)
+        )
+      );
+      if (authService.getUserId() !== uid) return { status: 'unavailable' };
+      const events = snapshot.docs.slice(0, 100).flatMap((entry) => {
+        const data = entry.data();
+        const t = data.timestamp;
+        if (
+          !t ||
+          !Number.isInteger(t.seconds) ||
+          !Number.isInteger(t.nanoseconds) ||
+          typeof data.contributorId !== 'string'
+        )
+          return [];
+        return [
+          {
+            id: entry.id,
+            seconds: t.seconds,
+            nanoseconds: t.nanoseconds,
+            contributorId: data.contributorId,
+            eventType: data.eventType,
+            metadata: data.metadata,
+          },
+        ];
+      });
+      return {
+        status: 'ready',
+        events,
+        ownContributorId: hashUserId(uid),
+        truncated: snapshot.size > 100,
+      };
+    } catch (error) {
+      console.warn('[SharedData] Village news unavailable', error);
+      return { status: 'unavailable' };
+    }
+  }
+
+  /** One immutable milestone per account/kind, even across devices and retries. */
+  async publishMilestone(milestoneId: string): Promise<boolean> {
+    if (
+      !Object.hasOwn(NEWS_MILESTONES, milestoneId) ||
+      !isFirebaseInitialized() ||
+      !authService.isAuthenticated()
+    )
+      return false;
+    const uid = authService.getUserId()!;
+    const story = NEWS_MILESTONES[milestoneId];
+    try {
+      // Unlike the legacy display hash, use a collision-resistant key for deduplication.
+      const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(uid));
+      const owner = Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join(
+        ''
+      );
+      if (authService.getUserId() !== uid) return false;
+      const ref = doc(
+        getFirebaseDb(),
+        FIRESTORE_PATHS.sharedEvents(),
+        `milestone_${owner}_${milestoneId}`
+      );
+      await runTransaction(getFirebaseDb(), async (transaction) => {
+        const existing = await transaction.get(ref);
+        if (existing.exists()) return;
+        if (authService.getUserId() !== uid)
+          throw new Error('Account changed during milestone publication');
+        transaction.set(ref, {
+          eventType: 'achievement',
+          title: story.title,
+          description: story.story.replace(/^A neighbour /, ''),
+          contributorId: hashUserId(uid),
+          contributorName: 'A neighbour',
+          timestamp: serverTimestamp(),
+          metadata: { milestoneId },
+        });
+      });
+      return true;
+    } catch (error) {
+      console.warn('[SharedData] Milestone will be retried', error);
       return false;
     }
   }

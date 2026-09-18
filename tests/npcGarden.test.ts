@@ -74,6 +74,7 @@ const { reportGardenProgress } = vi.hoisted(() => ({
 }));
 
 vi.mock('../firebase/safe', () => ({
+  getAuthService: () => ({ getState: () => ({ user: { uid: 'test-player' } }) }),
   getNpcGardenService: () => ({
     startListening: vi.fn(),
     stopListening: vi.fn(),

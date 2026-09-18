@@ -62,6 +62,7 @@ const { claimPlot, remotePlots } = vi.hoisted(() => ({
 }));
 
 vi.mock('../firebase/safe', () => ({
+  getAuthService: () => ({ getState: () => ({ user: { uid: 'test-player' } }) }),
   getCommunityGardenService: () => ({
     claimPlot,
     writePlot: vi.fn(async () => true),
@@ -132,6 +133,26 @@ describe('shared farm — contested harvest', () => {
     expect(result).not.toBeNull();
     expect(addItem).toHaveBeenCalled();
     expect(currentPlot(key)!.state).toBe(FarmPlotState.FALLOW);
+  });
+
+  it('publishes gardening news only after a winning claim, never a lost claim', async () => {
+    let resolveClaim!: (won: boolean) => void;
+    claimPlot.mockReturnValue(new Promise<boolean>(resolve => { resolveClaim = resolve; }));
+    const milestone = vi.fn();
+    const unsubscribe = eventBus.on(GameEvent.PLAYER_MILESTONE, milestone);
+    try {
+      farmManager.harvestCrop('village', { x: 3, y: 4 });
+      await settle();
+      expect(milestone).not.toHaveBeenCalled();
+      resolveClaim(false);
+      await settle();
+      expect(milestone).not.toHaveBeenCalled();
+      seedPlot(readyPlot(), key);
+      claimPlot.mockResolvedValue(true);
+      farmManager.harvestCrop('village', { x: 3, y: 4 });
+      await settle();
+      expect(milestone).toHaveBeenCalledExactlyOnceWith({ milestoneId: 'gardening' });
+    } finally { unsubscribe(); }
   });
 
   it('keeps the harvest when the claim is won', async () => {

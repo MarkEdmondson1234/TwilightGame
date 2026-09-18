@@ -6,7 +6,7 @@
  * backdrop (or lets the component handle its own backdrop).
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { getMiniGame } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type {
@@ -53,6 +53,10 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
   showToast,
 }) => {
   const definition = activeMiniGameId ? getMiniGame(activeMiniGameId) : undefined;
+
+  useEffect(() => {
+    if (definition) eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: definition.id });
+  }, [definition]);
 
   // Read-only game state snapshot
   const gameStateSnapshot: MiniGameGameState = useMemo(

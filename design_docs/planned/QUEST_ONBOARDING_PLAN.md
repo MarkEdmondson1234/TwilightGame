@@ -18,6 +18,18 @@ Validation: eight new discovery/component tests; type check and lint (no errors)
 
 Test in game: enter a winter forest; approach the village child in autumn, Mushra in the mushroom forest, or Cinder; choose **How do I try it?**, **Ask**, or **Later**; reopen the journal's **Things to try** chapter. Repeated visits should not repeat a remembered invitation. Test equipped skiing with **Go Skiing** and with the inventory action.
 
+### Second release — village news and shared milestones
+
+Implemented: an illustrated return recap and **Journal → Village news**, with authored spoiler-light summaries of shared events. **Later** preserves unread news; **Mark this news read** advances a persisted, account-scoped server timestamp/document-ID cursor. **Keep this lead** adds directions to Things to try without advancing personal quests. Repeated events are grouped, and the reader's own events are excluded.
+
+New shared milestones cover a successful cook, a successful brew, a confirmed harvest, and discovering skiing, pumpkin carving, wreath-making or Lava Leap. Publication is once per account/activity, uses immutable deterministic Firestore documents for retry/device deduplication, and retains a bounded pending queue in the character save. Existing players can contribute their first recorded milestone after this release; the wording does not falsely claim their first-ever dish or harvest. Signed-out actions are not published. Cooking and brewing announcements come after successful save paths; ordinary shared harvest announcements wait for a winning claim, and disputed claims never announce a harvest. Shared dual-harvest announcements are deferred until that path has equivalent confirmation.
+
+The recap deliberately summarises at most the latest 100 events and labels truncated results **recent highlights**; this first version is not a complete historical archive or an exact login-to-login activity ledger. **Later** retains news since the last explicit acknowledgement. Reads wait for initial cloud sync; offline failures do not advance the cursor and retry on reconnect. Legacy quest events receive generic summaries, while new milestone events provide specific leads. Personal quest state is never inferred from another player's news.
+
+Still planned: direct references to durable shared decorations and other visible changes, richer scripted NPC follow-up, individually targeted advanced hints, more milestone types, and full event pagination. Existing NPC global-event context can pick up the new events through its usual refresh path.
+
+Test with two signed-in accounts: A cooks/brews, harvests an uncontested crop, or opens one of the four supported mini-games. Allow up to 30 seconds for the saved milestone queue to publish. B reloads/returns after A's publication and should see news after cloud sync. B can keep a lead, reopen it in the journal, choose Later and return, or mark it read. Repeating A's action must not produce another milestone of the same kind. Check B's personal quest progress remains unchanged. Local checks cover selection/cursor boundaries, retries, account changes, UI actions, idempotent transport and the contested-harvest path; live two-account testing is still needed.
+
 ## Recommendation
 
 **Presentation direction:** Lead with visual storytelling, world activity and character dialogue. Helpful UI supports those clues by remembering them, confirming actions and offering optional guidance. Players should feel invited into village life and adventures, rather than directed through a checklist of features.

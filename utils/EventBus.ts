@@ -27,6 +27,7 @@ import type { BattlePhase } from '../multiplayer/battle';
  * All game events that can be emitted through the EventBus
  */
 export enum GameEvent {
+  PLAYER_MILESTONE = 'player:milestone',
   // Farm events
   FARM_PLOT_CHANGED = 'farm:plot_changed',
   FARM_CROP_GREW = 'farm:crop_grew',
@@ -152,6 +153,7 @@ export enum GameEvent {
  * Type-safe payload definitions for each event
  */
 export interface EventPayloads {
+  [GameEvent.PLAYER_MILESTONE]: { milestoneId: string };
   [GameEvent.FARM_PLOT_CHANGED]: {
     position?: Position;
     action?: 'till' | 'plant' | 'water' | 'harvest' | 'clear' | 'wilt' | 'die' | 'revive';

@@ -1,3 +1,9 @@
+import { getAuthService } from '../../firebase/safe';
+import { readVillageNews, updateVillageNews } from '../../utils/villageNewsStorage';
+import { compareNews } from '../../utils/villageNews';
+import { rememberActivityLead } from '../../utils/activityLeadStorage';
+import type { ActivityLeadId } from '../../utils/activityDiscovery';
+import { eventBus, GameEvent } from '../../utils/EventBus';
 import { getRememberedActivityLeads } from '../../utils/activityLeadStorage';
 import React, { useMemo, useState, useEffect } from 'react';
 import { BookThemeConfig } from './bookThemes';
@@ -17,7 +23,7 @@ interface JournalContentProps {
 }
 
 // Journal chapter types
-type JournalChapterId = 'active' | 'completed' | 'conversations' | 'activities';
+type JournalChapterId = 'active' | 'completed' | 'conversations' | 'activities' | 'news';
 
 // Unified journal entry type (quests or NPC conversations)
 interface JournalEntry {
@@ -25,6 +31,7 @@ interface JournalEntry {
   type: 'quest' | 'npc';
   title: string;
   subtitle?: string;
+  activityLead?: ActivityLeadId;
   // Quest-specific
   progress?: EventChainProgress;
   stageText?: string;
@@ -39,6 +46,7 @@ interface JournalEntry {
 const JOURNAL_CHAPTERS: BookChapter<JournalChapterId>[] = [
   { id: 'active', label: 'Active Quests', icon: '📋' },
   { id: 'activities', label: 'Things to try', icon: '🌱' },
+  { id: 'news', label: 'Village news', icon: '📜' },
   { id: 'completed', label: 'History', icon: '📜' },
   { id: 'conversations', label: 'Conversations', icon: '💬' },
 ];
@@ -78,6 +86,11 @@ function getNPCIdsWithConversations(): string[] {
 const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   // Counter to force diary data refresh after Firestore sync
   const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
+
+  useEffect(
+    () => eventBus.on(GameEvent.QUEST_DATA_CHANGED, () => setDiaryRefreshKey((n) => n + 1)),
+    []
+  );
 
   // Build journal entries for each chapter
   const entriesByChapter = useMemo(() => {
@@ -148,7 +161,19 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       })
       .filter((entry) => entry !== null) as JournalEntry[];
 
+    const newsUid = getAuthService().getState().user?.uid;
+    const newsStories = newsUid ? readVillageNews(newsUid).recent : [];
     return {
+      news: newsStories.map(
+        (story): JournalEntry => ({
+          id: story.key,
+          type: 'quest',
+          title: story.title,
+          stageText: story.story,
+          subtitle: 'Recent news from other players',
+          activityLead: story.lead,
+        })
+      ),
       activities: getRememberedActivityLeads().map(
         (lead): JournalEntry => ({
           id: lead.id,
@@ -250,7 +275,9 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
                 ? 'No completed quests yet'
                 : pagination.currentChapterId === 'activities'
                   ? 'Explore and chat with your neighbours to find things to try.'
-                  : 'No NPC conversations yet'}
+                  : pagination.currentChapterId === 'news'
+                    ? 'Sign in and visit the village to hear news. If you are offline, try again when connected.'
+                    : 'No NPC conversations yet'}
           </p>
         )}
       </div>
@@ -260,7 +287,9 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         className="mt-3 pt-2 border-t text-lg"
         style={{ borderColor: theme.accentPrimary, color: theme.textMuted }}
       >
-        {pagination.currentChapterId === 'activities' ? (
+        {pagination.currentChapterId === 'news' ? (
+          <span>Shared stories, personal adventures</span>
+        ) : pagination.currentChapterId === 'activities' ? (
           <span>{entriesByChapter.activities.length} things to try at your own pace</span>
         ) : pagination.currentChapterId === 'conversations' ? (
           <span>
@@ -284,6 +313,38 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   // Right page: Entry detail
   const rightPageContent = (
     <div className="h-full flex flex-col overflow-y-auto">
+      {pagination.currentChapterId === 'news' && (
+        <button
+          className="p-3 rounded mb-3"
+          style={{ background: theme.accentPrimary, color: '#fff' }}
+          onClick={() => {
+            const uid = getAuthService().getState().user?.uid;
+            if (uid)
+              updateVillageNews(uid, (state) => ({
+                ...state,
+                cursor:
+                  state.recentCursor &&
+                  (!state.cursor || compareNews(state.recentCursor, state.cursor) > 0)
+                    ? state.recentCursor
+                    : state.cursor,
+              }));
+          }}
+        >
+          Mark this news read
+        </button>
+      )}
+      {selectedEntry?.activityLead && (
+        <button
+          className="p-3 rounded mb-3"
+          style={{ background: theme.accentPrimary, color: '#fff' }}
+          onClick={() => {
+            rememberActivityLead(selectedEntry.activityLead!);
+            pagination.goToChapter('activities');
+          }}
+        >
+          Keep this lead in Things to try
+        </button>
+      )}
       {selectedEntry ? (
         selectedEntry.type === 'quest' ? (
           <QuestDetailPage entry={selectedEntry} theme={theme} />

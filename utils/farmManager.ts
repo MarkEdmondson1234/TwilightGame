@@ -1,3 +1,4 @@
+import { getAuthService } from '../firebase/safe';
 /**
  * FarmManager - Single Source of Truth for farm plot data
  *
@@ -882,9 +883,13 @@ class FarmManager {
       cropDisplayName: string;
     }
   ): void {
-    if (!SHARED_FARM_MAP_IDS.has(mapId)) return;
+    if (!SHARED_FARM_MAP_IDS.has(mapId)) {
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
+      return;
+    }
 
     const plotId = this.getPlotKey(mapId, position);
+    const harvestOwner = getAuthService().getState().user?.uid;
 
     void (async () => {
       try {
@@ -904,6 +909,9 @@ class FarmManager {
         );
 
         if (won) {
+          if (harvestOwner === getAuthService().getState().user?.uid) {
+            eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
+          }
           // Our write went out inside the transaction; mark it flushed so the
           // snapshot echo does not overwrite the plot we just harvested.
           this.recentlyFlushed.set(plotId, Date.now());
@@ -1079,6 +1087,7 @@ class FarmManager {
       position: plot.position,
     });
     this.syncSharedPlot(mapId, position);
+    if (!SHARED_FARM_MAP_IDS.has(mapId)) eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
 
     return {
       cropId: plot.cropType,

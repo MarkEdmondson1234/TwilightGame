@@ -44,6 +44,7 @@ const writePlot = vi.fn();
 const clearPlot = vi.fn();
 
 vi.mock('../firebase/safe', () => ({
+  getAuthService: () => ({ getState: () => ({ user: { uid: 'test-player' } }) }),
   getCommunityGardenService: () => ({
     writePlot,
     clearPlot,

@@ -223,6 +223,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
     const activeQuests: string[] = [];
     const completedQuests: string[] = [];
     for (const [questId, quest] of Object.entries(quests)) {
+      if (questId === 'activity_discovery_knowledge' || questId === 'village_news_knowledge') continue;
       const displayName = questId.replace(/_/g, ' ');
       if (quest.completed) completedQuests.push(displayName);
       else if (quest.started) activeQuests.push(displayName);

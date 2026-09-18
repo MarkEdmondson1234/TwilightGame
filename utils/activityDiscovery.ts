@@ -1,5 +1,12 @@
 /** Small, authored leads. These record knowledge, never quest completion. */
-export type ActivityLeadId = 'skiing' | 'pumpkin-carving' | 'wreath-making' | 'lava-leap';
+export type ActivityLeadId =
+  | 'skiing'
+  | 'pumpkin-carving'
+  | 'wreath-making'
+  | 'lava-leap'
+  | 'cooking'
+  | 'brewing'
+  | 'gardening';
 
 export interface ActivityLead {
   id: ActivityLeadId;
@@ -10,6 +17,29 @@ export interface ActivityLead {
 }
 
 export const ACTIVITY_LEADS: ActivityLead[] = [
+  {
+    id: 'cooking',
+    title: 'A dish of your own',
+    itemId: 'food_tea',
+    invitation: 'Mum has recipes to share.',
+    directions:
+      'Talk to Mum at home and ask her to teach you to cook. She will introduce the kitchen fireplace and your recipe book. Ask her about your next lesson when you are ready.',
+  },
+  {
+    id: 'gardening',
+    title: 'A garden of your own',
+    itemId: 'seed_radish',
+    invitation: 'Elias can help you get growing.',
+    directions:
+      'Find Elias in the village and ask about helping with the garden. He offers seasonal seeds and tasks. Winter is a time to plan; return in spring for planting.',
+  },
+  {
+    id: 'brewing',
+    title: 'Rumours of bottled magic',
+    invitation: 'Someone in the village has learned to brew potions.',
+    directions:
+      'Follow Elias’s gardening and friendship stories towards the fairies. As your own story unfolds, ask Althea about magic. If you are already an apprentice, visit your teacher and consult your magic recipe book for the next potion and its ingredients.',
+  },
   {
     id: 'skiing',
     title: 'Through the winter woods',

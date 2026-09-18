@@ -1,3 +1,5 @@
+import VillageNews from './components/VillageNews';
+import { useVillageNews } from './hooks/useVillageNews';
 import ActivityInvitation from './components/ActivityInvitation';
 import { canSkiHere } from './utils/activityDiscovery';
 import { getPlayerBodyFraction, playerGroundingOffset, isOutsideMobileShopFloor } from './utils/playerGrounding';
@@ -2275,6 +2277,8 @@ const App: React.FC = () => {
   const isInWorld =
     !showSplashScreen && !isLoadingCutscene && !isCutscenePlaying && isMapInitialized;
 
+  const villageNews = useVillageNews(isInWorld);
+
   const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
 
   // Show character creator as full-screen replacement only on first launch (before map loads)
@@ -2740,10 +2744,11 @@ const App: React.FC = () => {
           compact={isCompactMode}
         />
       )}
+      <VillageNews key={villageNews.uid ?? 'offline'} news={villageNews} blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible} onJournal={() => openUI('journal')} />
       <ActivityInvitation
         mapId={currentMapId}
         playerPosition={playerPosRef}
-        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible}
+        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
         onTalk={setActiveNPC}
         onJournal={() => openUI('journal')}
         onSki={() => {

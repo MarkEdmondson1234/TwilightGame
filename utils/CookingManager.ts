@@ -468,6 +468,7 @@ class CookingManagerClass {
     // Save inventory and cooking state
     this.saveInventory();
     this.save();
+    eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking' });
 
     // Build result message
     const message = masteryAchieved

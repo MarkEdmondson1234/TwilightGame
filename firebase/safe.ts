@@ -1,3 +1,4 @@
+import type { VillageNewsResult } from '../utils/villageNews';
 /**
  * Safe Firebase Wrapper
  *
@@ -54,6 +55,8 @@ const stubAuthService = {
 
 /** Stub sharedDataService when Firebase is not available */
 const stubSharedDataService = {
+  getVillageNews: async (): Promise<VillageNewsResult> => ({ status: 'unavailable' }),
+  publishMilestone: async (_id: string) => false,
   getNPCGossip: async () => null,
   addConversationSummary: async () => {},
   getWorldEvents: async () => [] as SharedWorldEvent[],
