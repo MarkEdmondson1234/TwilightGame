@@ -1483,9 +1483,26 @@ class FarmManager {
     this.flushInterval = setInterval(() => this.flushDirtyPlots(), SHARED_SYNC_INTERVAL_MS);
     debugLog('SharedFarm', `Started batch sync (${SHARED_SYNC_INTERVAL_MS / 1000}s interval)`);
 
-    // Start real-time listener for remote changes
+    // Start real-time listener for remote changes.
+    //
+    // Wait for the Firebase module first. This runs from App's mount effect
+    // when a save loads straight onto the village, which is before the dynamic
+    // Firebase import has settled — and getCommunityGardenService() hands back
+    // a no-op stub until it has. Binding the listener to the stub is permanent
+    // (this method is a no-op once the flush interval exists): our own plots
+    // still flush, because flushDirtyPlots() re-resolves the service each
+    // time, but nobody else's plots ever arrive. The second half of the same
+    // race — signed out when the listener starts — is handled inside the
+    // service, which retries on sign-in.
     try {
-      const { getCommunityGardenService } = await import('../firebase/safe');
+      const { getCommunityGardenService, whenFirebaseSettled } = await import('../firebase/safe');
+      const loaded = await whenFirebaseSettled();
+      if (!loaded) {
+        debugLog('SharedFarm', 'Firebase not available — local-only mode');
+        return;
+      }
+      // Left the shared map while the import was settling.
+      if (!this.flushInterval) return;
       const service = getCommunityGardenService();
       service.startListening();
 

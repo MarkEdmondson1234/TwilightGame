@@ -88,15 +88,40 @@ class SharedFarmService {
   private listeners: Set<(plots: Map<string, SharedPlotDoc>) => void> = new Set();
   private remotePlots: Map<string, SharedPlotDoc> = new Map();
   private isListening = false;
+  /** Armed while waiting for sign-in so the listener can start once it lands. */
+  private cancelAuthRetry: (() => void) | null = null;
 
   /**
    * Start listening to shared farm plot changes.
    * Call when entering any map with shared farming.
+   *
+   * Firebase restores the session *after* the game has loaded its first map,
+   * so a player who resumes standing in the village calls this while signed
+   * out. Returning quietly here — as this used to — meant their own plots
+   * still flushed (the flush checks auth at flush time) but nobody else's ever
+   * arrived: "she can't see the plants I just planted", for the whole session,
+   * until they walked out of the village and back in. The same race that
+   * rule 6 in CLAUDE.md fixed for presence and chat; this one is not a hook,
+   * so the auth-retry guard test never covered it.
    */
   startListening(): void {
     if (this.isListening) return;
-    if (!isFirebaseInitialized() || !authService.isAuthenticated()) {
+    if (!isFirebaseInitialized()) {
       debugLog('SharedFarm', 'Firebase not available — running in local-only mode');
+      return;
+    }
+    if (!authService.isAuthenticated()) {
+      if (!this.cancelAuthRetry) {
+        console.info(
+          "[SharedFarm] Not signed in yet — other players' plots will appear once sign-in completes"
+        );
+        this.cancelAuthRetry = authService.onAuthStateChange((state) => {
+          if (!state.isAuthenticated) return;
+          this.cancelAuthRetry?.();
+          this.cancelAuthRetry = null;
+          this.startListening();
+        });
+      }
       return;
     }
 
@@ -133,6 +158,8 @@ class SharedFarmService {
    * Call when leaving shared maps.
    */
   stopListening(): void {
+    this.cancelAuthRetry?.();
+    this.cancelAuthRetry = null;
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
