@@ -45,7 +45,7 @@ describe('skiing score transport', () => {
   it('publishes one best on the matching starting-level board', async () => {
     expect(await skiingScoreService.submit(4, { score: 200, distance: 2000, level: 4 })).toBe(true);
     expect(mock.write).toHaveBeenCalledWith(
-      'skiingBoards/v2_4/scores/skier-1',
+      'skiingBoards/v3_4/scores/skier-1',
       expect.objectContaining({ score: 200, name: 'Skier', updatedAt: 'server-time' })
     );
   });

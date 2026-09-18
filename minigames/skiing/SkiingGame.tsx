@@ -17,6 +17,9 @@ import { Z_MINI_GAME, zClass } from '../../zIndex';
 import { debugLog } from '../../utils/debugLog';
 import { SkiingHud, type SkiPhase, type TrailStatus } from './SkiingHud';
 import {
+  beginWolfLeap,
+  wolfLeapPose,
+  type WolfLeap,
   crossesContact,
   pickObstacleX,
   emptyWood,
@@ -44,6 +47,7 @@ interface WorldObj {
   worldX: number;
   worldZ: number;
   passed?: boolean;
+  leap?: WolfLeap;
 }
 
 const OBSTACLE_KINDS: ObstacleKind[] = [
@@ -402,7 +406,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   // ─── Spawning ───
   const spawnObject = useCallback(() => {
     const distance = cameraZRef.current;
-    const tuning = levelTuning(forestLevel(startLevel, distance));
+    const tuning = levelTuning(startLevel + distance / STRETCH_DISTANCE);
     const worldZ = distance + Z_SPAWN;
     const isObstacle = Math.random() >= PICKUP_SPAWN_CHANCE;
     const kind: ObjKind = !isObstacle
@@ -448,7 +452,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           previousX + ((held.right ? 1 : 0) - (held.left ? 1 : 0)) * STEER_SPEED * dt
         )
       );
-      const tuning = levelTuning(forestLevel(startLevel, previousZ));
+      const tuning = levelTuning(startLevel + previousZ / STRETCH_DISTANCE);
       const speed = tuning.speed * (held.boost ? 1.6 : 1);
       cameraZRef.current += speed * dt;
       spawnTimerRef.current -= dt * 1000;
@@ -464,6 +468,19 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         const z = obj.worldZ - cameraZRef.current;
         if (z <= 0) continue;
         const contact = getContact(obj.kind);
+        const previousObjX = obj.worldX;
+        if (obj.kind === 'wolf' && !obj.passed) {
+          obj.leap ??= beginWolfLeap(
+            obj.worldZ - previousZ - contact.z,
+            tuning.speed,
+            obj.worldX,
+            previousX
+          );
+          if (obj.leap) {
+            obj.leap.elapsed += dt;
+            obj.worldX = wolfLeapPose(obj.leap).x;
+          }
+        }
         const offset = obj.worldX - cameraXRef.current;
         if (!obj.passed && z <= contact.z) {
           obj.passed = true;
@@ -472,7 +489,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
               obj.worldZ - previousZ,
               z,
               contact.z,
-              obj.worldX - previousX,
+              previousObjX - previousX,
               offset,
               contact.halfWidth
             )
@@ -557,7 +574,37 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       const drawHeight = drawWidth / (img.naturalWidth / img.naturalHeight);
 
       if (screenX < -drawWidth || screenX > w + drawWidth) return;
-      ctx.drawImage(img, screenX - drawWidth / 2, screenY - drawHeight, drawWidth, drawHeight);
+      const leapPose = obj.leap ? wolfLeapPose(obj.leap) : undefined;
+      if (leapPose && !obj.passed) {
+        ctx.save();
+        ctx.fillStyle = leapPose.windingUp ? 'rgba(244, 172, 53, 0.7)' : 'rgba(25, 40, 50, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(
+          screenX,
+          screenY - drawHeight * GROUND_PAD_RATIO.wolf,
+          drawWidth * 0.4,
+          Math.max(3, drawWidth * 0.08),
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        if (leapPose.windingUp) {
+          ctx.fillStyle = '#543700';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Boost or dodge!', screenX, screenY - drawHeight - 12);
+        }
+        ctx.restore();
+      }
+      const lift = (leapPose?.lift ?? 0) * drawHeight * 0.22;
+      ctx.drawImage(
+        img,
+        screenX - drawWidth / 2,
+        screenY - drawHeight - lift,
+        drawWidth,
+        drawHeight
+      );
     };
 
     // World objects — farthest first (painter's algorithm), split around level2: distant

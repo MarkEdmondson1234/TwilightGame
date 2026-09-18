@@ -1,7 +1,7 @@
 /** Pure run rules. Rendering and transport stay outside this module. */
 export const STRETCH_DISTANCE = 14000;
 export const MAX_FOREST_LEVEL = 30;
-export const SCORE_VERSION = 2;
+export const SCORE_VERSION = 3;
 export type WoodKind = 'wood_poor' | 'wood_medium' | 'wood_fine';
 export type WoodCounts = Record<WoodKind, number>;
 export const emptyWood = (): WoodCounts => ({ wood_poor: 0, wood_medium: 0, wood_fine: 0 });
@@ -35,12 +35,14 @@ export function retainedWood(wood: WoodCounts, crashed: boolean): WoodCounts {
 }
 
 export function levelTuning(level: number) {
-  const difficulty = Math.max(0, level - 1);
+  // Fractional depth gives continuous acceleration, with a short gentle opening.
+  // A square-root curve keeps accelerating beyond depth 30 without sudden speed jumps.
+  const difficulty = Math.max(0, level - 1 - 0.28);
   return {
-    speed: 550 + Math.min(300, difficulty * 28),
-    spawnMs: Math.max(300, 850 - difficulty * 65),
+    speed: 550 + 360 * (Math.sqrt(1 + difficulty) - 1),
+    spawnMs: Math.max(300, 850 / (1 + difficulty * 0.55)),
     wood: (level < 3 ? 'wood_poor' : level < 5 ? 'wood_medium' : 'wood_fine') as WoodKind,
-    wolfChance: level < 4 ? 0 : Math.min(0.25, 0.06 + (level - 4) * 0.025),
+    wolfChance: level < 4 ? 0 : Math.min(0.25, 0.12 + (level - 4) * 0.035),
   };
 }
 
@@ -101,4 +103,36 @@ export function pickObstacleX(
   if (free.length <= 1) return null;
   const lane = free[Math.floor(random() * free.length)];
   return -halfWidth + lane * laneWidth + random() * laneWidth;
+}
+
+export const WOLF_WINDUP_SECONDS = 0.55;
+export const WOLF_LEAP_SECONDS = 0.55;
+export interface WolfLeap {
+  elapsed: number;
+  fromX: number;
+  targetX: number;
+}
+
+/** Lock the target before leaping: dodging and boosting must both remain useful. */
+export function beginWolfLeap(
+  gap: number,
+  cruisingSpeed: number,
+  wolfX: number,
+  playerX: number
+): WolfLeap | undefined {
+  if (gap <= 0 || gap > cruisingSpeed * 1.3 || Math.abs(playerX - wolfX) > 700) return;
+  return { elapsed: 0, fromX: wolfX, targetX: playerX };
+}
+
+export function wolfLeapPose(leap: WolfLeap) {
+  const progress = Math.max(
+    0,
+    Math.min(1, (leap.elapsed - WOLF_WINDUP_SECONDS) / WOLF_LEAP_SECONDS)
+  );
+  const eased = progress * progress * (3 - 2 * progress);
+  return {
+    x: leap.fromX + (leap.targetX - leap.fromX) * eased,
+    lift: Math.sin(progress * Math.PI),
+    windingUp: leap.elapsed < WOLF_WINDUP_SECONDS,
+  };
 }

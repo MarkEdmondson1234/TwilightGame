@@ -111,3 +111,42 @@ describe('reachable escape lanes', () => {
     ).not.toBeNull();
   });
 });
+
+import { beginWolfLeap, wolfLeapPose } from '../minigames/skiing/rules';
+
+describe('accelerating trail and wolf attacks', () => {
+  it('keeps the opening gentle, then accelerates within stretches and beyond the final depth', () => {
+    expect(levelTuning(1.2).speed).toBe(550);
+    expect(levelTuning(1.8).speed).toBeGreaterThan(levelTuning(1.4).speed);
+    expect(levelTuning(3).speed).toBeGreaterThan(780);
+    expect(levelTuning(3).spawnMs).toBeLessThan(450);
+    expect(levelTuning(32).speed).toBeGreaterThan(levelTuning(30).speed);
+    expect(levelTuning(1.99999).speed).toBeCloseTo(levelTuning(2).speed, 2);
+  });
+  it('only winds up nearby wolves before contact and locks their target', () => {
+    expect(beginWolfLeap(1400, 1000, -400, 0)).toBeUndefined();
+    expect(beginWolfLeap(-1, 1000, -400, 0)).toBeUndefined();
+    expect(beginWolfLeap(1000, 1000, -800, 0)).toBeUndefined();
+    const leap = beginWolfLeap(1300, 1000, -400, 0)!;
+    expect(wolfLeapPose({ ...leap, elapsed: 0.4 })).toMatchObject({
+      x: -400,
+      windingUp: true,
+      lift: 0,
+    });
+    expect(wolfLeapPose({ ...leap, elapsed: 0.8 }).lift).toBeGreaterThan(0.9);
+    expect(wolfLeapPose({ ...leap, elapsed: 1.2 }).x).toBe(0);
+  });
+  it('lets boost outrun a sideways leap, while cruising into its landing crashes', () => {
+    const cruise = levelTuning(4).speed;
+    const leap = beginWolfLeap(cruise * 1.3, cruise, -600, 0)!;
+    const poseAtContact = (boost: number) => wolfLeapPose({ ...leap, elapsed: 1.3 / boost });
+    expect(Math.abs(poseAtContact(1).x)).toBeLessThan(60);
+    expect(Math.abs(poseAtContact(1.6).x)).toBeGreaterThan(250);
+    // Dodging after the wolf commits also escapes; the target does not follow the player.
+    expect(Math.abs(poseAtContact(1).x - 300)).toBeGreaterThan(60);
+  });
+  it('sweeps both moving wolf and player at the contact plane', () => {
+    expect(crossesContact(240, 220, 230, -80, 80, 45)).toBe(true);
+    expect(crossesContact(240, 220, 230, -180, -80, 45)).toBe(false);
+  });
+});

@@ -69,7 +69,7 @@ service cloud.firestore {
     match /skiingBoards/{board}/scores/{userId} {
       allow read: if isAuthenticated();
       allow create, update: if isOwner(userId)
-        && board.matches('v2_([1-9]|[12][0-9]|30)')
+        && board.matches('v[23]_([1-9]|[12][0-9]|30)')
         && request.resource.data.keys().hasOnly(['score', 'distance', 'level', 'name', 'updatedAt'])
         && request.resource.data.score is int
         && request.resource.data.score >= 0 && request.resource.data.score <= 10000000
