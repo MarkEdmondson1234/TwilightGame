@@ -450,6 +450,12 @@ class GameStateManager {
     return this.state.caveDepth;
   }
 
+  /** Set the destination depth for travel that skips intermediate forest maps. */
+  setForestDepth(depth: number): void {
+    this.state.forestDepth = Math.max(0, Math.floor(depth));
+    this.notify();
+  }
+
   resetForestDepth(): void {
     this.state.forestDepth = 0;
     this.notify();

@@ -149,6 +149,12 @@ class MiniGameManagerClass {
       }
     }
 
+    if (!result.success && result.salvageRewards) {
+      for (const reward of result.salvageRewards) {
+        inventoryManager.addItem(reward.itemId, reward.quantity);
+      }
+    }
+
     // Save progress data if provided (regardless of success)
     if (result.progressData) {
       const existing = this.loadProgress(gameId) ?? {};

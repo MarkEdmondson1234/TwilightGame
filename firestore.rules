@@ -65,6 +65,26 @@ service cloud.firestore {
     // Shared Data (Public Read, Authenticated Write)
     // ============================================
 
+    // Versioned skiing boards, one best per account and starting forest level.
+    match /skiingBoards/{board}/scores/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId)
+        && board.matches('v2_([1-9]|[12][0-9]|30)')
+        && request.resource.data.keys().hasOnly(['score', 'distance', 'level', 'name', 'updatedAt'])
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0 && request.resource.data.score <= 10000000
+        && request.resource.data.distance is int
+        && request.resource.data.distance >= 0 && request.resource.data.distance <= 100000000
+        && request.resource.data.level is int
+        && request.resource.data.level >= 1 && request.resource.data.level <= 30
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 32
+        && request.resource.data.updatedAt == request.time
+        && (!exists(/databases/$(database)/documents/skiingBoards/$(board)/scores/$(userId))
+          || request.resource.data.score > resource.data.score);
+      allow delete: if isOwner(userId);
+    }
+
     // Shared conversations - what players discussed with NPCs
     // Path: conversations/{npcId}/summaries/{summaryId}
     match /conversations/{npcId}/summaries/{summaryId} {

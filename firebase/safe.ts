@@ -517,3 +517,11 @@ export async function whenFirebaseSettled(): Promise<boolean> {
   await safeInitializeFirebase();
   return firebaseModule !== null;
 }
+
+/** Skiing records are optional; local play never depends on the network. */
+export function getSkiingScoreService(): typeof import('./skiingScoreService').skiingScoreService {
+  return firebaseModule?.skiingScoreService ?? {
+    watch: (_level, receive) => { receive([], 'signed-out'); return () => {}; },
+    submit: async () => false,
+  };
+}

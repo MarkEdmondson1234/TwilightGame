@@ -2897,6 +2897,7 @@ const App: React.FC = () => {
       )}
       {ui.miniGame && ui.context.activeMiniGameId && (
         <MiniGameHost
+          key={ui.context.miniGameTriggerData?.extra?.skiingRunKey as string | undefined}
           activeMiniGameId={ui.context.activeMiniGameId}
           triggerData={ui.context.miniGameTriggerData}
           playerPosition={playerPos}
@@ -2904,6 +2905,23 @@ const App: React.FC = () => {
           onClose={(result) => {
             const miniGameId = ui.context.activeMiniGameId;
             closeUI('miniGame');
+            if (miniGameId === 'skiing' && result?.skiingDestination) {
+              const { depth, crashed } = result.skiingDestination;
+              // RANDOM_FOREST increments once, uses the shared daily seed, and validates spawn.
+              const destination = crashed ? 1 : Math.max(1, Math.min(30, depth));
+              gameState.setForestDepth(destination - 1);
+              handleMapTransition('RANDOM_FOREST', { x: 3, y: 15 });
+              if (result.skiingDestination.retry) {
+                openUI('miniGame', {
+                  activeMiniGameId: 'skiing',
+                  miniGameTriggerData: {
+                    triggerType: 'inventory',
+                    itemId: 'tool_skis',
+                    extra: { skiingRunKey: crypto.randomUUID() },
+                  },
+                });
+              }
+            }
             // Winning "Test of Wits" plays Mordecai's Strength Trial intro cutscene,
             // which transitions the player into the Strength Trial itself on "Next"
             // (see data/cutscenes/wizardTrials.ts's onComplete).

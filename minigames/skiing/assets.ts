@@ -26,5 +26,6 @@ export const skiingAssets = {
   woodPoor: `${BASE}/ski_low_quality_wood.png`,
   woodMedium: `${BASE}/ski_medium_quality_wood.png`,
   woodFine: `${BASE}/ski_fine_firewood.png`,
+  wolf: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png',
   player: `${BASE}/skiing_male_pc.png`,
 } as const;

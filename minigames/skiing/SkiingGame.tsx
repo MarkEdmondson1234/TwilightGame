@@ -1,28 +1,40 @@
-/**
- * Skiing Mini-Game — OutRun-style firewood gathering
- *
- * The player skis continuously forward through a winter forest, steering left/right
- * to dodge trees/brambles and collect firewood. No braking — only steering and a
- * forward boost. Crashing triggers the same "collapse and get sent home" flow as
- * stamina exhaustion; the "Stop skiing" button ends the run safely and banks the haul.
- *
- * Pseudo-3D projection is adapted from the reference project erendn/outrun-js
- * (specifically its Vector3.project() perspective-divide formula) — simplified since
- * this open field has no road/curve to track, just a camera moving through world space.
- */
-
+/** Winter forest travel: contact-plane collisions, level progression and salvage. */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { skiingAssets } from './assets';
+import {
+  CAMERA_ALTITUDE,
+  HORIZON_RATIO,
+  playerDrawWidth,
+  playerBottomMargin,
+  computeGap,
+  capDrawWidth,
+  getPlayerCollisionAnchorY,
+  contactForSprite,
+} from './geometry';
 import { gameState } from '../../GameState';
 import { Z_MINI_GAME, zClass } from '../../zIndex';
 import { debugLog } from '../../utils/debugLog';
+import { SkiingHud, type SkiPhase, type TrailStatus } from './SkiingHud';
+import {
+  crossesContact,
+  pickObstacleX,
+  emptyWood,
+  forestLevel,
+  levelTuning,
+  retainedWood,
+  runScore,
+  STRETCH_DISTANCE,
+  SCORE_VERSION,
+  validRecord,
+  type SkiRecord,
+} from './rules';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type ObstacleKind = 'tree_needle' | 'tree_spruce' | 'tree_birch' | 'brambles';
+type ObstacleKind = 'tree_needle' | 'tree_spruce' | 'tree_birch' | 'brambles' | 'wolf';
 type PickupKind = 'wood_poor' | 'wood_medium' | 'wood_fine';
 type ObjKind = ObstacleKind | PickupKind;
 
@@ -31,30 +43,18 @@ interface WorldObj {
   kind: ObjKind;
   worldX: number;
   worldZ: number;
+  passed?: boolean;
 }
 
-const OBSTACLE_KINDS: ObstacleKind[] = ['tree_needle', 'tree_spruce', 'tree_birch', 'brambles'];
+const OBSTACLE_KINDS: ObstacleKind[] = [
+  'tree_needle',
+  'tree_spruce',
+  'tree_birch',
+  'brambles',
+  'wolf',
+];
 
-// =============================================================================
-// Tuning constants (world units are camera-relative, not pixels — see the
-// projection formula below for how they map to screen space)
-// =============================================================================
-
-// The visible world-X half-width at any depth zDiff works out to zDiff × tan(FOV/2) — at the
-// old 90° (tan(45°) = 1) that's just zDiff itself, so an object spawned near the edge of the
-// (now much wider) OBSTACLE_SPAWN_X_RANGE only scrolled on-screen once it was within that same
-// distance of the player — i.e. invisible for most of its close-range approach, the exact
-// stretch where a player would be reacting to it. Widened so more of the reachable field is
-// actually visible up close, without pushing into fisheye-looking territory.
-const CAMERA_FOV = 112; // degrees
-const CAMERA_ALTITUDE = 150;
-const HORIZON_RATIO = 0.48; // where the horizon sits, as a fraction of canvas height — objects
-// were spawning right at this line (nearly zero vertical offset at Z_SPAWN), which sat above
-// the artwork's own treeline, making them look like they floated over the horizon
-
-// Per-cloud drift tuning — gives the three background clouds distinct speeds/sizes/steer-sway
-// instead of moving in lockstep, so they read as separate depth layers and visibly drift past
-// one another rather than holding fixed relative spacing forever.
+// The painted sky and near snowbank have independent parallax.
 const CLOUD_LAYERS = [
   { speedMul: 0.5, scaleMul: 0.8, xParallaxMul: 0.5 }, // farthest, slowest, smallest
   { speedMul: 0.8, scaleMul: 0.9, xParallaxMul: 0.75 },
@@ -82,255 +82,54 @@ const SNOW_SEEDS = Array.from({ length: SNOW_FLAKE_COUNT }, () => ({
   sizeMul: 0.5 + Math.random(),
 }));
 
-// A cheap outer pre-filter only — skips the per-frame collision maths for objects still
-// far away. It is NOT the real "has this reached the player" cutoff: working through the
-// projection maths, an object's projected ground position (objScreenY, see update()) only
-// crosses the player's own anchor line at a zDiff around ~200-280 depending on the current
-// window's aspect ratio (it scales with canvas width/height). A fixed threshold this close
-// to that crossing point would make the two conditions fight each other — an object could
-// already read as "passed" for most or all of a fixed inner window. So the real "still in
-// front of the player" gate is the dynamic objScreenY check in update(); this constant just
-// needs to stay safely above the crossing point across realistic window shapes.
-const Z_NEAR = 700;
-// Screen offset for a given lateral worldX scales with 1/zDiff, so an object only visibly
-// spreads out to its true lateral position in roughly the last 10-20% of its journey from
-// Z_SPAWN — for the rest it's compressed near the vanishing point regardless of FOV (an
-// unavoidable property of perspective at large distances). Kept much shorter than the old
-// 10000 so a bigger share of each object's on-screen lifetime falls in that "spread out"
-// window instead of the "still compressed near centre" one — trades some warning time
-// (~7s at BASE_SPEED, down from ~18s) for objects actually using the width of the screen.
-const Z_SPAWN = 4000; // objects spawn this far ahead of the camera
-// Depth at which an object switches from drawing behind level2 (occluded, only its top
-// visible above the ridge) to drawing in front of it (fully revealed) — see render().
+const Z_NEAR = 700; // Debug drawing range only; contact has no arbitrary near cutoff.
+const Z_SPAWN = 4000;
 const RIDGE_SWITCH_Z = 2200;
-
-// These obstacle/pickup kinds are short enough that their whole sprite sits below the ridge
-// line even far away — under the normal RIDGE_SWITCH_Z split they'd render fully invisible
-// until suddenly popping in close to the player, giving no time to dodge. Route them straight
-// to the "in front of the ridge" pass at any distance instead, like tall trees already are once
-// their tip pokes above the ridge.
+// Short sprites must remain visible above the snowbank throughout their approach.
 const NO_RIDGE_OCCLUSION_KINDS = new Set<ObjKind>([
   'tree_spruce',
   'brambles',
+  'wolf',
   'wood_poor',
   'wood_medium',
   'wood_fine',
 ]);
 
-// This is an open snowfield, not a road — the whole visible width should be real, reachable
-// terrain, not a narrow dodgeable lane surrounded by decorative scenery. STEER_SPEED is scaled
-// with STEER_RANGE so crossing the full range still takes the same ~1.46s as before; widening
-// the range alone would have made steering feel sluggish.
-const STEER_RANGE = 900; // max lateral offset the player can steer to
-const STEER_SPEED = 1230; // world units/sec
-
-// level2 (the near snow ridge) sits almost directly under the player, so — unlike the
-// static sky/level1 backdrop — it needs to visibly pan with steering to match how nearby
-// trees shift, or the ground reads as frozen under a moving world. Drawn wider than the
-// canvas ("zoomed in") so panning never exposes a transparent edge. Source art is native
-// 1920x1600 (see optimize-assets.js SKI_BACKDROP_MAX) so the zoom is kept modest to avoid
-// visible upscaling softness.
-const GROUND_ZOOM = 1.5; // level2 drawn at this multiple of canvas width
-const GROUND_PARALLAX_STRENGTH = 0.85; // fraction of the zoom's margin used at max steer (leaves a safety buffer)
-
-// Firewood spawns within reach of STEER_RANGE so every pickup is actually collectible.
-// Obstacles use the same single reachable band — every obstacle is real and dodgeable, there's
-// no separate decorative-only band anymore (see LANE_COUNT below for why this doesn't just
-// crowd the player).
+const STEER_RANGE = 900;
+const STEER_SPEED = 1230;
+const GROUND_ZOOM = 1.5;
+const GROUND_PARALLAX_STRENGTH = 0.85;
 const PICKUP_SPAWN_X_RANGE = 830;
-const OBSTACLE_SPAWN_X_RANGE = 1150;
-
-// Clear-path guarantee: every object's worldZ is fixed at spawn (only cameraZ advances),
-// so two obstacles spawned close together in worldZ stay close together in zDiff for their
-// whole journey — they'll always reach the danger zone at nearly the same moment. That makes
-// it safe to decide "will these threaten the player at the same time" once, at spawn time,
-// using worldZ alone. The band is divided into LANE_COUNT lanes; a new obstacle is only ever
-// placed in a lane that isn't already occupied by another obstacle within Z_CLUSTER_WINDOW of
-// it — if every lane is taken, the spawn is skipped rather than overcrowding the band.
-// Guarantees at least one lane-width gap (~2×OBSTACLE_SPAWN_X_RANGE/LANE_COUNT) stays clear
-// within steering reach.
-const LANE_COUNT = 6;
-const Z_CLUSTER_WINDOW = 900;
-
-// Obstacles never draw larger than this fraction of canvas width, however close they
-// get — without a cap, the "3x bigger" sizing left almost no visible gap to dodge into
-// even on a clean miss, since the sprite could cover most of the screen right before impact.
-const MAX_DRAW_WIDTH_RATIO = 0.46;
-
-const BASE_SPEED = 550; // world Z units/sec — kept slow so obstacles are visible well before they arrive
-const BOOST_SPEED = 1000;
-
-// Progression: the run is split into fixed-distance stages, each pairing one obstacle
-// density with exactly one firewood quality — no blending between stages, so each stage
-// reads as a distinct, deliberate step up in difficulty/reward. Thresholds are
-// BASE_SPEED × seconds — an approximation of "10s / 20s of play" in world-Z distance (most
-// play happens near base speed, with boost used in bursts rather than held continuously, so
-// this is a close enough proxy without needing a separate timer). Stage 3 has no further
-// ramp — it's today's baseline density.
-const STAGE1_END = BASE_SPEED * 20; // ≈20s — scattered obstacles, wood_poor only
-const STAGE2_END = STAGE1_END + BASE_SPEED * 10; // stage 2 spans ~10s — denser obstacles, wood_medium only
-
-// Firewood is meant to read as an occasional find while skiing through the forest, not
-// a resource you're farming — a typical run should turn up a modest haul, not a flood. Kept as
-// a slice of the regular (obstacle) spawn timer rather than its own stream, so it stays rare
-// at every pace tier without needing separate tuning.
-const PICKUP_SPAWN_CHANCE = 0.1;
-
-const MAX_DT = 0.033; // clamp frame delta so fast obstacles can't skip the collision window
-
-// Collision is checked in on-screen pixels using this same fraction of each sprite's
-// drawn size, rather than a fixed world-space radius — see computeGap()/capDrawWidth()
-// and the collision block in update(). A world-space hitbox drifted out of sync with
-// MAX_DRAW_WIDTH_RATIO (which caps how large a sprite draws up close): the hitbox kept
-// growing without bound as an obstacle approached even after its visible size had
-// plateaued, so a clean-looking miss could still register as a hit. Using the actual
-// capped draw size keeps "looks like it's touching" and "counts as a hit" in sync.
-const COLLISION_FUDGE = 0.55; // fraction of the combined sprite widths that counts as touching
-
-// Confirmed via the F3 debug overlay + [Skiing] HIT console log: at the drawn (bounding-box)
-// width, objects were registering hits while still visually far from the player — e.g. a
-// tree_spruce triggered a crash at zDiff=697 (barely inside the Z_NEAR collision window) with
-// a 525px-wide hitbox on a 1745px canvas. The drawn sprite width includes a lot of visual
-// padding/thin branches that isn't actually "solid", so the collision hitbox needs to be
-// substantially narrower than the sprite's full drawn width. Only the player's own box is left
-// untouched — the bug was specifically about obstacle/pickup hitboxes reading too wide, not
-// the player's.
+const FIXED_DT = 1 / 120;
+const WARNING_SECONDS = 0.75;
+const PICKUP_SPAWN_CHANCE = 0.16;
+// Hitboxes follow solid trunks/feet rather than transparent sprite padding and branches.
 const COLLISION_WIDTH_SCALE_DEFAULT = 1 / 3;
-// Per-kind multiplier on top of COLLISION_FUDGE and COLLISION_WIDTH_SCALE_DEFAULT. The birch
-// is a bare winter tree — its crown is wide but mostly sparse branches with gaps of open air,
-// so it needs to be narrower still than the already-narrowed default; keep it at the same
-// proportion (0.55×) relative to the default it had before.
-const COLLISION_WIDTH_SCALE: Partial<Record<ObjKind, number>> = {
-  tree_birch: 0.55 * COLLISION_WIDTH_SCALE_DEFAULT,
-};
+const COLLISION_WIDTH_SCALE: Partial<Record<ObjKind, number>> = { tree_birch: 0.55 / 3 };
 
 const DRAW_BASE: Record<ObjKind, number> = {
   tree_needle: 420,
   tree_spruce: 420,
   tree_birch: 420,
   brambles: 380,
+  wolf: 240,
   wood_poor: 190,
   wood_medium: 190,
   wood_fine: 190,
 };
 
-// Every sprite PNG has some fully-transparent margin below its actual visible pixels (measured
-// directly from each image's alpha channel — e.g. ski_needle_tree.png is opaque only up to row
-// 812 of 870, a 6.6% gap; the wood pickups are squatter piles on a much taller canvas and run
-// 12-21%). The collision Y-gate (see update()) anchors to the sprite's drawn BOTTOM edge, which
-// includes that invisible margin — so an obstacle was registering as "reached the player" while
-// its visible branches were still a gap above them, reading as a crash out of empty snow. Used
-// by getCollisionAnchorY() below to pull the collision anchor up to the actual visible base.
+// Transparent margin beneath the visible ground contact, measured from each image.
 const GROUND_PAD_RATIO: Record<ObjKind, number> = {
   tree_needle: 0.066,
   tree_spruce: 0.064,
   tree_birch: 0.035,
   brambles: 0.043,
+  wolf: 0.238,
   wood_poor: 0.212,
   wood_medium: 0.131,
   wood_fine: 0.125,
 };
-const PLAYER_SCREEN_WIDTH_RATIO = 0.26; // fraction of canvas width
-// How far the player sprite itself slides across the screen when steering, as a
-// fraction of canvas width. The backdrop is static, so without this the only
-// motion cue was the obstacles shifting — steering read as "broken" rather than
-// "dodging". Object projection still uses the same cameraX for the actual dodge.
 const PLAYER_SCREEN_SHIFT_RATIO = 0.38;
-// The player's ground anchor sits this far up from the bottom edge, as a fraction of
-// canvas height — used for RENDERING (see the drawImage call below). The collision anchor
-// is derived from this but corrected for the sprite's own padding — see PLAYER_GROUND_PAD_RATIO.
-const PLAYER_BOTTOM_MARGIN_RATIO = 0.03;
-
-// Measured directly from skiing_male_pc.png's alpha channel (1000x1000, square): opaque
-// pixels only span rows 148-728, a 27.1% fully-transparent margin below the boots/ski-tips.
-// The raw player anchor (PLAYER_BOTTOM_MARGIN_RATIO above) places that padding's bottom edge
-// on screen, not the boots — so both the collision Y-gate and the F3 debug box were floating
-// well below her visible feet. At that true visible bottom, the boots/ski-tips are also only
-// ~14-17% of the sprite's full width (the arms+poles spread wider, but well above where the
-// collision box actually sits) — vs. the un-narrowed full sprite width every obstacle check
-// was using, which is the main reason hits registered while still visually far apart on X.
-// Rendering is untouched by either of these — same principle as GROUND_PAD_RATIO for obstacles.
-const PLAYER_GROUND_PAD_RATIO = 0.271;
-const PLAYER_COLLISION_WIDTH_SCALE = 0.2; // slightly above the measured 14-17%, for animation-frame margin
-
-// =============================================================================
-// Shared projection helpers (used by both collision checks and rendering, so the
-// two can never drift apart the way the old fixed-world-space hitbox did)
-// =============================================================================
-
-function computeGap(canvasWidth: number): number {
-  return canvasWidth / (2 * Math.tan((CAMERA_FOV * Math.PI) / 360));
-}
-
-function capDrawWidth(base: number, gap: number, zDiff: number, canvasWidth: number): number {
-  return Math.min((base * gap) / zDiff, canvasWidth * MAX_DRAW_WIDTH_RATIO);
-}
-
-/**
- * Adjusts a sprite's raw ground-projection Y (its drawn bottom edge, incl. transparent margin)
- * up to the actual visible base of the artwork, using GROUND_PAD_RATIO. Rendering still draws
- * the full image at the raw anchor (art/shadow placement is untouched) — only collision checks
- * should use this, so a hit only registers once the visible pixels reach the player.
- */
-function getCollisionAnchorY(
-  rawAnchorY: number,
-  drawWidth: number,
-  img: HTMLImageElement | undefined,
-  kind: ObjKind
-): number {
-  const pad = img
-    ? (drawWidth / (img.naturalWidth / img.naturalHeight)) * GROUND_PAD_RATIO[kind]
-    : 0;
-  return rawAnchorY - pad;
-}
-
-/**
- * The player-equivalent of getCollisionAnchorY()/objDrawWidth's narrowing — see
- * PLAYER_GROUND_PAD_RATIO/PLAYER_COLLISION_WIDTH_SCALE above for the measurements behind
- * these. Used by both the real collision check and the F3 debug box so they can't drift apart.
- */
-function getPlayerCollisionAnchorY(canvasWidth: number, canvasHeight: number): number {
-  const spriteDrawHeight = canvasWidth * PLAYER_SCREEN_WIDTH_RATIO; // player sprite is square
-  return (
-    canvasHeight -
-    canvasHeight * PLAYER_BOTTOM_MARGIN_RATIO -
-    spriteDrawHeight * PLAYER_GROUND_PAD_RATIO
-  );
-}
-
-function getPlayerCollisionWidth(canvasWidth: number): number {
-  return canvasWidth * PLAYER_SCREEN_WIDTH_RATIO * PLAYER_COLLISION_WIDTH_SCALE;
-}
-
-/**
- * Clear-path guarantee for "near" obstacle spawns — see the constants above for why this
- * only needs worldZ (not simulated arrival time). Returns a lane-safe worldX, or null if
- * every lane is already occupied by an obstacle that will threaten around the same time.
- */
-function pickNearObstacleX(objects: WorldObj[], candidateWorldZ: number): number | null {
-  const laneWidth = (2 * OBSTACLE_SPAWN_X_RANGE) / LANE_COUNT;
-  const occupiedLanes = new Set<number>();
-  for (const obj of objects) {
-    if (!OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)) continue;
-    if (Math.abs(obj.worldZ - candidateWorldZ) >= Z_CLUSTER_WINDOW) continue;
-    if (obj.worldX < -OBSTACLE_SPAWN_X_RANGE || obj.worldX > OBSTACLE_SPAWN_X_RANGE) continue;
-    const lane = Math.min(
-      LANE_COUNT - 1,
-      Math.floor((obj.worldX + OBSTACLE_SPAWN_X_RANGE) / laneWidth)
-    );
-    occupiedLanes.add(lane);
-  }
-
-  const freeLanes: number[] = [];
-  for (let i = 0; i < LANE_COUNT; i++) {
-    if (!occupiedLanes.has(i)) freeLanes.push(i);
-  }
-  if (freeLanes.length === 0) return null;
-
-  const lane = freeLanes[Math.floor(Math.random() * freeLanes.length)];
-  const laneStart = -OBSTACLE_SPAWN_X_RANGE + lane * laneWidth;
-  return laneStart + Math.random() * laneWidth;
-}
 
 // =============================================================================
 // Asset loading
@@ -358,6 +157,7 @@ type ImageKey =
   | 'tree_spruce'
   | 'tree_birch'
   | 'brambles'
+  | 'wolf'
   | 'wood_poor'
   | 'wood_medium'
   | 'wood_fine'
@@ -367,13 +167,29 @@ type ImageKey =
 // Component
 // =============================================================================
 
-export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComplete }) => {
+export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComplete, onClose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<Partial<Record<ImageKey, HTMLImageElement>>>({});
   const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [phase, setPhase] = useState<'playing' | 'crashed'>('playing');
-  const [woodCounts, setWoodCounts] = useState({ wood_poor: 0, wood_medium: 0, wood_fine: 0 });
+  const [phase, setPhase] = useState<SkiPhase>('ready');
+  const [loadError, setLoadError] = useState(false);
+  const startLevel = useRef(Math.max(1, Math.min(30, gameState.getForestDepth()))).current;
+  const [stored] = useState(() =>
+    context.storage.load<{ version: number; bests: Record<string, SkiRecord> }>()
+  );
+  const previousBest = stored?.version === SCORE_VERSION ? stored.bests?.[startLevel] : null;
+  const [record, setRecord] = useState<SkiRecord | null>(
+    validRecord(previousBest) ? previousBest : null
+  );
+  const [best, setBest] = useState(validRecord(previousBest) ? previousBest.score : 0);
+  const [trail, setTrail] = useState<TrailStatus>({ level: startLevel, progress: 0, score: 0 });
+  const hudTimeRef = useRef(0);
+  const contactRef = useRef<Partial<Record<ObjKind, { z: number; halfWidth: number }>>>({});
+  const warningRef = useRef<WorldObj | null>(null);
+  const completedRef = useRef(false);
+  const endedRef = useRef(false);
+  const [woodCounts, setWoodCounts] = useState(emptyWood);
 
   const cameraXRef = useRef(0);
   const cameraZRef = useRef(0);
@@ -381,11 +197,10 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   const nextIdRef = useRef(1);
   const spawnTimerRef = useRef(600);
   const seededRef = useRef(false); // guards the one-time field pre-population below
-  const woodCountsRef = useRef({ wood_poor: 0, wood_medium: 0, wood_fine: 0 });
-  const phaseRef = useRef<'playing' | 'crashed'>('playing');
+  const woodCountsRef = useRef(emptyWood());
+  const phaseRef = useRef<SkiPhase>('ready');
   const heldRef = useRef({ left: false, right: false, boost: false });
   const rafRef = useRef(0);
-  const crashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasWidthRef = useRef(0);
   const canvasHeightRef = useRef(0);
   // F3 collision-box overlay — self-contained like the rest of this minigame's input (see
@@ -401,6 +216,13 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     const BOOST_KEYS = new Set(['w', 'arrowup']);
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      if (phaseRef.current !== 'playing' && key !== 'f3') return;
+      if (key === 'escape') {
+        e.preventDefault();
+        heldRef.current = { left: false, right: false, boost: false };
+        phaseRef.current = 'paused';
+        setPhase('paused');
+      }
       if (key === 'a' || key === 'arrowleft') heldRef.current.left = true;
       if (key === 'd' || key === 'arrowright') heldRef.current.right = true;
       if (BOOST_KEYS.has(key)) heldRef.current.boost = true;
@@ -416,9 +238,23 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       if (key === 'd' || key === 'arrowright') heldRef.current.right = false;
       if (BOOST_KEYS.has(key)) heldRef.current.boost = false;
     };
+    const interrupt = () => {
+      heldRef.current = { left: false, right: false, boost: false };
+      if (phaseRef.current === 'playing') {
+        phaseRef.current = 'paused';
+        setPhase('paused');
+      }
+    };
+    const visibility = () => {
+      if (document.hidden) interrupt();
+    };
+    window.addEventListener('blur', interrupt);
+    document.addEventListener('visibilitychange', visibility);
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     return () => {
+      window.removeEventListener('blur', interrupt);
+      document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
@@ -445,15 +281,20 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ['wood_medium', skiingAssets.woodMedium],
       ['wood_fine', skiingAssets.woodFine],
       ['player', skiingAssets.player],
+      ['wolf', skiingAssets.wolf],
     ];
     let cancelled = false;
     Promise.all(entries.map(([key, src]) => loadImage(src).then((img) => [key, img] as const)))
       .then((loaded) => {
         if (cancelled) return;
         for (const [key, img] of loaded) imagesRef.current[key] = img;
+        contactRef.current = {};
         setAssetsLoaded(true);
       })
-      .catch((err) => console.error('[SkiingGame] Failed to load assets:', err));
+      .catch((err) => {
+        if (!cancelled) setLoadError(true);
+        console.error('[SkiingGame] Failed to load assets:', err);
+      });
     return () => {
       cancelled = true;
     };
@@ -467,6 +308,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     canvas.height = window.innerHeight;
     canvasWidthRef.current = canvas.width;
     canvasHeightRef.current = canvas.height;
+    contactRef.current = {};
   }, []);
 
   useEffect(() => {
@@ -475,79 +317,108 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     return () => window.removeEventListener('resize', resizeCanvas);
   }, [resizeCanvas]);
 
-  // ─── Ending the run ───
+  // Ground contact is solved once per sprite/viewport, using the exact rendered anchor.
+  const getContact = useCallback((kind: ObjKind) => {
+    if (contactRef.current[kind]) return contactRef.current[kind]!;
+    const image = imagesRef.current[kind];
+    const contact = contactForSprite(
+      canvasWidthRef.current,
+      canvasHeightRef.current,
+      DRAW_BASE[kind],
+      image ? image.naturalWidth / image.naturalHeight : 1,
+      GROUND_PAD_RATIO[kind],
+      COLLISION_WIDTH_SCALE[kind] ?? COLLISION_WIDTH_SCALE_DEFAULT,
+      kind.startsWith('wood_')
+    );
+    contactRef.current[kind] = contact;
+    return contact;
+  }, []);
+
+  const endRun = useCallback(
+    (crashed: boolean) => {
+      if (endedRef.current) return;
+      endedRef.current = true;
+      phaseRef.current = crashed ? 'crashed' : 'stopped';
+      heldRef.current = { left: false, right: false, boost: false };
+      warningRef.current = null;
+      setPhase(phaseRef.current);
+      const distance = Math.floor(cameraZRef.current);
+      const level = forestLevel(startLevel, distance);
+      const score = runScore(distance, woodCountsRef.current);
+      setTrail({ level, score, progress: (distance % STRETCH_DISTANCE) / STRETCH_DISTANCE });
+      const next = { distance, level, score };
+      const old = stored?.version === SCORE_VERSION ? stored.bests : {};
+      const oldRecord = old?.[startLevel];
+      const winner = validRecord(oldRecord) && oldRecord.score >= score ? oldRecord : next;
+      context.storage.save({ version: SCORE_VERSION, bests: { ...old, [startLevel]: winner } });
+      setBest(winner.score);
+      setRecord(winner);
+    },
+    [context.storage, startLevel, stored]
+  );
+
   const finishRun = useCallback(
-    (success: boolean) => {
-      const result: MiniGameResult = success
-        ? {
-            success: true,
-            rewards: (Object.keys(woodCountsRef.current) as PickupKind[])
-              .filter((k) => woodCountsRef.current[k] > 0)
-              .map((k) => ({ itemId: k, quantity: woodCountsRef.current[k] })),
-            message: 'You gathered some firewood!',
-            messageType: 'success',
-          }
-        : {
-            success: false,
-            rewards: [],
-            message: 'You took a tumble in the snow and lost your bearings...',
-            messageType: 'warning',
-          };
+    (retry = false) => {
+      if (completedRef.current) return;
+      completedRef.current = true;
+      const crashed = phaseRef.current === 'crashed';
+      const wood = retainedWood(woodCountsRef.current, crashed);
+      const rewards = Object.entries(wood)
+        .filter(([, n]) => n > 0)
+        .map(([itemId, quantity]) => ({ itemId, quantity }));
+      const result: MiniGameResult = {
+        success: !crashed,
+        score: runScore(cameraZRef.current, woodCountsRef.current),
+        ...(crashed ? { salvageRewards: rewards } : { rewards }),
+        skiingDestination: {
+          depth: crashed ? 1 : forestLevel(startLevel, cameraZRef.current),
+          crashed,
+          retry,
+        },
+        message: crashed
+          ? 'Back at the forest entrance. Ready for another run.'
+          : 'Skis off — time to explore the forest.',
+        messageType: crashed ? 'info' : 'success',
+      };
       onComplete(result);
     },
-    [onComplete]
+    [onComplete, startLevel]
   );
 
   const handleStopSkiing = useCallback(() => {
-    finishRun(true);
-  }, [finishRun]);
+    if (phaseRef.current === 'ready') {
+      onClose();
+      return;
+    }
+    endRun(false);
+  }, [endRun, onClose]);
 
-  const handleCrash = useCallback(() => {
-    if (phaseRef.current === 'crashed') return;
-    phaseRef.current = 'crashed';
-    setPhase('crashed');
-    // Firewood collected this run is forfeited on a crash — don't add anything to inventory.
-    context.actions.triggerExhaustion();
-    // triggerExhaustion() synchronously starts the exhaustion cutscene, which closes all UI
-    // and unmounts this component almost immediately — clear this on unmount so the stale
-    // finishRun/onComplete closure never fires a redundant, contradictory "crashed" result
-    // after the cutscene has already taken over.
-    crashTimeoutRef.current = setTimeout(() => {
-      crashTimeoutRef.current = null;
-      finishRun(false);
-    }, 700);
-  }, [context, finishRun]);
-
-  useEffect(() => {
-    return () => {
-      if (crashTimeoutRef.current !== null) clearTimeout(crashTimeoutRef.current);
-    };
-  }, []);
+  const startPlaying = () => {
+    heldRef.current = { left: false, right: false, boost: false };
+    phaseRef.current = 'playing';
+    setPhase('playing');
+  };
 
   // ─── Spawning ───
   const spawnObject = useCallback(() => {
     const distance = cameraZRef.current;
-    const worldZ = cameraZRef.current + Z_SPAWN;
+    const tuning = levelTuning(forestLevel(startLevel, distance));
+    const worldZ = distance + Z_SPAWN;
     const isObstacle = Math.random() >= PICKUP_SPAWN_CHANCE;
-    let kind: ObjKind;
-    if (isObstacle) {
-      kind = OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)];
-    } else if (distance < STAGE1_END) {
-      kind = 'wood_poor';
-    } else if (distance < STAGE2_END) {
-      kind = 'wood_medium';
-    } else {
-      kind = 'wood_fine';
-    }
+    const kind: ObjKind = !isObstacle
+      ? tuning.wood
+      : Math.random() < tuning.wolfChance
+        ? 'wolf'
+        : OBSTACLE_KINDS[Math.floor(Math.random() * 4)];
     // Every obstacle goes through the lane-reservation helper, which guarantees at least one
     // clear lane stays open among simultaneous threats — there's no separate decorative band
-    // to fall back to anymore, so if every lane is taken this spawn is simply skipped rather
+    // to fall back to anymore, so if only one lane remains this spawn is simply skipped rather
     // than overcrowding the reachable field. Pickups always spawn within reach so every one is
     // collectible.
     let worldX: number | null;
     if (isObstacle) {
-      worldX = pickNearObstacleX(objectsRef.current, worldZ);
-      if (worldX === null) return; // every lane occupied — skip this spawn
+      worldX = pickObstacleX(objectsRef.current, worldZ);
+      if (worldX === null) return; // Preserve the escape lane.
     } else {
       worldX = (Math.random() * 2 - 1) * PICKUP_SPAWN_X_RANGE;
     }
@@ -562,84 +433,90 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     // one closest to reaching the player, so trimming too eagerly here would silently drop
     // soon-to-be-relevant obstacles/pickups.
     if (objectsRef.current.length > 260) objectsRef.current.shift();
-  }, []);
+  }, [startLevel]);
 
-  // ─── Update ───
+  // Fixed-step simulation; swept contact remains reliable even across a dropped frame.
   const update = useCallback(
     (dt: number) => {
+      const previousX = cameraXRef.current;
+      const previousZ = cameraZRef.current;
       const held = heldRef.current;
-      if (held.left) cameraXRef.current -= STEER_SPEED * dt;
-      if (held.right) cameraXRef.current += STEER_SPEED * dt;
-      cameraXRef.current = Math.max(-STEER_RANGE, Math.min(STEER_RANGE, cameraXRef.current));
-
-      const speed = held.boost ? BOOST_SPEED : BASE_SPEED;
+      cameraXRef.current = Math.max(
+        -STEER_RANGE,
+        Math.min(
+          STEER_RANGE,
+          previousX + ((held.right ? 1 : 0) - (held.left ? 1 : 0)) * STEER_SPEED * dt
+        )
+      );
+      const tuning = levelTuning(forestLevel(startLevel, previousZ));
+      const speed = tuning.speed * (held.boost ? 1.6 : 1);
       cameraZRef.current += speed * dt;
-
-      const distance = cameraZRef.current;
-      const spawnIntervalMs = distance < STAGE1_END ? 650 : distance < STAGE2_END ? 480 : 350;
       spawnTimerRef.current -= dt * 1000;
       if (spawnTimerRef.current <= 0) {
         spawnObject();
-        spawnTimerRef.current = spawnIntervalMs + (Math.random() * 240 - 120);
+        spawnTimerRef.current += tuning.spawnMs + (Math.random() * 160 - 80);
       }
-
-      const remaining: WorldObj[] = [];
+      warningRef.current = null;
+      let nearestWarning = Infinity;
+      // Compact in place: avoid creating new arrays for every simulation step.
+      let write = 0;
       for (const obj of objectsRef.current) {
-        const zDiff = obj.worldZ - cameraZRef.current;
-        if (zDiff <= -100) continue; // passed behind the camera — despawn
-
-        if (zDiff > 0 && zDiff <= Z_NEAR) {
-          const w = canvasWidthRef.current;
-          const h = canvasHeightRef.current;
-          const gap = computeGap(w);
-          // Once the object's projected ground position has dropped level with (or past)
-          // the player's own ground anchor, it would visually be drawn beneath/in front of
-          // the player — it's already "passed" and shouldn't be able to collide, even if
-          // zDiff is technically still positive. Adjusted up to the sprite's actual visible
-          // base (see getCollisionAnchorY) so the gate lines up with the artwork, not the
-          // transparent margin beneath it.
-          const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
-          const objScreenY = getCollisionAnchorY(
-            h * HORIZON_RATIO + (gap * CAMERA_ALTITUDE) / zDiff,
-            rawDrawWidth,
-            imagesRef.current[obj.kind],
-            obj.kind
-          );
-          const playerAnchorY = getPlayerCollisionAnchorY(w, h);
-          const screenSeparation = Math.abs((gap * (obj.worldX - cameraXRef.current)) / zDiff);
-          const objDrawWidth =
-            rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
-          const playerCollisionWidth = getPlayerCollisionWidth(w);
-          const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
-          if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
-            if (debugRef.current) {
-              debugLog(
-                'Skiing',
-                `HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
-                  `screenSeparation=${screenSeparation.toFixed(1)}px hitThreshold=${hitThreshold.toFixed(1)}px | ` +
-                  `objDrawWidth: raw=${rawDrawWidth.toFixed(1)}px scale=${COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT} scaled=${objDrawWidth.toFixed(1)}px | ` +
-                  `playerCollisionWidth=${playerCollisionWidth.toFixed(1)}px fudge=${COLLISION_FUDGE} | ` +
-                  `objScreenY=${objScreenY.toFixed(1)} playerAnchorY=${playerAnchorY.toFixed(1)} | canvas=${w}x${h}`
-              );
-            }
+        const z = obj.worldZ - cameraZRef.current;
+        if (z <= 0) continue;
+        const contact = getContact(obj.kind);
+        const offset = obj.worldX - cameraXRef.current;
+        if (!obj.passed && z <= contact.z) {
+          obj.passed = true;
+          if (
+            crossesContact(
+              obj.worldZ - previousZ,
+              z,
+              contact.z,
+              obj.worldX - previousX,
+              offset,
+              contact.halfWidth
+            )
+          ) {
             if (OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)) {
-              handleCrash();
-              return; // stop processing — the run is over
+              if (debugRef.current) debugLog('Skiing', `Contact ${obj.kind} at z=${z.toFixed(1)}`);
+              endRun(true);
+              return;
             }
-            const pickupKind = obj.kind as PickupKind;
+            const kind = obj.kind as PickupKind;
             woodCountsRef.current = {
               ...woodCountsRef.current,
-              [pickupKind]: woodCountsRef.current[pickupKind] + 1,
+              [kind]: woodCountsRef.current[kind] + 1,
             };
             setWoodCounts(woodCountsRef.current);
-            continue; // collected — remove from the world
+            continue;
           }
         }
-        remaining.push(obj);
+        const timeToContact = (z - contact.z) / speed;
+        if (
+          !obj.passed &&
+          OBSTACLE_KINDS.includes(obj.kind as ObstacleKind) &&
+          timeToContact > 0 &&
+          timeToContact < WARNING_SECONDS &&
+          Math.abs(offset) < contact.halfWidth * 1.4 &&
+          timeToContact < nearestWarning
+        ) {
+          nearestWarning = timeToContact;
+          warningRef.current = obj;
+        }
+        objectsRef.current[write++] = obj;
       }
-      objectsRef.current = remaining;
+      objectsRef.current.length = write;
+      hudTimeRef.current += dt;
+      if (hudTimeRef.current >= 0.1) {
+        hudTimeRef.current = 0;
+        setTrail({
+          level: forestLevel(startLevel, cameraZRef.current),
+          score: runScore(cameraZRef.current, woodCountsRef.current),
+          progress: (cameraZRef.current % STRETCH_DISTANCE) / STRETCH_DISTANCE,
+        });
+      }
     },
-    [spawnObject, handleCrash]
+    [spawnObject, getContact, endRun, startLevel]
   );
 
   // ─── Render ───
@@ -688,15 +565,12 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     // pokes above the ridge, matching the near horizon blocking the view of what's beyond
     // it), then once an object crosses RIDGE_SWITCH_Z it draws AFTER level2 instead, so the
     // full sprite — trunk included — appears "in front of" the ridge.
-    const sorted = [...objectsRef.current].sort((a, b) => b.worldZ - a.worldZ);
-    const farObjects = sorted.filter(
-      (o) => o.worldZ - cameraZRef.current > RIDGE_SWITCH_Z && !NO_RIDGE_OCCLUSION_KINDS.has(o.kind)
-    );
-    const nearObjects = sorted.filter(
-      (o) => o.worldZ - cameraZRef.current <= RIDGE_SWITCH_Z || NO_RIDGE_OCCLUSION_KINDS.has(o.kind)
-    );
-
-    farObjects.forEach(drawObj);
+    const isFar = (o: WorldObj) =>
+      o.worldZ - cameraZRef.current > RIDGE_SWITCH_Z && !NO_RIDGE_OCCLUSION_KINDS.has(o.kind);
+    for (let i = objectsRef.current.length - 1; i >= 0; i--) {
+      const obj = objectsRef.current[i];
+      if (isFar(obj)) drawObj(obj);
+    }
     if (images.level2) {
       const groundDrawWidth = w * GROUND_ZOOM;
       const groundMarginPx = (groundDrawWidth - w) / 2;
@@ -728,19 +602,47 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ctx.drawImage(img, cx, cy, cw, ch);
     });
 
-    nearObjects.forEach(drawObj);
+    for (let i = objectsRef.current.length - 1; i >= 0; i--) {
+      const obj = objectsRef.current[i];
+      if (!isFar(obj)) drawObj(obj);
+    }
+
+    // A short, steady amber marker under the skis leaves the escape route visible.
+    if (warningRef.current && phaseRef.current === 'playing') {
+      const anchorY = getPlayerCollisionAnchorY(w, h);
+      ctx.save();
+      ctx.strokeStyle = '#f4ac35';
+      ctx.fillStyle = 'rgba(255, 192, 65, 0.25)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(playerScreenX, anchorY, Math.max(25, w * 0.045), 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#543700';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Steer clear!', playerScreenX, anchorY - playerDrawWidth(w, h) * 0.62 - 24);
+      ctx.restore();
+    }
 
     // Player — locked near the bottom, at the same anchor used to project objects above
     if (images.player) {
-      const pw = w * PLAYER_SCREEN_WIDTH_RATIO;
+      const pw = playerDrawWidth(w, h);
       const ph = pw / (images.player.naturalWidth / images.player.naturalHeight);
+      ctx.save();
+      if (phaseRef.current === 'crashed') {
+        ctx.translate(playerScreenX, getPlayerCollisionAnchorY(w, h));
+        ctx.rotate(-0.65);
+        ctx.translate(-playerScreenX, -getPlayerCollisionAnchorY(w, h));
+      }
       ctx.drawImage(
         images.player,
         playerScreenX - pw / 2,
-        h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO,
+        h - ph - playerBottomMargin(w, h),
         pw,
         ph
       );
+      ctx.restore();
     }
 
     // Falling snow — reacts live to weather (unlike the sky image, which is only picked once at
@@ -765,148 +667,93 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ctx.restore();
     }
 
-    // ─── Debug: collision box overlay (F3) — mirrors the exact maths update() uses to
-    // decide a hit, so what you see here is what actually triggers a crash/pickup. ───
+    // F3 shows the exact predicted contact footprint (including pickup forgiveness).
     if (debugRef.current) {
-      const playerCollisionWidth = getPlayerCollisionWidth(w);
-      const playerHalfWidth = (playerCollisionWidth / 2) * COLLISION_FUDGE;
-      const playerAnchorY = getPlayerCollisionAnchorY(w, h);
-
+      const anchorY = getPlayerCollisionAnchorY(w, h);
       ctx.save();
       ctx.lineWidth = 2;
       ctx.font = '11px monospace';
-      ctx.textBaseline = 'bottom';
-
-      // Y-gate line — an object at/below this line has visually already passed the player
-      // and can no longer collide, even if it's still overlapping on X (see update()).
-      ctx.strokeStyle = 'rgba(80, 180, 255, 0.5)';
-      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = '#50b4ff';
       ctx.beginPath();
-      ctx.moveTo(0, playerAnchorY);
-      ctx.lineTo(w, playerAnchorY);
+      ctx.moveTo(0, anchorY);
+      ctx.lineTo(w, anchorY);
       ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Player's own collision box — same half-width formula update() uses.
-      ctx.strokeStyle = 'rgba(80, 180, 255, 0.9)';
-      ctx.strokeRect(playerScreenX - playerHalfWidth, playerAnchorY - 24, playerHalfWidth * 2, 24);
-
       for (const obj of objectsRef.current) {
-        const zDiff = obj.worldZ - cameraZRef.current;
-        if (zDiff <= 0 || zDiff > Z_NEAR) continue; // matches update()'s collision-check window
-        const objScreenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
-        const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
-        const objScreenY = getCollisionAnchorY(
-          horizonY + (gap * CAMERA_ALTITUDE) / zDiff,
-          rawDrawWidth,
-          images[obj.kind],
-          obj.kind
-        );
-        const objDrawWidth =
-          rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
-        const objHalfWidth = (objDrawWidth / 2) * COLLISION_FUDGE;
-        const screenSeparation = Math.abs(objScreenX - playerScreenX);
-        const isHit =
-          objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
-
-        const color = isHit
-          ? '255, 60, 60'
-          : OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)
-            ? '255, 190, 0'
-            : '80, 220, 120';
-        ctx.strokeStyle = `rgba(${color}, 0.9)`;
-        ctx.strokeRect(objScreenX - objHalfWidth, objScreenY - 24, objHalfWidth * 2, 24);
-        ctx.fillStyle = `rgba(${color}, 0.9)`;
+        const depth = obj.worldZ - cameraZRef.current;
+        if (depth <= 0 || depth > Z_NEAR) continue;
+        const contact = getContact(obj.kind);
+        const offset = obj.worldX - cameraXRef.current;
+        const x = playerScreenX + (gap * offset) / contact.z;
+        const half = (gap * contact.halfWidth) / contact.z;
+        ctx.strokeStyle = obj.passed
+          ? '#9da9ad'
+          : Math.abs(offset) < contact.halfWidth
+            ? '#e65737'
+            : '#e8b64e';
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.strokeRect(x - half, anchorY - 16, half * 2, 16);
         ctx.fillText(
-          `${obj.kind} z=${Math.round(zDiff)}`,
-          objScreenX - objHalfWidth,
-          objScreenY - 26
+          `${obj.kind}: contact z=${Math.round(contact.z)}, now=${Math.round(depth)}`,
+          x - half,
+          anchorY - 22
         );
       }
-
-      ctx.fillStyle = 'rgba(80, 180, 255, 0.9)';
-      ctx.font = 'bold 12px monospace';
-      ctx.fillText('F3 DEBUG — collision boxes', 12, 20);
+      ctx.fillStyle = '#50b4ff';
+      ctx.fillText('F3 — predicted contact footprints', 12, h - 110);
       ctx.restore();
     }
-  }, []);
+  }, [getContact]);
 
   // ─── Game loop ───
   useEffect(() => {
     if (!assetsLoaded) return;
 
-    // Pre-populate the field once, on the first run of this effect. Without this, the object
-    // pipeline starts empty and every spawn takes Z_SPAWN/BASE_SPEED to arrive from the
-    // horizon — the forest reads as barren for the whole opening stretch of every run. Floored
-    // just above Z_NEAR (not RIDGE_SWITCH_Z) so some pre-seeded obstacles already sit close
-    // enough to show their true spread-out lateral position at frame 1 — flooring further out
-    // left everything still visually compressed near centre until gameplay caught up (see
-    // screenshots from actual playtesting). Still comfortably above the real collision gate
-    // (~200-280, see Z_NEAR's comment), so nothing is unfairly close.
+    // A gentle opening: obstacles have at least two seconds of approach time.
     if (!seededRef.current) {
       seededRef.current = true;
-      const PREFILL_MIN_Z = Z_NEAR + 200;
-      const prefillCount = Math.round((Z_SPAWN - PREFILL_MIN_Z) / BASE_SPEED / 0.5); // ≈ one spawn per 0.5s of backfilled time
-      for (let i = 0; i < prefillCount; i++) {
-        const worldZ = PREFILL_MIN_Z + Math.random() * (Z_SPAWN - PREFILL_MIN_Z);
-        const worldX = pickNearObstacleX(objectsRef.current, worldZ);
-        if (worldX === null) continue; // lanes full at this depth — skip, same as a normal spawn would
-        objectsRef.current.push({
-          id: nextIdRef.current++,
-          kind: OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)],
-          worldX,
-          worldZ,
-        });
+      for (let i = 0; i < 8; i++) {
+        const worldZ = 1800 + i * 300;
+        const worldX = pickObstacleX(objectsRef.current, worldZ);
+        if (worldX !== null)
+          objectsRef.current.push({
+            id: nextIdRef.current++,
+            kind: OBSTACLE_KINDS[i % 4],
+            worldX,
+            worldZ,
+          });
       }
+      objectsRef.current.sort((a, b) => a.worldZ - b.worldZ);
     }
-
     let lastTime = performance.now();
+    let accumulator = 0;
+    let lastDraw = '';
     const loop = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, MAX_DT);
+      const elapsed = (time - lastTime) / 1000;
       lastTime = time;
-      if (phaseRef.current === 'playing') update(dt);
-      render();
+      if (phaseRef.current === 'playing') {
+        // An interrupted frame should pause, never fast-forward into an unseen tree.
+        if (elapsed > 0.25) {
+          phaseRef.current = 'paused';
+          setPhase('paused');
+          heldRef.current = { left: false, right: false, boost: false };
+        } else {
+          accumulator += elapsed;
+          while (accumulator >= FIXED_DT && phaseRef.current === 'playing') {
+            update(FIXED_DT);
+            accumulator -= FIXED_DT;
+          }
+        }
+      } else accumulator = 0;
+      const drawKey = `${phaseRef.current}:${canvasWidthRef.current}:${canvasHeightRef.current}:${debugRef.current}`;
+      if (!document.hidden && (phaseRef.current === 'playing' || drawKey !== lastDraw)) {
+        render();
+        lastDraw = drawKey;
+      }
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
   }, [assetsLoaded, update, render]);
-
-  // ─── Touch controls (mirror the keyboard held-state refs) ───
-  const bindHold = (key: 'left' | 'right' | 'boost') => ({
-    onTouchStart: (e: React.TouchEvent) => {
-      e.preventDefault();
-      heldRef.current[key] = true;
-    },
-    onTouchEnd: (e: React.TouchEvent) => {
-      e.preventDefault();
-      heldRef.current[key] = false;
-    },
-    onMouseDown: () => {
-      heldRef.current[key] = true;
-    },
-    onMouseUp: () => {
-      heldRef.current[key] = false;
-    },
-    onMouseLeave: () => {
-      heldRef.current[key] = false;
-    },
-  });
-
-  const touchButtonStyle: React.CSSProperties = {
-    width: 72,
-    height: 72,
-    borderRadius: '50%',
-    border: '2px solid rgba(255,255,255,0.6)',
-    background: 'rgba(30,41,59,0.55)',
-    color: '#fff',
-    fontSize: 28,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    touchAction: 'none',
-    userSelect: 'none',
-  };
 
   return (
     <div
@@ -915,7 +762,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       style={{
         position: 'fixed',
         inset: 0,
-        background: '#0f172a',
+        background: '#16383f',
         userSelect: 'none',
         overflow: 'hidden',
       }}
@@ -924,122 +771,39 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         ref={canvasRef}
         style={{ display: 'block', width: '100%', height: '100%', touchAction: 'none' }}
       />
-
       {!assetsLoaded && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontSize: 20,
-          }}
-        >
-          Loading...
+        <div className="ski-ui">
+          <div className="ski-scrim">
+            <section className="ski-panel">
+              <h1>{loadError ? 'The trail could not load' : 'Finding the winter trail…'}</h1>
+              {loadError && (
+                <>
+                  <p>Please try again when your connection is ready.</p>
+                  <button onClick={onClose}>Back to the forest</button>
+                </>
+              )}
+            </section>
+          </div>
         </div>
       )}
-
       {assetsLoaded && (
-        <>
-          {/* HUD: firewood counts */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 16,
-              left: 16,
-              display: 'flex',
-              gap: 12,
-              background: 'rgba(15,23,42,0.55)',
-              borderRadius: 12,
-              padding: '8px 12px',
-              color: '#fff',
-              fontFamily: 'sans-serif',
-              fontSize: 14,
-            }}
-          >
-            {(['wood_poor', 'wood_medium', 'wood_fine'] as PickupKind[]).map((kind) => (
-              <div key={kind} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <img
-                  src={
-                    skiingAssets[
-                      kind === 'wood_poor'
-                        ? 'woodPoor'
-                        : kind === 'wood_medium'
-                          ? 'woodMedium'
-                          : 'woodFine'
-                    ]
-                  }
-                  alt=""
-                  style={{ width: 22, height: 22, objectFit: 'contain' }}
-                />
-                <span>{woodCounts[kind]}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Stop skiing button */}
-          <button
-            onClick={handleStopSkiing}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              background: 'rgba(15,23,42,0.75)',
-              color: '#fff',
-              border: '1px solid rgba(255,255,255,0.4)',
-              borderRadius: 10,
-              padding: '10px 16px',
-              fontSize: 14,
-              cursor: 'pointer',
-            }}
-          >
-            Stop skiing
-          </button>
-
-          {phase === 'crashed' && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(255,255,255,0.35)',
-                color: '#1e293b',
-                fontFamily: 'sans-serif',
-                fontSize: 28,
-                fontWeight: 600,
-              }}
-            >
-              You took a tumble!
-            </div>
-          )}
-
-          {/* Touch controls */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 24,
-              left: 24,
-              display: 'flex',
-              gap: 16,
-            }}
-          >
-            <div style={touchButtonStyle} {...bindHold('left')}>
-              ◀
-            </div>
-            <div style={touchButtonStyle} {...bindHold('right')}>
-              ▶
-            </div>
-          </div>
-          <div style={{ position: 'absolute', bottom: 24, right: 24 }}>
-            <div style={touchButtonStyle} {...bindHold('boost')}>
-              ⏩
-            </div>
-          </div>
-        </>
+        <SkiingHud
+          phase={phase}
+          trail={trail}
+          wood={woodCounts}
+          kept={retainedWood(woodCounts, phase === 'crashed')}
+          best={best}
+          record={record}
+          startLevel={startLevel}
+          onStart={startPlaying}
+          onResume={startPlaying}
+          onStop={handleStopSkiing}
+          onExit={() => finishRun()}
+          onRetry={() => finishRun(true)}
+          onHold={(key, held) => {
+            heldRef.current[key] = held;
+          }}
+        />
       )}
     </div>
   );

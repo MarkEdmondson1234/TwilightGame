@@ -266,6 +266,12 @@ export interface MiniGameResult {
     quantity: number;
   }>;
 
+  /** Explicit salvage on a failed run; ordinary rewards remain success-only. */
+  salvageRewards?: Array<{ itemId: string; quantity: number }>;
+
+  /** Skiing destination, consumed by the host map transition flow. */
+  skiingDestination?: { depth: number; crashed: boolean; retry?: boolean };
+
   /** Gold to award */
   goldReward?: number;
 

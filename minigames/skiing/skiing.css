@@ -1,0 +1,182 @@
+/* Snow, spruce and amber: quiet trail signage leaves the painted forest in view. */
+.ski-ui {
+  color: #f3f8fa;
+  font-family: 'Trebuchet MS', sans-serif;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ski-ui button {
+  font: inherit;
+  color: inherit;
+  background: #234c52;
+  border: 1px solid #b9d2d6;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+  min-height: 44px;
+}
+.ski-ui button:focus-visible {
+  outline: 3px solid #f5c265;
+  outline-offset: 3px;
+}
+.ski-ui button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ski-hud {
+  position: absolute;
+  inset: max(12px, env(safe-area-inset-top)) 16px auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 12px 16px;
+  background: #16383fe8;
+  border-radius: 12px;
+}
+.ski-trail {
+  display: grid;
+  gap: 3px;
+  min-width: 130px;
+  flex: 1;
+}
+.ski-trail span,
+.ski-score span {
+  font-size: 12px;
+  color: #d2e4e8;
+}
+.ski-trail progress {
+  width: min(100%, 240px);
+  height: 6px;
+  accent-color: #f5c265;
+}
+.ski-score {
+  display: grid;
+  text-align: right;
+}
+.ski-score strong {
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+}
+.ski-wood {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: #e1edf0;
+}
+.ski-controls {
+  position: absolute;
+  inset: auto 20px max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+}
+.ski-controls div {
+  display: flex;
+  gap: 14px;
+}
+.ski-controls button {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border-radius: 50%;
+  touch-action: none;
+  background: #16383fbf;
+}
+.ski-scrim {
+  position: absolute;
+  inset: 0;
+  background: #12343a55;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+.ski-panel {
+  box-sizing: border-box;
+  width: min(100%, 500px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: clamp(20px, 4vw, 34px);
+  background: #eff6f7f5;
+  color: #173d44;
+  border-radius: 16px;
+  box-shadow: 0 12px 60px #15333b44;
+}
+.ski-panel h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1.15;
+  margin: 0 0 16px;
+}
+.ski-panel p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ski-panel .ski-primary {
+  width: 100%;
+  background: #23554b;
+  color: white;
+  margin: 8px 0;
+}
+.ski-result {
+  display: grid;
+  gap: 4px;
+}
+.ski-result strong {
+  font-size: 42px;
+  font-variant-numeric: tabular-nums;
+}
+.ski-records {
+  border-top: 1px solid #bacfd1;
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.ski-records h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.ski-records small {
+  display: block;
+  font-weight: normal;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.ski-records ol {
+  padding-left: 24px;
+  font-size: 14px;
+}
+.ski-records li {
+  padding: 4px 0;
+}
+.ski-records li span {
+  display: inline-block;
+  width: 75%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .ski-hud {
+    inset-inline: 8px;
+    gap: 8px;
+    padding: 10px;
+  }
+  .ski-hud button {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .ski-score strong {
+    font-size: 20px;
+  }
+  .ski-trail {
+    min-width: 100px;
+  }
+}
+
+.ski-panel button:not(.ski-primary) {
+  background: transparent;
+  color: #173d44;
+}
