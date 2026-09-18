@@ -10,6 +10,15 @@
  * check() reads placed angels directly from gameState rather than tracking them
  * in memory, so angels carried over from a previous session (or left behind by a
  * dev-mode hot-reload of this module) still get cleaned up correctly.
+ *
+ * Angels on a shared map are shared placements, and the player who made one is
+ * often gone before its timer runs out (a child closes the tab, a phone crashes).
+ * Their client is the only one holding it in local state, so only it could ever
+ * remove it — and if it never comes back, the angel stays in the shared mirror
+ * for everyone, into spring and beyond (seen 2026-09-18). So on the current map
+ * this also sweeps the angels that are only in the shared mirror: anyone may
+ * pick up anyone's furniture, and removing one reconciles to a server-side
+ * delete, so whoever is standing there is the janitor.
  */
 
 import { Position } from '../types';
@@ -47,11 +56,19 @@ class SnowAngelManagerClass {
    * are no longer met on the map it's on.
    */
   check(): void {
-    const angels = gameState.getAllPlacedItems().filter((item) => item.itemId === SNOW_ANGEL_ITEM_ID);
+    const currentMapId = mapManager.getCurrentMapId();
+    // Ours on every map, plus everyone's on the map we can see.
+    const local = gameState.getAllPlacedItems();
+    const here = currentMapId ? gameState.getPlacedItems(currentMapId) : [];
+    const seen = new Set<string>();
+    const angels = [...local, ...here].filter((item) => {
+      if (item.itemId !== SNOW_ANGEL_ITEM_ID || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
     if (angels.length === 0) return;
 
     const now = Date.now();
-    const currentMapId = mapManager.getCurrentMapId();
     const conditionsStillMet =
       TimeManager.isCurrentSeason(Season.WINTER) && gameState.getWeather() === 'snow';
 
