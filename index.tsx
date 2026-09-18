@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { initErrorReporting, onUncaughtError, onRecoverableError } from './utils/errorReporting';
 import { suppressBrowserContextMenu } from './utils/suppressBrowserContextMenu';
 import { debugLog } from './utils/debugLog';
+import { registerServiceWorker, browserServiceWorkerDeps } from './utils/serviceWorkerUpdates';
 
 // No-ops when VITE_SENTRY_DSN isn't set — see utils/errorReporting.ts.
 // Called before render so it can catch errors from mount onward.
@@ -32,16 +33,11 @@ root.render(
 
 // Register service worker for PWA support (production only)
 // In development, SW caching interferes with Vite's HMR and can serve stale content.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// The update policy (re-check on return, reload onto a new build only while
+// the tab is hidden) lives in utils/serviceWorkerUpdates.ts.
+if (import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/TwilightGame/sw.js')
-      .then((registration) => {
-        debugLog('PWA', 'Service Worker registered:', registration);
-      })
-      .catch((error) => {
-        // A failed service-worker registration is a real problem — keep it ungated.
-        console.warn('[PWA] Service Worker registration failed:', error);
-      });
+    const deps = browserServiceWorkerDeps();
+    if (deps) registerServiceWorker({ ...deps, log: (message) => debugLog('PWA', message) });
   });
 }
