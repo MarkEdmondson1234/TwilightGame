@@ -25,7 +25,8 @@ import {
 import { getRealtimeDb } from './realtimeConfig';
 import { authService } from './authService';
 import { DEBUG } from '../constants';
-import { reportError } from '../utils/errorReporting';
+import { reportError, reportErrorOnce } from '../utils/errorReporting';
+import { serverNow } from '../multiplayer/serverClock';
 import {
   sanitiseMessage,
   decodeChatMessage,
@@ -94,20 +95,32 @@ class ChatService {
       const recent = query(ref(db, `${CHAT_ROOT}/${mapId}`), limitToLast(CHAT_HISTORY_LIMIT));
       this.roomMapId = mapId;
 
-      const joinedAt = Date.now();
+      // On the server's clock (multiplayer/serverClock.ts), because `t` is.
+      // Against the local clock, a device a few seconds fast filed every live
+      // message as backlog — into the transcript, never a bubble — and one
+      // more than ten minutes fast dropped them altogether.
+      const joinedAt = serverNow();
       this.unsubscribers.push(
-        onChildAdded(recent, (snapshot: ChildSnapshot) => {
-          const message = decodeChatMessage(snapshot.key ?? '', snapshot.val(), uid);
-          if (!message) return;
-          // Backlog older than the cutoff is history, not conversation. `t` is
-          // the server clock and `joinedAt` is ours, so this is approximate on
-          // purpose — it only has to keep last week's messages off the screen.
-          if (message.sentAt > 0 && joinedAt - message.sentAt > CHAT_MAX_AGE_MS) return;
-          // Tag what already existed at join time so the controller can put
-          // backlog in the transcript without popping bubbles for it.
-          message.isBacklog = isBacklogMessage(message.sentAt, joinedAt);
-          this.#emit(message);
-        })
+        onChildAdded(
+          recent,
+          (snapshot: ChildSnapshot) => {
+            const message = decodeChatMessage(snapshot.key ?? '', snapshot.val(), uid);
+            if (!message) return;
+            // Backlog older than the cutoff is history, not conversation. `t` is
+            // the server clock and `joinedAt` is ours, so this is approximate on
+            // purpose — it only has to keep last week's messages off the screen.
+            if (message.sentAt > 0 && joinedAt - message.sentAt > CHAT_MAX_AGE_MS) return;
+            // Tag what already existed at join time so the controller can put
+            // backlog in the transcript without popping bubbles for it.
+            message.isBacklog = isBacklogMessage(message.sentAt, joinedAt);
+            this.#emit(message);
+          },
+          (error: Error) => {
+            // See presenceService: a refused listener is otherwise silent.
+            console.warn(`[Chat] Listener for "${mapId}" was cancelled:`, error);
+            reportErrorOnce(error, 'presence', { room: mapId, transport: 'chat' });
+          }
+        )
       );
 
       if (DEBUG.MULTIPLAYER) console.log(`[Chat] Entered room "${mapId}"`);

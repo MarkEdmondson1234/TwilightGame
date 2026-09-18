@@ -51,6 +51,13 @@ class AuthService {
   private currentUser: User | null = null;
   private isLoading = true;
   private listeners: Set<AuthStateListener> = new Set();
+  /**
+   * Run before the token is dropped. Anything that owns a per-user record the
+   * rules only let its owner delete — a presence record, say — must remove it
+   * here: after firebaseSignOut() the delete is refused as unauthenticated,
+   * and the record stays behind as a ghost of the player for everyone else.
+   */
+  private beforeSignOutHooks: Set<() => Promise<void> | void> = new Set();
   private unsubscribeAuth: (() => void) | null = null;
 
   /**
@@ -197,8 +204,22 @@ class AuthService {
    */
   async signOut(): Promise<void> {
     const auth = getFirebaseAuth();
+    for (const hook of this.beforeSignOutHooks) {
+      try {
+        await hook();
+      } catch (error) {
+        // Never let cleanup block the sign-out the player asked for.
+        console.warn('[AuthService] Before-sign-out hook failed:', error);
+      }
+    }
     await firebaseSignOut(auth);
     debugLog('AuthService', 'User signed out');
+  }
+
+  /** Register cleanup that must run while the player is still signed in. Returns an unsubscribe. */
+  onBeforeSignOut(hook: () => Promise<void> | void): () => void {
+    this.beforeSignOutHooks.add(hook);
+    return () => this.beforeSignOutHooks.delete(hook);
   }
 
   // ============================================

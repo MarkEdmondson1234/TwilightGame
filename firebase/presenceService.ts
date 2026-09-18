@@ -30,9 +30,13 @@ import { getRealtimeDb, isRealtimeConfigured } from './realtimeConfig';
 import { isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG, MULTIPLAYER } from '../constants';
-import { reportError, reportMessageOnce } from '../utils/errorReporting';
+import { reportError, reportErrorOnce, reportMessageOnce } from '../utils/errorReporting';
 import { encodePresence, decodePresence, isGhostRecord } from '../multiplayer/wire';
-import { serverNow, setServerTimeOffset, isServerTimeOffsetKnown } from '../multiplayer/serverClock';
+import {
+  serverNow,
+  setServerTimeOffset,
+  isServerTimeOffsetKnown,
+} from '../multiplayer/serverClock';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState, PresenceEvent } from '../multiplayer/types';
 
@@ -52,6 +56,14 @@ class PresenceService {
   /** Publish runs at 5 Hz — report the first failure only, not 300 a minute. */
   private reportedPublishFailure = false;
   private unsubscribeClock: (() => void) | null = null;
+
+  constructor() {
+    // Our record can only be deleted by its owner, so it has to go before the
+    // token does. Signing out used to leave a "you" standing in the village
+    // for everyone else — frozen where you were, and if you came back as a
+    // guest, standing next to yourself.
+    authService.onBeforeSignOut(() => this.leaveRoom());
+  }
 
   /** True when presence can actually be published — Firebase up and signed in. */
   isAvailable(): boolean {
@@ -188,14 +200,26 @@ class PresenceService {
         this.#emit({ type, uid: otherUid, wire });
       };
 
+      // The cancel callback is the only notice we get that a listener has
+      // been refused (rules, an expired token). Without it a denied read is
+      // perfectly silent: our own writes still land, so everyone sees us, and
+      // we see an empty map — one-way multiplayer with nothing to look at.
+      const cancelled = (listener: string) => (error: Error) => {
+        console.warn(`[Presence] Listener "${listener}" for "${mapId}" was cancelled:`, error);
+        reportErrorOnce(error, 'presence', { room: mapId, listener }, `cancelled:${mapId}`);
+      };
       this.unsubscribers.push(
-        onChildAdded(roomRef, handle('joined')),
-        onChildChanged(roomRef, handle('changed')),
-        onChildRemoved(roomRef, (snapshot) => {
-          const otherUid = snapshot.key;
-          if (!otherUid || otherUid === uid) return;
-          this.#emit({ type: 'left', uid: otherUid });
-        })
+        onChildAdded(roomRef, handle('joined'), cancelled('child_added')),
+        onChildChanged(roomRef, handle('changed'), cancelled('child_changed')),
+        onChildRemoved(
+          roomRef,
+          (snapshot) => {
+            const otherUid = snapshot.key;
+            if (!otherUid || otherUid === uid) return;
+            this.#emit({ type: 'left', uid: otherUid });
+          },
+          cancelled('child_removed')
+        )
       );
 
       if (DEBUG.MULTIPLAYER) console.log(`[Presence] Entered room "${mapId}"`);
@@ -280,7 +304,9 @@ class PresenceService {
         await onDisconnect(selfRef).cancel();
         await remove(selfRef);
       } catch (error) {
-        if (DEBUG.MULTIPLAYER) console.warn('[Presence] Cleanup on leave failed:', error);
+        // A record we could not remove is a ghost of us for everyone else.
+        console.warn(`[Presence] Could not remove our record from "${leftRoom}":`, error);
+        reportErrorOnce(error, 'presence', { room: leftRoom, action: 'leave' });
       }
     }
 
