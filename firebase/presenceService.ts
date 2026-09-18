@@ -37,7 +37,7 @@ import {
   setServerTimeOffset,
   isServerTimeOffsetKnown,
 } from '../multiplayer/serverClock';
-import type { PresenceStatus } from '../multiplayer/presenceStatus';
+import type { PresenceStatus, PresenceStats } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState, PresenceEvent } from '../multiplayer/types';
 
 const PRESENCE_ROOT = 'presence';
@@ -56,6 +56,7 @@ class PresenceService {
   /** Publish runs at 5 Hz — report the first failure only, not 300 a minute. */
   private reportedPublishFailure = false;
   private unsubscribeClock: (() => void) | null = null;
+  private stats = { received: 0, dropped: 0, published: 0, publishFailed: 0, lastReceivedAt: 0 };
 
   constructor() {
     // Our record can only be deleted by its owner, so it has to go before the
@@ -96,6 +97,11 @@ class PresenceService {
 
   getCurrentRoom(): string | null {
     return this.roomMapId;
+  }
+
+  /** Traffic so far this session — see PresenceStats. */
+  getStats(): PresenceStats {
+    return { ...this.stats, subscribers: this.listeners.size };
   }
 
   /**
@@ -154,6 +160,7 @@ class PresenceService {
           // Every dropped record is a player somebody cannot see. Say so once
           // per player, whatever the debug flags: a drop that only logs when
           // asked is what made "she can see me but I can't see her" untraceable.
+          this.stats.dropped++;
           const keys = raw && typeof raw === 'object' ? Object.keys(raw).join(',') : typeof raw;
           console.warn(`[Presence] Dropped malformed record from ${otherUid} (fields: ${keys})`);
           reportMessageOnce(
@@ -177,6 +184,7 @@ class PresenceService {
         // case is recognisable — a large raw age with a small corrected one.
         const localNow = Date.now();
         if (isGhostRecord(wire, serverNow(localNow), MULTIPLAYER.GHOST_AFTER_MS)) {
+          this.stats.dropped++;
           const ageMs = serverNow(localNow) - wire.t;
           console.warn(
             `[Presence] Sweeping ghost record ${otherUid} (${Math.round(ageMs / 1000)} s old)`
@@ -197,6 +205,8 @@ class PresenceService {
           return;
         }
 
+        this.stats.received++;
+        this.stats.lastReceivedAt = localNow;
         this.#emit({ type, uid: otherUid, wire });
       };
 
@@ -324,8 +334,10 @@ class PresenceService {
 
     try {
       await set(this.selfRef, wire);
+      this.stats.published++;
       return true;
     } catch (error) {
+      this.stats.publishFailed++;
       // Losing a *single* position update is harmless — the next one is 200 ms
       // away. Losing every one of them is invisible multiplayer, so the first
       // failure is always reported, however quiet the debug flags are: a

@@ -34,3 +34,32 @@ export const PRESENCE_REASON_TEXT: Record<PresenceUnavailableReason, string> = {
   'database-init-failed': 'the Realtime Database could not be opened',
   'signed-out': 'you are not signed in — press F1, open Settings and sign in (or play as guest)',
 };
+
+/**
+ * Traffic counters for the on-device readout (components/SharedWorldStatus).
+ * They answer the question the status alone cannot: when a friend is
+ * invisible, did their records never arrive, or arrive and get lost after?
+ */
+export interface PresenceStats {
+  /** Inbound records accepted and handed to subscribers */
+  received: number;
+  /** Inbound records refused (malformed, ghost) */
+  dropped: number;
+  /** Our own records written */
+  published: number;
+  /** Our own writes refused */
+  publishFailed: number;
+  /** Local clock at the last accepted inbound record, 0 if none */
+  lastReceivedAt: number;
+  /** How many things are listening for inbound records — 0 means nobody would notice one */
+  subscribers: number;
+}
+
+export const EMPTY_PRESENCE_STATS: PresenceStats = {
+  received: 0,
+  dropped: 0,
+  published: 0,
+  publishFailed: 0,
+  lastReceivedAt: 0,
+  subscribers: 0,
+};

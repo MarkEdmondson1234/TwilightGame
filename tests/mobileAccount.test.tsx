@@ -20,6 +20,14 @@ vi.mock('../firebase/safe', () => ({
   // The shared-world readout under Account reads these on mount.
   getPresenceService: () => ({
     getStatus: () => ({ available: false, reason: 'signed-out', uid: null, room: null }),
+    getStats: () => ({
+      received: 0,
+      dropped: 0,
+      published: 0,
+      publishFailed: 0,
+      lastReceivedAt: 0,
+      subscribers: 0,
+    }),
   }),
   getCommunityGardenService: () => ({ isActive: () => false }),
 }));

@@ -18,7 +18,8 @@ import type { SharedConversationSummary, SharedWorldEvent, SaveSlot } from './ty
 import type { SharedPlotDoc } from './communityGardenService';
 import type { NpcGardenPlanDoc } from './npcGardenService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
-import type { PresenceStatus } from '../multiplayer/presenceStatus';
+import type { PresenceStatus, PresenceStats } from '../multiplayer/presenceStatus';
+import { EMPTY_PRESENCE_STATS } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
@@ -151,6 +152,7 @@ const stubPresenceService = {
   }),
   getUid: () => null as string | null,
   getCurrentRoom: () => null as string | null,
+  getStats: (): PresenceStats => EMPTY_PRESENCE_STATS,
   onPresence: (_cb: (event: PresenceEvent) => void) => () => {},
   enterRoom: async (_mapId: string) => false as boolean,
   leaveRoom: async () => {},
@@ -523,8 +525,26 @@ export async function whenFirebaseSettled(): Promise<boolean> {
 
 /** Skiing records are optional; local play never depends on the network. */
 export function getSkiingScoreService(): typeof import('./skiingScoreService').skiingScoreService {
-  return firebaseModule?.skiingScoreService ?? {
-    watch: (_level, receive) => { receive([], 'signed-out'); return () => {}; },
-    submit: async () => false,
-  };
+  return (
+    firebaseModule?.skiingScoreService ?? {
+      watch: (_level, receive) => {
+        receive([], 'signed-out');
+        return () => {};
+      },
+      submit: async () => false,
+    }
+  );
+}
+
+/** Trial records are optional; offline runs retain their personal best. */
+export function getAgilityScoreService(): typeof import('./agilityScoreService').agilityScoreService {
+  return (
+    firebaseModule?.agilityScoreService ?? {
+      watch: (receive) => {
+        receive([], 'signed-out');
+        return () => {};
+      },
+      submit: async () => false,
+    }
+  );
 }
