@@ -33,14 +33,21 @@ const rtdb = vi.hoisted(() => {
   type Callback = (snapshot: { key: string | null; val: () => unknown }) => void;
   const childAdded = new Map<string, Callback>();
   const valueWatchers = new Map<string, Callback>();
+  const cancels = new Map<string, (error: Error) => void>();
   return {
     childAdded,
     valueWatchers,
+    cancels,
     removed: [] as string[],
     reset() {
       childAdded.clear();
       valueWatchers.clear();
+      cancels.clear();
       this.removed = [];
+    },
+    /** The server refusing a listener (rules, expired token). */
+    cancel(room: string, error: Error) {
+      cancels.get(room)?.(error);
     },
     /** Deliver a presence record into a room as the SDK would. */
     addChild(room: string, uid: string, value: unknown) {
@@ -63,8 +70,9 @@ vi.mock('firebase/database', () => ({
   },
   serverTimestamp: () => Date.now(),
   onDisconnect: () => ({ remove: async () => {}, cancel: async () => {} }),
-  onChildAdded: (path: string, cb: never) => {
+  onChildAdded: (path: string, cb: never, onCancel?: (error: Error) => void) => {
     rtdb.childAdded.set(path, cb);
+    if (onCancel) rtdb.cancels.set(path, onCancel);
     return () => rtdb.childAdded.delete(path);
   },
   onChildChanged: () => () => {},
@@ -79,8 +87,16 @@ vi.mock('../firebase/realtimeConfig', () => ({
   isRealtimeConfigured: () => true,
 }));
 vi.mock('../firebase/config', () => ({ isFirebaseInitialized: () => true }));
+const beforeSignOutHooks = vi.hoisted(() => new Set<() => Promise<void> | void>());
 vi.mock('../firebase/authService', () => ({
-  authService: { getUserId: () => 'me', isAuthenticated: () => true },
+  authService: {
+    getUserId: () => 'me',
+    isAuthenticated: () => true,
+    onBeforeSignOut: (hook: () => Promise<void> | void) => {
+      beforeSignOutHooks.add(hook);
+      return () => beforeSignOutHooks.delete(hook);
+    },
+  },
 }));
 
 import { presenceService } from '../firebase/presenceService';
@@ -217,6 +233,37 @@ describe('presence drop reporting', () => {
       'presence',
       { offsetMs: -(MULTIPLAYER.CLOCK_SKEW_WARN_MS + 1) },
       'clock-skew'
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Signing out must not leave a ghost, and a refused listener must be heard
+// ---------------------------------------------------------------------------
+describe('presence on sign-out', () => {
+  it('removes our record through the before-sign-out hook, while still signed in', async () => {
+    await presenceService.enterRoom('village');
+    expect(presenceService.getCurrentRoom()).toBe('village');
+
+    // The rules only let the owner delete the record, so this has to run
+    // before firebaseSignOut() — which is what the hook guarantees.
+    expect(beforeSignOutHooks.size, 'presence registers a before-sign-out hook').toBe(1);
+    for (const hook of beforeSignOutHooks) await hook();
+
+    expect(rtdb.removed).toEqual(['presence/village/me']);
+    expect(presenceService.getCurrentRoom()).toBeNull();
+  });
+
+  it('reports a listener the server cancelled instead of going quiet', async () => {
+    await presenceService.enterRoom('village');
+    const denied = new Error('permission_denied');
+    rtdb.cancel('presence/village', denied);
+
+    expect(reporting.reportErrorOnce).toHaveBeenCalledWith(
+      denied,
+      'presence',
+      expect.objectContaining({ room: 'village', listener: 'child_added' }),
+      'cancelled:village'
     );
   });
 });

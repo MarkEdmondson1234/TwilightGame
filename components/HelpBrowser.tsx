@@ -21,6 +21,7 @@ import {
 } from '../firebase/safe';
 import { reportError } from '../utils/errorReporting';
 import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
+import SharedWorldStatus from './SharedWorldStatus';
 
 interface HelpBrowserProps {
   onResetPosition?: () => void;
@@ -1042,6 +1043,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                       </div>
                     </div>
                   )}
+
+                  {/* What this device knows about the shared world — the
+                      readout for "she can see me but I can't see her". */}
+                  <SharedWorldStatus colours={colours} />
 
                   {authState?.profileError && (
                     <p role="status" className="mt-4 font-serif" style={{ color: colours.text }}>

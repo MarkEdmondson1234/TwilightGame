@@ -17,6 +17,11 @@ vi.mock('../firebase/safe', () => ({
     signInWithGoogle: cloud.google,
   }),
   getSyncManager: () => ({ onStateChange: () => () => {} }),
+  // The shared-world readout under Account reads these on mount.
+  getPresenceService: () => ({
+    getStatus: () => ({ available: false, reason: 'signed-out', uid: null, room: null }),
+  }),
+  getCommunityGardenService: () => ({ isActive: () => false }),
 }));
 vi.mock('../services/anthropicClient', () => ({
   getStoredApiKey: () => null,
