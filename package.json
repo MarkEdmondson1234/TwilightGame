@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:start": "node scripts/dev-server.js",
     "dev:reload": "node scripts/dev-server.js --reload",
-    "build": "npm run optimize-assets && vite build",
+    "build": "npm run optimize-assets && vite build && node scripts/stamp-sw.mjs",
     "preview": "vite preview",
     "optimize-assets": "node scripts/optimize-assets.js",
     "art-review": "node scripts/art-review.mjs",

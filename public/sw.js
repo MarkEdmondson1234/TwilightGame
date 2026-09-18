@@ -1,5 +1,15 @@
 // Service Worker for Twilight Game PWA
-const CACHE_NAME = 'twilight-game-v3';
+//
+// The cache is named per deploy: scripts/stamp-sw.mjs replaces the placeholder
+// below with VITE_APP_VERSION (the commit sha) after `vite build`. A new deploy
+// is therefore a byte-different sw.js, which is what makes the browser install
+// it, and its activation deletes every older cache. Before this the name was
+// bumped by hand ('v3') and a returning phone could play a build that was hours
+// or days old: index.html is network-first, but when the first request after
+// waking fails (the radio is not up yet) the cached shell is served, and that
+// shell points at the old bundle — and nothing ever changed sw.js to fix it.
+const APP_VERSION = '__APP_VERSION__';
+const CACHE_NAME = `twilight-game-${APP_VERSION.startsWith('__') ? 'dev' : APP_VERSION}`;
 const urlsToCache = [
   '/TwilightGame/',
   '/TwilightGame/index.html',

@@ -2,6 +2,7 @@
 import * as Sentry from '@sentry/react';
 import { performanceMonitor } from './PerformanceMonitor';
 import { getCachedPerformanceSettings } from './performanceTier';
+import { startHeartbeat, takePreviousAbruptEnd, type Heartbeat } from './sessionHeartbeat';
 
 type Fields = Record<string, string | number | boolean>;
 type Operation =
@@ -44,6 +45,10 @@ let contextLossReported = false;
 // modules (GameState already imports sessionDiagnostics — the cycle would be
 // real). Only invoked for slow minutes, so healthy sessions pay nothing.
 let slowMinuteContext: (() => Fields) | undefined;
+// The last operation started and not yet finished — what a session that dies
+// abruptly was in the middle of (see sessionHeartbeat.ts).
+let inFlight: { name: Operation; at: number } | null = null;
+let heartbeat: Heartbeat | null = null;
 
 function safely(action: () => void): void {
   try {
@@ -158,6 +163,79 @@ export function startSessionDiagnostics(): void {
     }, INTERVAL_MS);
     log('game.session_start');
   });
+  safely(reportPreviousAbruptEnd);
+  safely(startSessionHeartbeat);
+}
+
+/**
+ * A session that ended without unloading — on iOS, the memory kill that a
+ * player sees as "it refreshed back to the title screen". Nothing could
+ * report it at the time; the heartbeat it left behind says what it was doing.
+ */
+function reportPreviousAbruptEnd(): void {
+  const abrupt = takePreviousAbruptEnd(localStorage, Date.now());
+  if (!abrupt) return;
+  const p = abrupt.previous;
+  const details: Fields = {
+    'previous.kind': abrupt.kind,
+    'previous.release': p.release,
+    'previous.session_id': p.sessionId,
+    'previous.map': p.map,
+    'previous.in_flight': p.inFlight ?? 'none',
+    'previous.in_flight_ms': p.inFlightSinceMs === null ? 0 : Math.round(p.beatAt - p.inFlightSinceMs),
+    'previous.uptime_s': Math.round(p.uptimeMs / 1000),
+    'previous.world_ready': p.worldReady,
+    'previous.resident_texture_mb': p.residentTextureMB ?? 0,
+    'previous.scene_texture_mb': p.sceneTextureMB ?? 0,
+    'previous.visible_sprites': p.visibleSprites ?? 0,
+    'previous.gap_s': Math.round(abrupt.gapMs / 1000),
+  };
+  log('game.session_abrupt_end', details);
+  // A foreground death is the crash; a hidden tab reclaimed by the OS is
+  // routine on a phone and stays a log line.
+  // (Sentry directly rather than errorReporting's helper, as the context-loss
+  // report does: errorReporting imports this module.)
+  if (abrupt.kind === 'foreground') {
+    Sentry.captureMessage(
+      `Previous session ended abruptly in ${p.map}` + (p.inFlight ? ` during ${p.inFlight}` : ''),
+      { level: 'warning', tags: { category: 'game_crash' }, contexts: { details } }
+    );
+  }
+}
+
+function startSessionHeartbeat(): void {
+  const startedAt = performance.now();
+  heartbeat = startHeartbeat({
+    storage: localStorage,
+    now: Date.now,
+    sessionId,
+    release: import.meta.env.VITE_APP_VERSION ?? 'dev',
+    isHidden: () => document.visibilityState === 'hidden',
+    onVisibilityChange: (handler) => {
+      document.addEventListener('visibilitychange', handler);
+      return () => document.removeEventListener('visibilitychange', handler);
+    },
+    onPageHide: (handler) => {
+      window.addEventListener('pagehide', handler);
+      return () => window.removeEventListener('pagehide', handler);
+    },
+    setInterval: (fn, ms) => setInterval(fn, ms),
+    clearInterval: (handle) => clearInterval(handle as ReturnType<typeof setInterval>),
+    getState: () => {
+      const scene = performanceMonitor.getMetrics().scene;
+      return {
+        map: mapId,
+        inFlight: inFlight?.name ?? null,
+        // Wall-clock start of the in-flight operation, so the report can say how long it had run.
+        inFlightSinceMs: inFlight ? Date.now() - Math.round(performance.now() - inFlight.at) : null,
+        residentTextureMB: residentMemory ? Math.round(residentMemory()) : null,
+        sceneTextureMB: Math.round(scene.textureMB),
+        visibleSprites: scene.visibleSprites,
+        uptimeMs: Math.round(performance.now() - startedAt),
+        worldReady,
+      };
+    },
+  });
 }
 
 /** Uses the game's existing WebGL context; never creates a second GPU context. */
@@ -255,6 +333,7 @@ export function setDiagnosticMap(nextMap: string): void {
   // Generated maps contain seeds: group them by map family for useful comparisons.
   mapId = nextMap.replace(/_\d+$/, '_generated');
   resetFrames();
+  heartbeat?.beat();
   safely(() => {
     Sentry.setTag('game.map', mapId);
     Sentry.setContext('game_performance', null);
@@ -291,9 +370,16 @@ export function startDiagnosticOperation(operation: Operation): (success?: boole
   const epoch = visibilityEpoch;
   const startedVisible = document.visibilityState === 'visible';
   let finished = false;
+  // Saves are quick and constant; the loads are what a dying session is in
+  // the middle of. Tell the heartbeat straight away — it may have two seconds.
+  if (operation !== 'local_save') {
+    inFlight = { name: operation, at: start };
+    heartbeat?.beat();
+  }
   return (success = true) => {
     if (finished || !active) return;
     finished = true;
+    if (inFlight?.name === operation && inFlight.at === start) inFlight = null;
     const now = performance.now();
     const slow = now - start >= (operation === 'local_save' ? 50 : 1000);
     const key = `${operation}:${success}:${slow}`;
@@ -329,5 +415,8 @@ export function stopSessionDiagnostics(): void {
   worldReady = false;
   contextLossReported = false;
   slowMinuteContext = undefined;
+  inFlight = null;
+  heartbeat?.stop();
+  heartbeat = null;
 }
 if (import.meta.hot) import.meta.hot.dispose(stopSessionDiagnostics);
