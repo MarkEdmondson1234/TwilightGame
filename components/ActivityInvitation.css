@@ -1,0 +1,61 @@
+.activity-invitation {
+  box-sizing: border-box;
+  position: fixed;
+  top: max(76px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: min(370px, calc(100vw - 24px));
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  border: 2px solid;
+  border-radius: 18px 18px 4px 18px;
+  padding: 14px;
+  box-shadow: 0 4px 14px #30251c30;
+}
+.activity-invitation-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.activity-invitation-heading img {
+  width: 58px;
+  height: 70px;
+  object-fit: contain;
+}
+.activity-invitation strong {
+  font-size: 18px;
+}
+.activity-invitation p {
+  margin: 6px 0 10px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.activity-invitation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.activity-invitation button {
+  font: inherit;
+  border: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: #4a6741;
+  color: #fff;
+  border-radius: 8px;
+}
+.activity-invitation button:focus-visible {
+  outline: 3px solid #4a3228;
+  outline-offset: 2px;
+}
+.activity-invitation small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+}
+@media (max-height: 500px) {
+  .activity-invitation {
+    top: 12px;
+    max-height: calc(100dvh - 100px);
+    width: min(340px, calc(100vw - 110px));
+  }
+}

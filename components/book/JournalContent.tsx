@@ -1,3 +1,4 @@
+import { getRememberedActivityLeads } from '../../utils/activityLeadStorage';
 import React, { useMemo, useState, useEffect } from 'react';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
@@ -16,7 +17,7 @@ interface JournalContentProps {
 }
 
 // Journal chapter types
-type JournalChapterId = 'active' | 'completed' | 'conversations';
+type JournalChapterId = 'active' | 'completed' | 'conversations' | 'activities';
 
 // Unified journal entry type (quests or NPC conversations)
 interface JournalEntry {
@@ -37,6 +38,7 @@ interface JournalEntry {
 
 const JOURNAL_CHAPTERS: BookChapter<JournalChapterId>[] = [
   { id: 'active', label: 'Active Quests', icon: '📋' },
+  { id: 'activities', label: 'Things to try', icon: '🌱' },
   { id: 'completed', label: 'History', icon: '📜' },
   { id: 'conversations', label: 'Conversations', icon: '💬' },
 ];
@@ -147,6 +149,15 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       .filter((entry) => entry !== null) as JournalEntry[];
 
     return {
+      activities: getRememberedActivityLeads().map(
+        (lead): JournalEntry => ({
+          id: lead.id,
+          type: 'quest',
+          title: lead.title,
+          subtitle: lead.invitation,
+          stageText: lead.directions,
+        })
+      ),
       active: activeQuests,
       completed: completedQuests,
       conversations,
@@ -215,9 +226,11 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
                   {entry.type === 'quest' && entry.progressPercent === 100 && (
                     <span style={{ color: theme.masteredColour }}>✓</span>
                   )}
-                  {entry.type === 'quest' && (entry.progressPercent ?? 0) < 100 && (
-                    <span style={{ color: theme.accentPrimary }}>{entry.progressPercent}%</span>
-                  )}
+                  {entry.type === 'quest' &&
+                    entry.progressPercent !== undefined &&
+                    entry.progressPercent < 100 && (
+                      <span style={{ color: theme.accentPrimary }}>{entry.progressPercent}%</span>
+                    )}
                 </span>
               </div>
               {entry.subtitle && (
@@ -235,7 +248,9 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
               ? 'No active quests'
               : pagination.currentChapterId === 'completed'
                 ? 'No completed quests yet'
-                : 'No NPC conversations yet'}
+                : pagination.currentChapterId === 'activities'
+                  ? 'Explore and chat with your neighbours to find things to try.'
+                  : 'No NPC conversations yet'}
           </p>
         )}
       </div>
@@ -245,7 +260,9 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         className="mt-3 pt-2 border-t text-lg"
         style={{ borderColor: theme.accentPrimary, color: theme.textMuted }}
       >
-        {pagination.currentChapterId === 'conversations' ? (
+        {pagination.currentChapterId === 'activities' ? (
+          <span>{entriesByChapter.activities.length} things to try at your own pace</span>
+        ) : pagination.currentChapterId === 'conversations' ? (
           <span>
             <span style={{ color: theme.accentPrimary }}>
               {entriesByChapter.conversations.length}

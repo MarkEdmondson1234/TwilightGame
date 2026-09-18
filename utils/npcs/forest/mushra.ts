@@ -79,6 +79,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
     },
     initialState: 'roaming',
     dialogue: [
+
       // Good Friends greeting - takes priority over stranger greeting when unlocked
       {
         id: 'greeting',
@@ -104,6 +105,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
           { text: 'Did you make any new sketches?', nextId: 'sketchbook' },
           { text: 'How have you been?', nextId: 'good_friend_chat' },
           { text: 'Tell me about mushrooms.', nextId: 'about_mushrooms' },
+          { text: 'Could we make a wreath?', nextId: 'wreath_invitation' },
           {
             text: 'Could you teach me to paint?',
             nextId: 'offer_easel',
@@ -142,6 +144,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
           { text: 'Who are you?', nextId: 'who_are_you' },
           { text: 'What do you do here?', nextId: 'what_do_you_do' },
           { text: 'Tell me about mushrooms.', nextId: 'about_mushrooms' },
+          { text: 'Could we make a wreath?', nextId: 'wreath_invitation' },
           {
             text: 'Could you teach me to paint?',
             nextId: 'offer_easel',
@@ -172,6 +175,11 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '"Good luck! I do hope it is useful."',
         requiredQuest: 'ghost_queen',
         hiddenIfQuestCompleted: 'ghost_queen',
+      },
+      {
+        id: 'wreath_invitation',
+        text: '*Mushra curls her fingers into a circle, imagining the flowers.* "A little piece of the forest for your door! Bring some flowers, then close our chat, interact with me and choose Make a Wreath. You can arrange them just as you like. We can make wreaths all year — you need not wait for the autumn workshop."',
+        responses: [{ text: 'That sounds lovely.' }],
       },
       {
         id: 'who_are_you',

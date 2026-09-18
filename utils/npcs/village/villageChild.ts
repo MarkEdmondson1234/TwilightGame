@@ -67,6 +67,7 @@ export function createVillageChildNPC(
             "Hi! Look at all the petals falling! It's like pink snow! I've been trying to catch them - want to see how many we can catch together?",
         },
         responses: [
+          { text: 'Can we carve a pumpkin?', nextId: 'pumpkin_invitation', requiredSeason: 'autumn' },
           {
             text: 'What do you like to play?',
             nextId: 'play_games',
@@ -88,6 +89,11 @@ export function createVillageChildNPC(
             text: 'Maybe another time!',
           },
         ],
+      },
+      {
+        id: 'pumpkin_invitation',
+        text: '*She traces a toothy grin in the air.* "Yes! Bring a pumpkin and we can give it a face. Mr Fox sells seeds if you want to grow one. When you have a pumpkin, close our chat, interact with me and choose Carve Pumpkin. We only use the pumpkin when you finish. I wonder what yours will look like!"',
+        responses: [{ text: 'I will bring one!' }],
       },
       {
         id: 'build_snowman',

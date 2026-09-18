@@ -6,6 +6,16 @@ This directory contains design documents for planned features and architectural 
 
 ## Active Plans
 
+### Quest Onboarding and Feature Discovery
+
+**Status:** Draft for review — audit completed 18 September 2026.
+
+**Document:** [QUEST_ONBOARDING_PLAN.md](./QUEST_ONBOARDING_PLAN.md)
+
+Audit of the current quest chains and GitHub issue #151, with a proposed cooking repair, clearer next-step guidance, parallel beginner quests, and early mini-game rewards for players aged 11–12. Prioritises visual storytelling and NPC dialogue, supported by light contextual UI. Includes phased delivery, a winter skiing walkthrough, discovery routes for every registered mini-game, a wider feature-coverage checklist, multiplayer village news and milestone clues, and playtest acceptance criteria.
+
+---
+
 ### 📱 Performance on Every Device
 
 **Status**: In progress — days 1–3 shipped 2026-09-17 (PRs #136, #138, #139); next is §6A

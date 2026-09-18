@@ -1,3 +1,5 @@
+import ActivityInvitation from './components/ActivityInvitation';
+import { canSkiHere } from './utils/activityDiscovery';
 import { getPlayerBodyFraction, playerGroundingOffset, isOutsideMobileShopFloor } from './utils/playerGrounding';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
@@ -2738,6 +2740,24 @@ const App: React.FC = () => {
           compact={isCompactMode}
         />
       )}
+      <ActivityInvitation
+        mapId={currentMapId}
+        playerPosition={playerPosRef}
+        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible}
+        onTalk={setActiveNPC}
+        onJournal={() => openUI('journal')}
+        onSki={() => {
+          if (
+            !canSkiHere(mapManager.getCurrentMapId() ?? '', TimeManager.getCurrentTime().season) ||
+            inventoryManager.getQuantity('tool_skis') < 1
+          ) return;
+          openUI('miniGame', {
+            activeMiniGameId: 'skiing',
+            miniGameTriggerData: { triggerType: 'inventory', itemId: 'tool_skis' },
+          });
+        }}
+      />
+
       {activeNPC && !isCutscenePlaying && (
         <UnifiedDialogueBox
           npc={npcManager.getNPCById(activeNPC)!}
@@ -3382,9 +3402,7 @@ const App: React.FC = () => {
             onGoSkiing: () => {
               setInventoryRadialMenu(null);
               const skiMapId = mapManager.getCurrentMapId() ?? '';
-              const isForest = skiMapId.startsWith('forest') || skiMapId === 'deep_forest';
-              const isWinter = TimeManager.getCurrentTime().season === Season.WINTER;
-              if (!isForest || !isWinter) {
+              if (!canSkiHere(skiMapId, TimeManager.getCurrentTime().season)) {
                 showToast('To go skiing, you need to be in the forest at winter', 'warning');
                 return;
               }

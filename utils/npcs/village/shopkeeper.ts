@@ -58,6 +58,7 @@ export function createShopkeeperNPC(
     initialState: entryAnimation ? 'walking' : 'idle',
     entryAnimation,
     dialogue: [
+
       {
         id: 'greeting',
         text: 'Welcome to my humble shop! I have the finest goods in all the village. What brings thee here today?',
@@ -87,6 +88,7 @@ export function createShopkeeperNPC(
             "Isn't it magical? The petals drift past my shop windows like pink snowflakes! Such weather is good for the soul - and good for business! What can I help thee find?",
         },
         responses: [
+          { text: 'How can I go skiing?', nextId: 'skiing_advice', requiredSeason: 'winter' },
           // ── Always visible ────────────────────────────────────────────────
           {
             text: 'Can you walk me through what you sell?',
@@ -195,6 +197,11 @@ export function createShopkeeperNPC(
         ],
       },
 
+      {
+        id: 'skiing_advice',
+        text: '*Mr Fox leans forward, ears pricked.* "A winter adventure! I sell skis in the shop. Take a pair into the forest, select them in your bag and choose Go Skiing. You can gather firewood and stop safely to explore further down the trail. Mind the trees, though — a tumble brings you back to the entrance with only some of your wood!"',
+        responses: [{ text: 'I will have a look. Thank you!' }],
+      },
       {
         id: 'fox_garden_salad_offer',
         text: "To be honest, I'm not much of a cook. But if I have the right ingredients, I can whip up a lovely garden salad. I'll write down the recipe for you.",
