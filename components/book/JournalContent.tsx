@@ -1,3 +1,5 @@
+import { readCookingNextStep, readQuestNextStep } from '../../utils/readQuestNextSteps';
+import type { QuestNextStep } from '../../utils/questNextSteps';
 import { getAuthService } from '../../firebase/safe';
 import { readVillageNews, updateVillageNews } from '../../utils/villageNewsStorage';
 import { compareNews } from '../../utils/villageNews';
@@ -32,6 +34,7 @@ interface JournalEntry {
   title: string;
   subtitle?: string;
   activityLead?: ActivityLeadId;
+  nextStep?: QuestNextStep;
   // Quest-specific
   progress?: EventChainProgress;
   stageText?: string;
@@ -87,10 +90,17 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   // Counter to force diary data refresh after Firestore sync
   const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
 
-  useEffect(
-    () => eventBus.on(GameEvent.QUEST_DATA_CHANGED, () => setDiaryRefreshKey((n) => n + 1)),
-    []
-  );
+  useEffect(() => {
+    const refresh = () => setDiaryRefreshKey((n) => n + 1);
+    const unsubscribe = [
+      GameEvent.QUEST_DATA_CHANGED,
+      GameEvent.EVENT_CHAIN_UPDATED,
+      GameEvent.INVENTORY_CHANGED,
+      GameEvent.TIME_CHANGED,
+      GameEvent.PLAYER_MILESTONE,
+    ].map((event) => eventBus.on(event, refresh));
+    return () => unsubscribe.forEach((off) => off());
+  }, []);
 
   // Build journal entries for each chapter
   const entriesByChapter = useMemo(() => {
@@ -99,21 +109,28 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       const chain = eventChainManager.getChain(progress.chainId);
       const definition = chain?.definition;
       const currentStage = chain?.stageMap.get(progress.currentStageId);
-      const totalStages = definition?.stages.length ?? 1;
-      const currentIndex =
-        definition?.stages.findIndex((s) => s.id === progress.currentStageId) ?? 0;
-      const percent = Math.round(((currentIndex + 1) / totalStages) * 100);
+      const nextStep = readQuestNextStep(progress.chainId);
 
       return {
         id: progress.chainId,
         type: 'quest' as const,
         title: definition?.title ?? progress.chainId,
-        subtitle: definition?.description,
+        subtitle: nextStep?.action ?? definition?.description,
         progress,
         stageText: currentStage?.text ?? 'In progress...',
-        progressPercent: percent,
+        nextStep,
       };
     });
+
+    const cookingStep = readCookingNextStep();
+    if (cookingStep)
+      activeQuests.unshift({
+        id: 'cooking_lessons',
+        type: 'quest',
+        title: 'Cooking with Mum',
+        subtitle: cookingStep.action,
+        nextStep: cookingStep,
+      });
 
     // Completed quests
     const completedQuests: JournalEntry[] = eventChainManager
@@ -395,10 +412,26 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
     >
       {entry.title}
     </h3>
-    {entry.subtitle && (
+    {entry.subtitle && !entry.nextStep && (
       <p className="text-lg mb-2" style={{ color: theme.textSecondary }}>
         {entry.subtitle}
       </p>
+    )}
+
+    {entry.nextStep && (
+      <section
+        aria-label="Your next step"
+        className="p-3 rounded mb-3"
+        style={{ backgroundColor: `${theme.accentPrimary}10`, color: theme.textPrimary }}
+      >
+        <h4 className="font-bold text-lg">Next: {entry.nextStep.action}</h4>
+        <p className="text-base mt-1">Where: {entry.nextStep.where}</p>
+        <ul className="list-disc pl-5 mt-2 space-y-2 text-base">
+          {entry.nextStep.details.map((detail) => (
+            <li key={detail}>{detail}</li>
+          ))}
+        </ul>
+      </section>
     )}
 
     {/* Progress bar */}

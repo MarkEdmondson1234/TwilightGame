@@ -365,7 +365,7 @@ export function createOldWomanKnittingNPC(
       // Tea done — only cookies remain
       {
         id: 'chores_progress_need_cookies',
-        text: "*She looks up with a contented smile, the empty teacup beside her.* That tea was just lovely, dearie. Are those biscuits coming along? And the cobwebs of course — no rush.",
+        text: '*She looks up with a contented smile, the empty teacup beside her.* That tea was just lovely, dearie. Are those biscuits coming along? And the cobwebs of course — no rush.',
         responses: [
           {
             text: "I've baked some biscuits for you.",
@@ -386,7 +386,7 @@ export function createOldWomanKnittingNPC(
             nextId: 'chores_deliver_tea',
           },
           {
-            text: "Almost there — just a bit longer.",
+            text: 'Almost there — just a bit longer.',
           },
         ],
       },
@@ -406,11 +406,11 @@ export function createOldWomanKnittingNPC(
       // Tea outcomes
       {
         id: 'chores_tea_accepted',
-        text: "*She wraps her hands around the warm cup and sighs contentedly.* Oh, just what I needed, dearie. A proper cup of tea. Thank you.",
+        text: '*She wraps her hands around the warm cup and sighs contentedly.* Oh, just what I needed, dearie. A proper cup of tea. Thank you.',
       },
       {
         id: 'chores_no_tea',
-        text: "*She peers at your hands hopefully, then shakes her head.* No tea yet, dear? Never mind — whenever you're ready.",
+        text: '*She peers at your hands hopefully, then shakes her head.* No tea yet, dear? Your mum has a kettle in her kitchen. Open your recipe book there and make Tea, then come back and tell me you brought it for my chores.',
       },
       {
         id: 'chores_tea_done',
@@ -423,7 +423,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'chores_no_cookies',
-        text: "*She sniffs the air hopefully.* No biscuits yet, pet? Take your time — I know baking takes effort.",
+        text: '*She sniffs the air hopefully.* No biscuits yet, pet? Your mum teaches chocolate cookies on her baking path. Ask her about your next lesson. When you have some, come back and tell me you brought them for my chores. No need to rush — the dusting and tea can be done separately.',
       },
       {
         id: 'chores_cookies_done',
@@ -504,7 +504,7 @@ export function createOldWomanKnittingNPC(
       // Post-quest dialogue — shown when althea_chores is complete but estranged_sisters not yet started
       {
         id: 'post_chores_reminder',
-        text: "*She looks at you with hopeful eyes.* Have you found Juniper yet, dearie? Remember \u2014 through the old ruins, just north of the village. Look for the ancient meadow. And please... give her my love.",
+        text: '*She looks at you with hopeful eyes.* Have you found Juniper yet, dearie? Remember \u2014 through the old ruins, just north of the village. Look for the ancient meadow. And please... give her my love.',
         requiredQuest: 'althea_chores',
         requiredQuestStage: 3,
         hiddenIfQuestStarted: 'estranged_sisters',
@@ -535,19 +535,19 @@ export function createOldWomanKnittingNPC(
             setsQuestStage: { questId: 'estranged_sisters', stage: 1 },
           },
           {
-            text: "Maybe another time.",
+            text: 'Maybe another time.',
           },
         ],
       },
       {
         id: 'sisters_letter_farewell',
-        text: "*She presses your hand warmly.* Tell her... tell her I think about her every single day. And that I am glad she found someone worth trusting with her glade. *She settles back with a watery smile.* Off you go, then, love. And thank you.",
+        text: '*She presses your hand warmly.* Tell her... tell her I think about her every single day. And that I am glad she found someone worth trusting with her glade. *She settles back with a watery smile.* Off you go, then, love. And thank you.',
       },
 
       // Greeting redirect targets — shown based on quest stage (via handleAltheaQuestItems)
       {
         id: 'sisters_awaiting_delivery',
-        text: "*She looks up with hopeful eyes, her knitting stilled.* Have you been able to get the letter to Juniper yet, dear? No rush \u2014 I just... well. You know.",
+        text: '*She looks up with hopeful eyes, her knitting stilled.* Have you been able to get the letter to Juniper yet, dear? No rush \u2014 I just... well. You know.',
         requiredQuest: 'estranged_sisters',
         requiredQuestStage: 1,
         maxQuestStage: 1,
@@ -559,7 +559,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'sisters_awaiting_photo',
-        text: "*She tilts her head curiously, eyes bright.* And how is Juniper? Has she... said anything about the letter?",
+        text: '*She tilts her head curiously, eyes bright.* And how is Juniper? Has she... said anything about the letter?',
         requiredQuest: 'estranged_sisters',
         requiredQuestStage: 2,
         maxQuestStage: 2,
@@ -579,7 +579,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'sisters_awaiting_meeting',
-        text: "*She looks up, searching your face immediately, her knitting quite forgotten.* What did Juniper say? Will she come?",
+        text: '*She looks up, searching your face immediately, her knitting quite forgotten.* What did Juniper say? Will she come?',
         requiredQuest: 'estranged_sisters',
         requiredQuestStage: 3,
         maxQuestStage: 3,

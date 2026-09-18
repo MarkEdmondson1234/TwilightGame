@@ -39,6 +39,16 @@ Mum's introduction saves a journal lead rather than completing the lesson. Actua
 
 Validation: manager tests cover location, ingredients, stamina, practice-cup limits, reload and legacy progress; book tests cover the shared path beside Mum and disabled cooking outside the kitchen. Live first-session keyboard/iPad playtesting remains required. Test a fresh character: ask Mum to teach cooking, make Tea through the book anywhere in her kitchen, check the bag and return to Mum for a domain choice. Reload and confirm it does not ask for another cup. Repeat on another fresh save via the fireplace action. Check that village reading cannot cook tea.
 
+### Fourth release — personal next steps in the journal
+
+Implemented: **Active Quests** now includes cooking lessons and live next-step guidance for Elias's gardening quest and Althea's chores. Each guide names the next action and destination, with ingredient shortages, cooking mastery counts, seasonal tasks, items in the bag and completed hand-ins. Existing chain story text stays available. Inventory, quest, chain and time events refresh the journal while it is open. Guidance is read-only and uses personal progress; village news never supplies quest credit.
+
+Gardening keeps an assigned task across season changes, accepts an already-held delivery in winter, and suggests other activities when waiting for a new season. Althea's guide keeps dusting and both food deliveries visible, never asks for a delivered item again, and points to her final conversation once the chores are done. Her missing-tea/cookies dialogue now points to Mum and explains how to return. Cooking remains visible alongside the other quests and names ingredients still needed for one cook.
+
+Removed estimated active-chain percentages: stage-array position is not a reliable completion measure in branching stories. Completed history entries retain their completion marker. Pinning, world markers, wider quest adapters and cooking-path flexibility remain planned.
+
+Validation: all 1,620 tests passed; type check and lint passed (nine existing warnings). The journal panel was reviewed in an isolated 1024×768 touch browser. State-transition tests cover tea, mastery, ingredients, seasonal rollover, winter, inventory versus delivery and independent chores; a journal interaction test covers simultaneous activities and live inventory refresh. Playtest by switching among all three entries, handing over only one of Althea's items, and revisiting Elias after a season change. No quest state or inventory is changed by opening these guides.
+
 ## Recommendation
 
 **Presentation direction:** Lead with visual storytelling, world activity and character dialogue. Helpful UI supports those clues by remembering them, confirming actions and offering optional guidance. Players should feel invited into village life and adventures, rather than directed through a checklist of features.
