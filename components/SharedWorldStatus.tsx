@@ -32,6 +32,8 @@ interface Snapshot {
   presenceOk: boolean;
   room: string | null;
   friends: string[];
+  traffic: string;
+  trafficOk: boolean;
   clock: string;
   clockOk: boolean;
   garden: boolean;
@@ -53,6 +55,10 @@ function takeSnapshot(): Snapshot {
   const auth = getAuthService().getState();
   const status = getPresenceService().getStatus();
   const clock = describeClock();
+  const stats = getPresenceService().getStats();
+  const lastIn = stats.lastReceivedAt
+    ? `${Math.round((Date.now() - stats.lastReceivedAt) / 1000)} s ago`
+    : 'never';
   return {
     signedIn: auth.isAuthenticated,
     uid: auth.user?.uid ?? null,
@@ -66,6 +72,14 @@ function takeSnapshot(): Snapshot {
     presenceOk: status.available,
     room: status.room,
     friends: remotePlayerManager.getNames(),
+    // "in" is what other players sent us; "out" is what we sent. A friend who
+    // is invisible with "in" climbing was received and lost afterwards; with
+    // "in: never" they were never delivered. "nobody listening" means the
+    // game never subscribed — records arrive and go nowhere.
+    traffic: `in ${stats.received} (last ${lastIn}), dropped ${stats.dropped}, out ${stats.published}${
+      stats.publishFailed ? `, ${stats.publishFailed} refused` : ''
+    }${stats.subscribers === 0 && status.room ? ', nobody listening' : ''}`,
+    trafficOk: stats.publishFailed === 0 && !(stats.subscribers === 0 && Boolean(status.room)),
     clock: clock.text,
     clockOk: clock.ok,
     garden: getCommunityGardenService().isActive(),
@@ -99,6 +113,7 @@ const SharedWorldStatus: React.FC<Props> = ({ colours }) => {
       value: snapshot.friends.length ? snapshot.friends.join(', ') : 'nobody',
       ok: true,
     },
+    { label: 'Records', value: snapshot.traffic, ok: snapshot.trafficOk },
     { label: 'Clock', value: snapshot.clock, ok: snapshot.clockOk },
     {
       label: 'Shared garden',

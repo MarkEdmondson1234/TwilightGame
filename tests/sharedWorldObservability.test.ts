@@ -254,6 +254,32 @@ describe('presence on sign-out', () => {
     expect(presenceService.getCurrentRoom()).toBeNull();
   });
 
+  it('counts what arrived, what was refused and what we sent', async () => {
+    const before = presenceService.getStats(); // the singleton counts across tests
+    const events: PresenceEvent[] = [];
+    presenceService.onPresence((event) => events.push(event));
+    await presenceService.enterRoom('village');
+    rtdb.setServerOffset(0);
+    rtdb.addChild('presence/village', 'nomi', liveRecord(Date.now()));
+    rtdb.addChild('presence/village', 'odd', { n: 'X' });
+    await presenceService.publish({
+      name: 'Me',
+      characterId: 'character1',
+      position: { x: 1, y: 1 },
+      direction: 0,
+      sizeTier: 0,
+      fairyForm: false,
+      emote: null,
+    });
+
+    const after = presenceService.getStats();
+    expect(after.received - before.received).toBe(1);
+    expect(after.dropped - before.dropped).toBe(1);
+    expect(after.published - before.published).toBe(1);
+    expect(after.publishFailed - before.publishFailed).toBe(0);
+    expect(after.subscribers).toBe(1);
+  });
+
   it('reports a listener the server cancelled instead of going quiet', async () => {
     await presenceService.enterRoom('village');
     const denied = new Error('permission_denied');
