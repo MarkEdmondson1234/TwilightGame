@@ -23,7 +23,7 @@ import { syncDiaryFromFirestore } from '../services/diaryService';
 import { gameState } from '../GameState';
 import { FIRESTORE_PATHS, SyncMetadata } from './types';
 import { eventBus, GameEvent } from '../utils/EventBus';
-import { reportError } from '../utils/errorReporting';
+import { reportError, reportMessageOnce } from '../utils/errorReporting';
 import { debugLog } from '../utils/debugLog';
 
 // ============================================
@@ -33,6 +33,17 @@ import { debugLog } from '../utils/debugLog';
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const GAME_VERSION = '1.0.0';
 const DEFAULT_SLOT = 'slot_1';
+
+/**
+ * Whose game the single local save belongs to: a uid, or `'local'` for play
+ * while signed out. The local save is one slot per browser, not per account,
+ * so on a shared family laptop it is whoever played last — and "newer than
+ * the cloud" then means "someone else's game", not "this player's unsynced
+ * progress". Without this tag, signing in on such a machine uploaded the
+ * previous player's inventory and garden over your own cloud save.
+ */
+const LOCAL_SAVE_OWNER_KEY = 'twilight_last_save_owner';
+export const LOCAL_SAVE_OWNER_SIGNED_OUT = 'local';
 
 // Generate a unique device ID (persisted in localStorage)
 function getDeviceId(): string {
@@ -55,6 +66,44 @@ export interface SyncState {
   lastSyncTime: number | null;
   pendingChanges: boolean;
   error: string | null;
+}
+
+export type SignInSyncDecision =
+  | 'upload'
+  | 'download'
+  | 'in-sync'
+  /** Local save is someone else's (or signed-out play) and a cloud save exists */
+  | 'download-foreign'
+  /** Local save is another account's and this account has nothing in the cloud */
+  | 'reset-foreign';
+
+/**
+ * What to do with the local save when an account signs in. Pure, so the
+ * shared-laptop cases can be pinned by tests/localSaveOwner.test.ts.
+ *
+ * The timestamp race only means anything when the local save is this
+ * account's own. Anyone else's game — another account's, or a signed-out
+ * session's — never wins on age: the cloud does, or, for a brand-new account,
+ * an empty game does. A signed-out session with no cloud save to protect is
+ * the one "adopt it" case: that is offline play being signed up to keep.
+ */
+export function decideSignInSync(input: {
+  uid: string;
+  localOwner: string | null;
+  localTimestamp: number;
+  cloudTimestamp: number;
+}): SignInSyncDecision {
+  const { uid, localOwner, localTimestamp, cloudTimestamp } = input;
+  const own = localOwner === null || localOwner === uid;
+  if (!own) {
+    if (cloudTimestamp > 0) return 'download-foreign';
+    if (localOwner === LOCAL_SAVE_OWNER_SIGNED_OUT)
+      return localTimestamp > 0 ? 'upload' : 'in-sync';
+    return localTimestamp > 0 ? 'reset-foreign' : 'in-sync';
+  }
+  if (localTimestamp > cloudTimestamp) return 'upload';
+  if (cloudTimestamp > localTimestamp) return 'download';
+  return 'in-sync';
 }
 
 // ============================================
@@ -82,14 +131,19 @@ class SyncManager {
         // User signed in - sync immediately
         this.onSignIn();
       } else if (!authState.isAuthenticated && !authState.isLoading) {
-        // User signed out - stop periodic sync
+        // User signed out - stop periodic sync. From here on the local save
+        // is nobody's: whatever is played signed out must not be mistaken
+        // for this account's progress when they next sign in.
         this.stopPeriodicSync();
+        this.setLocalSaveOwner(LOCAL_SAVE_OWNER_SIGNED_OUT);
       }
     });
 
-    // Mark pending changes whenever local state is saved
+    // Mark pending changes whenever local state is saved, and stamp whose
+    // game it is.
     eventBus.on(GameEvent.LOCAL_SAVE_FLUSHED, () => {
       this.markPendingChanges();
+      this.setLocalSaveOwner(authService.getUserId() ?? LOCAL_SAVE_OWNER_SIGNED_OUT);
     });
 
     // Best-effort cloud save when page is hidden (tab switch, close, navigate away)
@@ -128,11 +182,46 @@ class SyncManager {
         cloudTimestamp
       );
 
-      if (localTimestamp > cloudTimestamp) {
+      const decision = decideSignInSync({
+        uid: authService.getUserId() ?? '',
+        localOwner: this.getLocalSaveOwner(),
+        localTimestamp,
+        cloudTimestamp,
+      });
+
+      if (decision === 'download-foreign') {
+        // The local save is another account's (or was played signed out) and
+        // this account has a cloud save: the cloud is the truth. Said out
+        // loud and reported, because until now this uploaded the other
+        // person's game over yours and nothing recorded it.
+        console.warn(
+          '[SyncManager] The save on this device belongs to someone else — loading your cloud save instead.'
+        );
+        reportMessageOnce('Local save belonged to another account; cloud save loaded', 'sync', {
+          localOwner: this.getLocalSaveOwner() ?? 'unknown',
+        });
+        await this.downloadFromCloud();
+      } else if (decision === 'reset-foreign') {
+        // Another account's game on this device, and this account has no
+        // cloud save yet: a fresh account must start fresh, not inherit and
+        // upload somebody else's inventory. Reload so the game starts from
+        // the empty state (character creation) with the session kept.
+        console.warn(
+          '[SyncManager] The save on this device belongs to another account and you have no cloud save — starting a new game.'
+        );
+        reportMessageOnce('Local save belonged to another account; new game started', 'sync', {
+          localOwner: this.getLocalSaveOwner() ?? 'unknown',
+        });
+        gameState.resetState();
+        gameState.flushSave();
+        this.setLocalSaveOwner(authService.getUserId() ?? LOCAL_SAVE_OWNER_SIGNED_OUT);
+        window.location.reload();
+        return;
+      } else if (decision === 'upload') {
         // Local is newer - upload to cloud
         debugLog('SyncManager', 'Local save is newer, uploading to cloud...');
         await this.uploadToCloud();
-      } else if (cloudTimestamp > localTimestamp) {
+      } else if (decision === 'download') {
         // Cloud is newer - download to local
         debugLog('SyncManager', 'Cloud save is newer, downloading...');
         await this.downloadFromCloud();
@@ -229,6 +318,7 @@ class SyncManager {
 
       // Update local save timestamp to match cloud
       this.setLocalSaveTimestamp(Date.now());
+      this.setLocalSaveOwner(authService.getUserId() ?? LOCAL_SAVE_OWNER_SIGNED_OUT);
 
       this.updateState({
         status: 'idle',
@@ -421,6 +511,15 @@ class SyncManager {
 
   private setLocalSaveTimestamp(timestamp: number): void {
     localStorage.setItem('twilight_last_save', timestamp.toString());
+  }
+
+  /** null on a save written before the owner tag existed. */
+  private getLocalSaveOwner(): string | null {
+    return localStorage.getItem(LOCAL_SAVE_OWNER_KEY);
+  }
+
+  private setLocalSaveOwner(owner: string): void {
+    localStorage.setItem(LOCAL_SAVE_OWNER_KEY, owner);
   }
 
   // ============================================
