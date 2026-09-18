@@ -25,6 +25,27 @@ const SAVE_KEY = 'twilight-game-save';
 localStorage.getItem('twilight-game-save')
 ```
 
+### One save per browser, not per account
+
+The local save is a single slot. On a shared family laptop it is whoever
+played last, and `firebase/syncManager.ts` compares its timestamp with the
+cloud's on sign-in — so "newer than the cloud" can mean "somebody else's
+game". That used to upload the previous player's inventory and garden over
+the signing-in account's cloud save.
+
+`twilight_last_save_owner` records whose game the local save is (a uid, or
+`local` for signed-out play; set on every flush and on sign-out). On sign-in,
+`decideSignInSync()` applies:
+
+| Local save belongs to | Cloud save exists | Result |
+| --- | --- | --- |
+| this account (or untagged, pre-dating the tag) | any | newer wins, as before |
+| another account or a signed-out session | yes | **cloud wins** — downloaded, reported (`sync`) |
+| a signed-out session | no | adopted and uploaded (offline play being signed up to keep) |
+| another account | no | new game — the page reloads into character creation |
+
+`tests/localSaveOwner.test.ts` pins the table.
+
 ## Save Data Structure
 
 The save data is a JSON object with the following top-level structure:
