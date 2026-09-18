@@ -75,6 +75,9 @@ describe('rendered contact geometry', () => {
         [190, 1, 0.212],
         [240, 1, 0.238],
         [320, 1, 0.192],
+        [620, 1, 0.078125],
+        [340, 1, 0.0703125],
+        [330, 1, 0.263671875],
       ]) {
         const contact = contactForSprite(width, height, base, aspect, pad, 1 / 3, false);
         const playerY = getPlayerCollisionAnchorY(width, height);
