@@ -96,3 +96,5 @@ export type {
 export { FIRESTORE_PATHS, SAVE_DATA_DOCS } from './types';
 
 export { skiingScoreService } from './skiingScoreService';
+
+export { agilityScoreService } from './agilityScoreService';

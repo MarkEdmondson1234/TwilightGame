@@ -1,752 +1,499 @@
-/**
- * Test of Agility — mine cart dodge run
- *
- * Third trial in the Wizard Trials series. The player rides a runaway mine cart
- * through a crystal-lined tunnel, steering left/right to dodge crystal outcrops
- * for a set distance. No braking, no boost — the cart is already rushing forward
- * on its own; only steering is player input. Any crash ends the run immediately.
- *
- * Engine adapted from minigames/skiing/SkiingGame.tsx (OutRun-style pseudo-3D
- * projection) — see that file for the full reasoning behind the shared collision/
- * rendering maths. This version drops skiing's pickups, boost and weather, and
- * adds a new "walls rushing past" middle-ground layer technique that skiing
- * doesn't need (see drawWallLayer below).
- */
-
+/** Wizard trial and optional endurance run, sharing skiing's swept-contact rules. */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { MiniGameComponentProps, MiniGameResult } from '../types';
+import type { MiniGameComponentProps } from '../types';
+import { gameState } from '../../GameState';
 import { testOfAgilityAssets } from './assets';
+import { crossesContact, pickObstacleX } from '../skiing/rules';
 import { Z_MINI_GAME, zClass } from '../../zIndex';
-import { debugLog } from '../../utils/debugLog';
+import { MineCartHud } from './MineCartHud';
+import {
+  beginGoblinLunge,
+  cartRecord,
+  cartTuning,
+  FIXED_DT,
+  goblinPose,
+  SCORE_VERSION,
+  TRIAL_DISTANCE,
+  trialResult,
+  validCartRecord,
+  type CartPhase,
+  type CartRecord,
+  type GoblinLunge,
+  type ObstacleKind,
+} from './rules';
+import {
+  CAMERA_ALTITUDE,
+  HORIZON_RATIO,
+  computeGap,
+  cartWidth,
+  CART_ASPECT,
+  cartBottom,
+  cartAnchor,
+  cartContact,
+  obstacleWidth,
+  OBSTACLES,
+} from './geometry';
 
-// =============================================================================
-// Types
-// =============================================================================
-
+type ImageKey = keyof typeof testOfAgilityAssets;
 interface WorldObj {
   id: number;
+  kind: ObstacleKind;
   worldX: number;
   worldZ: number;
+  passed?: boolean;
+  lunge?: GoblinLunge;
 }
-
-// =============================================================================
-// Tuning constants (world units are camera-relative, not pixels — see the
-// projection formula below for how they map to screen space). Mirrors
-// minigames/skiing/SkiingGame.tsx's constant block; see that file for the
-// reasoning behind values reused unchanged here.
-// =============================================================================
-
-const CAMERA_FOV = 112; // degrees
-const CAMERA_ALTITUDE = 150;
-const HORIZON_RATIO = 0.48; // where the horizon sits, as a fraction of canvas height
-
-const Z_NEAR = 700; // outer pre-filter for the collision check (see SkiingGame.tsx's comment)
-const Z_SPAWN = 4000; // obstacles spawn this far ahead of the camera
-
-const STEER_RANGE = 900; // max lateral offset the player can steer to
-const STEER_SPEED = 1230; // world units/sec
-
-// The floor (mine-cart tracks) sits almost directly under the player — like skiing's
-// level2, it needs to visibly pan with steering or it reads as frozen under a moving cart.
-const GROUND_ZOOM = 1.5; // floor drawn at this multiple of canvas width
-const GROUND_PARALLAX_STRENGTH = 0.85; // fraction of the zoom's margin used at max steer
-
-const OBSTACLE_SPAWN_X_RANGE = 1150; // lateral spawn band — the whole reachable width is real, dodgeable terrain
-const LANE_COUNT = 6; // clear-path guarantee — see pickNearObstacleX
-const Z_CLUSTER_WINDOW = 900;
-
-const MAX_DRAW_WIDTH_RATIO = 0.46; // obstacles never draw larger than this fraction of canvas width
-
-const BASE_SPEED = 550; // world Z units/sec — no boost, the cart's speed is constant
-
-// Progression: spawn density ramps up in fixed-distance stages, same style as skiing's
-// firewood/obstacle stages (just without a paired reward tier, since there's nothing to gather).
-const STAGE1_END = BASE_SPEED * 20; // ≈20s — scattered crystals
-const STAGE2_END = STAGE1_END + BASE_SPEED * 10; // stage 2 spans ~10s — denser crystals
-
-// Distance to survive to pass the trial. Placeholder — tune via playtesting, per design brief.
-const WIN_DISTANCE = 12000;
-
-const MAX_DT = 0.033; // clamp frame delta so fast obstacles can't skip the collision window
-
-// Collision hitbox narrowing — see SkiingGame.tsx's COLLISION_FUDGE/COLLISION_WIDTH_SCALE_DEFAULT
-// comments for why sprite draw width isn't used directly. Placeholder until measured against
-// crystal.png/mine_cart_male.png's actual alpha-channel bounds (same F3-debug-overlay method).
-const COLLISION_FUDGE = 0.55;
-const CRYSTAL_COLLISION_WIDTH_SCALE = 1 / 3;
-const CRYSTAL_DRAW_BASE = 380;
-// Placeholder ground padding — the fraction of the sprite's drawn height that is fully
-// transparent margin below the visible artwork (see SkiingGame.tsx's GROUND_PAD_RATIO comment).
-const CRYSTAL_GROUND_PAD_RATIO = 0.05;
-
-const PLAYER_SCREEN_WIDTH_RATIO = 0.22; // fraction of canvas width
-const PLAYER_SCREEN_SHIFT_RATIO = 0.38; // how far the player sprite slides when steering
-const PLAYER_BOTTOM_MARGIN_RATIO = 0.03;
-// mine_cart_male.png is portrait (not square, unlike skiing's player sprite) — draw height is
-// derived from the image's real aspect ratio at each call site, not assumed 1:1.
-const PLAYER_GROUND_PAD_RATIO = 0.1; // placeholder, tune against the real alpha bounds
-const PLAYER_COLLISION_WIDTH_SCALE = 0.3; // placeholder
-
-// "Walls rushing past" middle-ground layers — layer1/layer2/layer3 each behave like a
-// non-collidable object centred on the track (worldX = 0), advancing through a 0->1 phase per
-// cycle that drives opacity (fade in/out at the edges) and on-screen scale, then re-looping.
-// The fade (not a hard cutoff) is what hides the worldZ reset — by the time it jumps back to
-// WALL_CYCLE_DISTANCE the layer is already at zero opacity. The three layers are seeded at
-// evenly-spaced fractions of the cycle so they're always at different points in it — one
-// mid-growth/opaque while another is fading — giving a continuous alternating rush instead of
-// synchronized pops.
-//
-// Scale is a direct min->max interpolation over phase, NOT derived from the perspective
-// divide (gap/zDiff) the way obstacle scale is. A pure perspective divide ties the ratio
-// between the smallest and largest size in the cycle to WALL_CYCLE_DISTANCE/WALL_NEAR_CUTOFF
-// (a fixed ~10x here) — tuning it to keep the far end big enough to cover the canvas forces
-// the near end to an absurd multiple, while tuning it modestly leaves the far end visibly
-// undersized (a small rectangle with visible edges right as it fades into view — the bug this
-// replaces). Interpolating directly between two tuned canvas-width multiples, both already
-// bigger than the canvas, guarantees neither end ever shows an edge inside the frame.
-const WALL_CYCLE_DISTANCE = 3000;
-const WALL_NEAR_CUTOFF = 300;
-const WALL_FADE_IN_END = 0.08; // phase fraction over which opacity ramps 0→1 after (re)spawn
-const WALL_FADE_OUT_START = 0.95; // phase fraction after which opacity ramps 1→0 toward cutoff
-// Start just a hair over exact canvas-width alignment (not 1.6x+) — the ask is for the wall's
-// borders to align with the frame at spawn, not to already be visibly zoomed in from the start.
-const WALL_MIN_SCALE = 1.05; // ×canvas width at phase=0 — borders roughly aligned with the frame
-const WALL_MAX_SCALE = 3.2; // ×canvas width at phase=1 (near cutoff)
-
-const HUD_UPDATE_INTERVAL_MS = 160; // ~6/sec — the distance readout doesn't need per-frame precision
-const METERS_PER_WORLD_UNIT = 1 / 6; // cosmetic conversion only, for a readable HUD number
-
-// =============================================================================
-// Shared projection helpers (used by both collision checks and rendering, so the
-// two can never drift apart)
-// =============================================================================
-
-function computeGap(canvasWidth: number): number {
-  return canvasWidth / (2 * Math.tan((CAMERA_FOV * Math.PI) / 360));
+const WALL_CYCLE = 3000;
+function newRun() {
+  return {
+    x: 0,
+    z: 0,
+    objects: [] as WorldObj[],
+    nextId: 1,
+    spawnMs: 600,
+    hudTime: 0,
+    trialPassed: false,
+    walls: [3000, 2000, 1000],
+    warning: false,
+  };
 }
-
-function capDrawWidth(base: number, gap: number, zDiff: number, canvasWidth: number): number {
-  return Math.min((base * gap) / zDiff, canvasWidth * MAX_DRAW_WIDTH_RATIO);
-}
-
-function getCollisionAnchorY(
-  rawAnchorY: number,
-  drawWidth: number,
-  img: HTMLImageElement | undefined
-): number {
-  const pad = img ? (drawWidth / (img.naturalWidth / img.naturalHeight)) * CRYSTAL_GROUND_PAD_RATIO : 0;
-  return rawAnchorY - pad;
-}
-
-function getPlayerDrawHeight(canvasWidth: number, img: HTMLImageElement | undefined): number {
-  const pw = canvasWidth * PLAYER_SCREEN_WIDTH_RATIO;
-  const aspect = img ? img.naturalWidth / img.naturalHeight : 1;
-  return pw / aspect;
-}
-
-function getPlayerCollisionAnchorY(
-  canvasWidth: number,
-  canvasHeight: number,
-  img: HTMLImageElement | undefined
-): number {
-  const drawHeight = getPlayerDrawHeight(canvasWidth, img);
-  return canvasHeight - canvasHeight * PLAYER_BOTTOM_MARGIN_RATIO - drawHeight * PLAYER_GROUND_PAD_RATIO;
-}
-
-function getPlayerCollisionWidth(canvasWidth: number): number {
-  return canvasWidth * PLAYER_SCREEN_WIDTH_RATIO * PLAYER_COLLISION_WIDTH_SCALE;
-}
-
-function clamp01(v: number): number {
-  return Math.min(1, Math.max(0, v));
-}
-
-/**
- * Clear-path guarantee for obstacle spawns — see SkiingGame.tsx's pickNearObstacleX comment
- * for the full reasoning. Returns a lane-safe worldX, or null if every lane is occupied.
- */
-function pickNearObstacleX(objects: WorldObj[], candidateWorldZ: number): number | null {
-  const laneWidth = (2 * OBSTACLE_SPAWN_X_RANGE) / LANE_COUNT;
-  const occupiedLanes = new Set<number>();
-  for (const obj of objects) {
-    if (Math.abs(obj.worldZ - candidateWorldZ) >= Z_CLUSTER_WINDOW) continue;
-    if (obj.worldX < -OBSTACLE_SPAWN_X_RANGE || obj.worldX > OBSTACLE_SPAWN_X_RANGE) continue;
-    const lane = Math.min(
-      LANE_COUNT - 1,
-      Math.floor((obj.worldX + OBSTACLE_SPAWN_X_RANGE) / laneWidth)
-    );
-    occupiedLanes.add(lane);
-  }
-
-  const freeLanes: number[] = [];
-  for (let i = 0; i < LANE_COUNT; i++) {
-    if (!occupiedLanes.has(i)) freeLanes.push(i);
-  }
-  if (freeLanes.length === 0) return null;
-
-  const lane = freeLanes[Math.floor(Math.random() * freeLanes.length)];
-  const laneStart = -OBSTACLE_SPAWN_X_RANGE + lane * laneWidth;
-  return laneStart + Math.random() * laneWidth;
-}
-
-// =============================================================================
-// Asset loading
-// =============================================================================
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-type ImageKey = 'roof' | 'layer1' | 'layer2' | 'layer3' | 'floor' | 'crystal' | 'player';
-
-// =============================================================================
-// Component
-// =============================================================================
-
-export const MineCartGame: React.FC<MiniGameComponentProps> = ({ onComplete }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+export const MineCartGame: React.FC<MiniGameComponentProps> = ({ context, onComplete }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<Partial<Record<ImageKey, HTMLImageElement>>>({});
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [phase, setPhase] = useState<'playing' | 'crashed'>('playing');
-  const [distancePct, setDistancePct] = useState(0);
-  const [distanceMeters, setDistanceMeters] = useState(0);
-
-  const cameraXRef = useRef(0);
-  const cameraZRef = useRef(0);
-  const objectsRef = useRef<WorldObj[]>([]);
-  const nextIdRef = useRef(1);
-  const spawnTimerRef = useRef(600);
-  const seededRef = useRef(false);
-  const phaseRef = useRef<'playing' | 'crashed'>('playing');
-  const heldRef = useRef({ left: false, right: false });
-  const rafRef = useRef(0);
-  const crashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const canvasWidthRef = useRef(0);
-  const canvasHeightRef = useRef(0);
-  const lastHudUpdateRef = useRef(0);
-  // Seeded at evenly-spaced fractions of WALL_CYCLE_DISTANCE so the three layers are always at
-  // different points in their cycle — one mid-growth/opaque while another is fading, etc.
-  const layer1WorldZRef = useRef(WALL_CYCLE_DISTANCE);
-  const layer2WorldZRef = useRef((WALL_CYCLE_DISTANCE * 2) / 3);
-  const layer3WorldZRef = useRef(WALL_CYCLE_DISTANCE / 3);
-  // F3 collision-box overlay — mirrors SkiingGame.tsx's debug tooling for tuning hitboxes
-  // against the real alpha-channel bounds of crystal.png/mine_cart_male.png.
-  const debugRef = useRef(false);
-
-  // ─── Input: keyboard (self-contained — main game's controls are already gated
-  // off via ui.miniGame while this is open) ───
-  useEffect(() => {
-    const STEER_KEYS = new Set(['a', 'd', 'arrowleft', 'arrowright']);
-    const onKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (key === 'a' || key === 'arrowleft') heldRef.current.left = true;
-      if (key === 'd' || key === 'arrowright') heldRef.current.right = true;
-      if (key === 'f3') {
-        e.preventDefault();
-        debugRef.current = !debugRef.current;
-      }
-      if (STEER_KEYS.has(key)) e.preventDefault();
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (key === 'a' || key === 'arrowleft') heldRef.current.left = false;
-      if (key === 'd' || key === 'arrowright') heldRef.current.right = false;
-    };
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-    };
+  const contactsRef = useRef<Partial<Record<ObstacleKind, { z: number; halfWidth: number }>>>({});
+  const run = useRef(newRun());
+  const held = useRef({ left: false, right: false });
+  const phaseRef = useRef<CartPhase>('ready');
+  const [phase, setPhase] = useState<CartPhase>('ready');
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [distance, setDistance] = useState(0);
+  const [record, setRecord] = useState<CartRecord | null>(() => {
+    const saved = context.storage.load<{ version: number; best: CartRecord }>();
+    return saved?.version === SCORE_VERSION && validCartRecord(saved.best) ? saved.best : null;
+  });
+  const recordRef = useRef(record);
+  const storageRef = useRef(context.storage);
+  storageRef.current = context.storage;
+  const completed = useRef(false);
+  const practiceRef = useRef(false);
+  const [practice, setPractice] = useState(false);
+  const debug = useRef(false);
+  const dirty = useRef(true);
+  const setRunPhase = useCallback((next: CartPhase) => {
+    held.current = { left: false, right: false };
+    phaseRef.current = next;
+    setPhase(next);
+    dirty.current = true;
   }, []);
+  const saveBest = useCallback(() => {
+    const next = cartRecord(run.current.z);
+    if (!recordRef.current || next.score > recordRef.current.score) {
+      recordRef.current = next;
+      setRecord(next);
+      storageRef.current.save({ version: SCORE_VERSION, best: next });
+    }
+    setDistance(run.current.z);
+  }, []);
+  const exit = useCallback(() => {
+    if (completed.current) return;
+    completed.current = true;
+    saveBest();
+    setRunPhase('paused');
+    onComplete(trialResult(run.current.z, practiceRef.current));
+  }, [onComplete, saveBest, setRunPhase]);
+  const pause = useCallback(() => {
+    if (phaseRef.current === 'playing') setRunPhase('paused');
+  }, [setRunPhase]);
+  const start = useCallback(
+    (freePlay = false) => {
+      run.current = newRun();
+      practiceRef.current = freePlay;
+      setPractice(freePlay);
+      run.current.trialPassed = freePlay;
+      // Depth ordered from the outset; leave time to read the track before the first contact.
+      for (let i = 0; i < 5; i++) {
+        const z = 1800 + i * 440;
+        const x = pickObstacleX(run.current.objects, z);
+        if (x !== null)
+          run.current.objects.push({
+            id: run.current.nextId++,
+            kind: i % 3 === 0 ? 'rock' : 'crystal',
+            worldX: x,
+            worldZ: z,
+          });
+      }
+      setDistance(0);
+      setRunPhase('playing');
+    },
+    [setRunPhase]
+  );
 
-  // ─── Load assets ───
   useEffect(() => {
-    const entries: Array<[ImageKey, string]> = [
-      ['roof', testOfAgilityAssets.roof],
-      ['layer1', testOfAgilityAssets.layer1],
-      ['layer2', testOfAgilityAssets.layer2],
-      ['layer3', testOfAgilityAssets.layer3],
-      ['floor', testOfAgilityAssets.floor],
-      ['crystal', testOfAgilityAssets.crystal],
-      ['player', testOfAgilityAssets.player],
-    ];
     let cancelled = false;
-    Promise.all(entries.map(([key, src]) => loadImage(src).then((img) => [key, img] as const)))
-      .then((loaded) => {
+    Promise.all(
+      Object.entries(testOfAgilityAssets).map(
+        ([key, src]) =>
+          new Promise<[ImageKey, HTMLImageElement]>((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve([key as ImageKey, image]);
+            image.onerror = () => reject(new Error(`Missing minecart asset: ${key}`));
+            image.src = src;
+          })
+      )
+    )
+      .then((entries) => {
         if (cancelled) return;
-        for (const [key, img] of loaded) imagesRef.current[key] = img;
-        setAssetsLoaded(true);
+        for (const [key, image] of entries) imagesRef.current[key] = image;
+        setLoaded(true);
+        dirty.current = true;
       })
-      .catch((err) => console.error('[MineCartGame] Failed to load assets:', err));
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
-
-  // ─── Canvas sizing ───
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvasWidthRef.current = canvas.width;
-    canvasHeightRef.current = canvas.height;
-  }, []);
-
   useEffect(() => {
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
-  }, [resizeCanvas]);
-
-  // ─── Ending the run ───
-  const finishRun = useCallback(
-    (success: boolean) => {
-      const result: MiniGameResult = success
-        ? {
-            success: true,
-            rewards: [],
-            message: 'You made it through the tunnel! You have passed the Test of Agility.',
-            messageType: 'success',
-          }
-        : {
-            success: false,
-            rewards: [],
-            message: 'The mine cart crashed! You are cast back to the antechamber...',
-            messageType: 'warning',
-          };
-      onComplete(result);
-    },
-    [onComplete]
-  );
-
-  const handleCrash = useCallback(() => {
-    if (phaseRef.current === 'crashed') return;
-    phaseRef.current = 'crashed';
-    setPhase('crashed');
-    crashTimeoutRef.current = setTimeout(() => {
-      crashTimeoutRef.current = null;
-      finishRun(false);
-    }, 500);
-  }, [finishRun]);
-
-  useEffect(() => {
-    return () => {
-      if (crashTimeoutRef.current !== null) clearTimeout(crashTimeoutRef.current);
+    const resize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      contactsRef.current = {};
+      dirty.current = true;
     };
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
   }, []);
-
-  // ─── Spawning ───
-  const spawnObject = useCallback(() => {
-    const worldZ = cameraZRef.current + Z_SPAWN;
-    const worldX = pickNearObstacleX(objectsRef.current, worldZ);
-    if (worldX === null) return; // every lane occupied — skip this spawn
-    objectsRef.current.push({ id: nextIdRef.current++, worldX, worldZ });
-    if (objectsRef.current.length > 260) objectsRef.current.shift();
-  }, []);
-
-  // ─── Update ───
-  const update = useCallback(
-    (dt: number) => {
-      const held = heldRef.current;
-      if (held.left) cameraXRef.current -= STEER_SPEED * dt;
-      if (held.right) cameraXRef.current += STEER_SPEED * dt;
-      cameraXRef.current = Math.max(-STEER_RANGE, Math.min(STEER_RANGE, cameraXRef.current));
-
-      cameraZRef.current += BASE_SPEED * dt;
-
-      if (cameraZRef.current >= WIN_DISTANCE) {
-        finishRun(true);
+  useEffect(() => {
+    const keyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'a', 'd', 'escape', 'f3'].includes(key)) e.preventDefault();
+      if (key === 'escape') {
+        pause();
         return;
       }
-
-      // Advance the wall layers' loop cycles (see WALL_CYCLE_DISTANCE comment above).
-      for (const wallZRef of [layer1WorldZRef, layer2WorldZRef, layer3WorldZRef]) {
-        const zDiff = wallZRef.current - cameraZRef.current;
-        if (zDiff <= WALL_NEAR_CUTOFF) wallZRef.current += WALL_CYCLE_DISTANCE;
+      if (key === 'f3') {
+        debug.current = !debug.current;
+        dirty.current = true;
+        return;
       }
-
-      const distance = cameraZRef.current;
-      const spawnIntervalMs = distance < STAGE1_END ? 650 : distance < STAGE2_END ? 480 : 350;
-      spawnTimerRef.current -= dt * 1000;
-      if (spawnTimerRef.current <= 0) {
-        spawnObject();
-        spawnTimerRef.current = spawnIntervalMs + (Math.random() * 240 - 120);
+      if (phaseRef.current !== 'playing') return;
+      if (key === 'a' || key === 'arrowleft') held.current.left = true;
+      if (key === 'd' || key === 'arrowright') held.current.right = true;
+    };
+    const keyUp = (e: KeyboardEvent) => {
+      if (['a', 'arrowleft'].includes(e.key.toLowerCase())) held.current.left = false;
+      if (['d', 'arrowright'].includes(e.key.toLowerCase())) held.current.right = false;
+    };
+    const hidden = () => {
+      if (document.hidden) pause();
+    };
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', pause);
+    document.addEventListener('visibilitychange', hidden);
+    return () => {
+      window.removeEventListener('keydown', keyDown);
+      window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('blur', pause);
+      document.removeEventListener('visibilitychange', hidden);
+    };
+  }, [pause]);
+  const contact = useCallback((kind: ObstacleKind) => {
+    const canvas = canvasRef.current!;
+    return (contactsRef.current[kind] ??= cartContact(kind, canvas.width, canvas.height));
+  }, []);
+  const update = useCallback(
+    (dt: number) => {
+      const r = run.current,
+        previousX = r.x,
+        previousZ = r.z;
+      const tuning = cartTuning(r.z);
+      r.x = Math.max(
+        -900,
+        Math.min(
+          900,
+          r.x + ((held.current.right ? 1 : 0) - (held.current.left ? 1 : 0)) * 1230 * dt
+        )
+      );
+      const nextZ = previousZ + tuning.speed * dt;
+      // Process collisions through the finish plane BEFORE awarding the trial pass.
+      r.z = !r.trialPassed ? Math.min(TRIAL_DISTANCE, nextZ) : nextZ;
+      for (let i = 0; i < r.walls.length; i++)
+        if (r.walls[i] - r.z <= 300) r.walls[i] += WALL_CYCLE;
+      r.spawnMs -= dt * 1000;
+      if (r.spawnMs <= 0) {
+        const worldZ = r.z + 4000;
+        const worldX = pickObstacleX(r.objects, worldZ);
+        if (worldX !== null)
+          r.objects.push({
+            id: r.nextId++,
+            kind:
+              Math.random() < tuning.goblinChance
+                ? 'goblin'
+                : Math.random() < 0.25
+                  ? 'rock'
+                  : 'crystal',
+            worldX,
+            worldZ,
+          });
+        r.spawnMs += tuning.spawnMs + Math.random() * 100 - 50;
       }
-
-      const now = performance.now();
-      if (now - lastHudUpdateRef.current >= HUD_UPDATE_INTERVAL_MS) {
-        lastHudUpdateRef.current = now;
-        setDistancePct(Math.min(100, (distance / WIN_DISTANCE) * 100));
-        setDistanceMeters(Math.round(distance * METERS_PER_WORLD_UNIT));
-      }
-
-      const remaining: WorldObj[] = [];
-      for (const obj of objectsRef.current) {
-        const zDiff = obj.worldZ - cameraZRef.current;
-        if (zDiff <= -100) continue; // passed behind the camera — despawn
-
-        if (zDiff > 0 && zDiff <= Z_NEAR) {
-          const w = canvasWidthRef.current;
-          const h = canvasHeightRef.current;
-          const gap = computeGap(w);
-          const rawDrawWidth = capDrawWidth(CRYSTAL_DRAW_BASE, gap, zDiff, w);
-          const objScreenY = getCollisionAnchorY(
-            h * HORIZON_RATIO + (gap * CAMERA_ALTITUDE) / zDiff,
-            rawDrawWidth,
-            imagesRef.current.crystal
+      let write = 0;
+      r.warning = false;
+      for (const obj of r.objects) {
+        const z = obj.worldZ - r.z;
+        if (z <= 0) continue;
+        const c = contact(obj.kind),
+          oldX = obj.worldX;
+        if (obj.kind === 'goblin' && !obj.passed) {
+          obj.lunge ??= beginGoblinLunge(
+            obj.worldZ - previousZ - c.z,
+            tuning.speed,
+            obj.worldX,
+            previousX
           );
-          const playerAnchorY = getPlayerCollisionAnchorY(w, h, imagesRef.current.player);
-          const screenSeparation = Math.abs((gap * (obj.worldX - cameraXRef.current)) / zDiff);
-          const objDrawWidth = rawDrawWidth * CRYSTAL_COLLISION_WIDTH_SCALE;
-          const playerCollisionWidth = getPlayerCollisionWidth(w);
-          const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
-          if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
-            if (debugRef.current) {
-              debugLog(
-                'TestOfAgility',
-                `HIT zDiff=${zDiff.toFixed(0)} screenSeparation=${screenSeparation.toFixed(1)}px ` +
-                  `hitThreshold=${hitThreshold.toFixed(1)}px | canvas=${w}x${h}`
-              );
-            }
-            handleCrash();
-            return; // stop processing — the run is over
+          if (obj.lunge) {
+            obj.lunge.elapsed += dt;
+            obj.worldX = goblinPose(obj.lunge).x;
           }
         }
-        remaining.push(obj);
+        const offset = obj.worldX - r.x;
+        if (!obj.passed && z <= c.z) {
+          obj.passed = true;
+          if (
+            crossesContact(obj.worldZ - previousZ, z, c.z, oldX - previousX, offset, c.halfWidth)
+          ) {
+            // A crash exactly at the finish must not accidentally award a pass.
+            if (!r.trialPassed) r.z = Math.min(r.z, TRIAL_DISTANCE - 1);
+            saveBest();
+            setRunPhase('crashed');
+            return;
+          }
+        }
+        const eta = (z - c.z) / tuning.speed;
+        if (!obj.passed && eta > 0 && eta < 0.75 && Math.abs(offset) < c.halfWidth * 1.4)
+          r.warning = true;
+        r.objects[write++] = obj;
       }
-      objectsRef.current = remaining;
+      r.objects.length = write;
+      if (!r.trialPassed && r.z >= TRIAL_DISTANCE) {
+        r.trialPassed = true;
+        saveBest();
+        setRunPhase('passed');
+        return;
+      }
+      r.hudTime += dt;
+      if (r.hudTime >= 0.1) {
+        r.hudTime = 0;
+        setDistance(r.z);
+      }
     },
-    [spawnObject, handleCrash, finishRun]
+    [contact, saveBest, setRunPhase]
   );
 
-  // ─── Render ───
   const render = useCallback(() => {
-    const canvas = canvasRef.current;
-    const images = imagesRef.current;
+    const canvas = canvasRef.current,
+      images = imagesRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const horizonY = h * HORIZON_RATIO;
-    const gap = computeGap(w);
-
-    // Roof — static full-frame backdrop, never moves.
+    const w = canvas.width,
+      h = canvas.height,
+      r = run.current;
+    const gap = computeGap(w),
+      horizon = h * HORIZON_RATIO;
+    const playerX = w / 2 + (r.x / 900) * w * 0.38;
+    ctx.fillStyle = '#161020';
+    ctx.fillRect(0, 0, w, h);
     if (images.roof) ctx.drawImage(images.roof, 0, 0, w, h);
-
-    const playerShiftPx = (cameraXRef.current / STEER_RANGE) * (w * PLAYER_SCREEN_SHIFT_RATIO);
-    const playerScreenX = w / 2 + playerShiftPx;
-
-    // Floor — drawn "zoomed in" wider than the canvas, panned opposite steering, mirrors
-    // SkiingGame.tsx's level2 ground layer.
-    if (images.floor) {
-      const groundDrawWidth = w * GROUND_ZOOM;
-      const groundMarginPx = (groundDrawWidth - w) / 2;
-      const groundShiftPx =
-        -(cameraXRef.current / STEER_RANGE) * groundMarginPx * GROUND_PARALLAX_STRENGTH;
-      ctx.drawImage(images.floor, -groundMarginPx + groundShiftPx, 0, groundDrawWidth, h);
+    if (images.floor)
+      ctx.drawImage(images.floor, -w * 0.25 - (r.x / 900) * w * 0.25 * 0.85, 0, w * 1.5, h);
+    // Three looping cave walls, farthest first without a per-frame sort/allocation.
+    const farthest =
+      r.walls[0] > r.walls[1] ? (r.walls[0] > r.walls[2] ? 0 : 2) : r.walls[1] > r.walls[2] ? 1 : 2;
+    for (let n = 0; n < 3; n++) {
+      const i = (farthest + n) % 3,
+        z = r.walls[i] - r.z;
+      const img = i === 0 ? images.layer1 : i === 1 ? images.layer2 : images.layer3;
+      if (!img || z <= 0) continue;
+      const p = Math.max(0, Math.min(1, 1 - (z - 300) / 2700));
+      ctx.globalAlpha = p < 0.08 ? p / 0.08 : p > 0.95 ? (1 - p) / 0.05 : 1;
+      const width = w * (1.05 + 2.15 * p),
+        height = width / (img.naturalWidth / img.naturalHeight);
+      ctx.drawImage(
+        img,
+        playerX - (gap * r.x) / z - width / 2,
+        horizon - height * (i === 2 ? 1 : 0.5),
+        width,
+        height
+      );
     }
-
-    // Wall layers — "rushing past" tunnel walls (see WALL_* constants above). Anchor is
-    // per-layer since the art isn't uniform: layer1/layer2 have their visible rock content
-    // concentrated near their own top edge, so centring on the horizon shows it correctly;
-    // layer3 is a near-full-frame texture meant to align its lower edge with the horizon line
-    // (where the tunnel continues into the distance), so it needs bottom-anchoring instead.
-    const drawWallLayer = (
-      img: HTMLImageElement | undefined,
-      wallZRef: React.RefObject<number>,
-      anchor: 'center' | 'bottom'
-    ) => {
-      if (!img) return;
-      const zDiff = wallZRef.current - cameraZRef.current;
-      if (zDiff <= 0) return;
-      const phase = clamp01(1 - (zDiff - WALL_NEAR_CUTOFF) / (WALL_CYCLE_DISTANCE - WALL_NEAR_CUTOFF));
-      const opacity =
-        phase < WALL_FADE_IN_END
-          ? phase / WALL_FADE_IN_END
-          : phase > WALL_FADE_OUT_START
-            ? (1 - phase) / (1 - WALL_FADE_OUT_START)
-            : 1;
-      if (opacity <= 0) return;
-      const drawWidth = w * (WALL_MIN_SCALE + (WALL_MAX_SCALE - WALL_MIN_SCALE) * phase);
-      const drawHeight = drawWidth / (img.naturalWidth / img.naturalHeight);
-      const screenX = playerScreenX - (gap * cameraXRef.current) / zDiff;
-      const drawY = anchor === 'bottom' ? horizonY - drawHeight : horizonY - drawHeight / 2;
-      ctx.globalAlpha = opacity;
-      ctx.drawImage(img, screenX - drawWidth / 2, drawY, drawWidth, drawHeight);
-      ctx.globalAlpha = 1;
-    };
-    // Farther layer first (painter's algorithm) so the nearer one draws on top.
-    [
-      { img: images.layer1, ref: layer1WorldZRef, anchor: 'center' as const },
-      { img: images.layer2, ref: layer2WorldZRef, anchor: 'center' as const },
-      { img: images.layer3, ref: layer3WorldZRef, anchor: 'bottom' as const },
-    ]
-      .sort((a, b) => b.ref.current - a.ref.current)
-      .forEach(({ img, ref, anchor }) => drawWallLayer(img, ref, anchor));
-
-    // Crystals — farthest first (painter's algorithm).
-    const sorted = [...objectsRef.current].sort((a, b) => b.worldZ - a.worldZ);
-    for (const obj of sorted) {
-      const zDiff = obj.worldZ - cameraZRef.current;
-      if (zDiff <= 0) continue;
-      const img = images.crystal;
-      if (!img) continue;
-
-      const screenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
-      const screenY = horizonY + (gap * CAMERA_ALTITUDE) / zDiff;
-      const drawWidth = capDrawWidth(CRYSTAL_DRAW_BASE, gap, zDiff, w);
-      const drawHeight = drawWidth / (img.naturalWidth / img.naturalHeight);
-
-      if (screenX < -drawWidth || screenX > w + drawWidth) continue;
-      ctx.drawImage(img, screenX - drawWidth / 2, screenY - drawHeight, drawWidth, drawHeight);
-    }
-
-    // Player — locked near the bottom, at the same anchor used to project obstacles above.
-    if (images.player) {
-      const pw = w * PLAYER_SCREEN_WIDTH_RATIO;
-      const ph = getPlayerDrawHeight(w, images.player);
-      ctx.drawImage(images.player, playerScreenX - pw / 2, h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO, pw, ph);
-    }
-
-    // ─── Debug: collision box overlay (F3) — mirrors the exact maths update() uses. ───
-    if (debugRef.current) {
-      const playerCollisionWidth = getPlayerCollisionWidth(w);
-      const playerHalfWidth = (playerCollisionWidth / 2) * COLLISION_FUDGE;
-      const playerAnchorY = getPlayerCollisionAnchorY(w, h, images.player);
-
-      ctx.save();
-      ctx.lineWidth = 2;
-      ctx.font = '11px monospace';
-      ctx.textBaseline = 'bottom';
-
-      ctx.strokeStyle = 'rgba(80, 180, 255, 0.5)';
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      ctx.moveTo(0, playerAnchorY);
-      ctx.lineTo(w, playerAnchorY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.strokeStyle = 'rgba(80, 180, 255, 0.9)';
-      ctx.strokeRect(playerScreenX - playerHalfWidth, playerAnchorY - 24, playerHalfWidth * 2, 24);
-
-      for (const obj of objectsRef.current) {
-        const zDiff = obj.worldZ - cameraZRef.current;
-        if (zDiff <= 0 || zDiff > Z_NEAR) continue;
-        const objScreenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
-        const rawDrawWidth = capDrawWidth(CRYSTAL_DRAW_BASE, gap, zDiff, w);
-        const objScreenY = getCollisionAnchorY(
-          horizonY + (gap * CAMERA_ALTITUDE) / zDiff,
-          rawDrawWidth,
-          images.crystal
+    ctx.globalAlpha = 1;
+    for (let i = r.objects.length - 1; i >= 0; i--) {
+      const obj = r.objects[i],
+        z = obj.worldZ - r.z,
+        img = images[obj.kind];
+      if (z <= 0 || !img) continue;
+      const x = playerX + (gap * (obj.worldX - r.x)) / z;
+      const y = horizon + (gap * CAMERA_ALTITUDE) / z;
+      const width = obstacleWidth(obj.kind, w, z, h),
+        height = width / OBSTACLES[obj.kind].aspect;
+      if (x < -width || x > w + width) continue;
+      const pose = obj.lunge ? goblinPose(obj.lunge) : undefined;
+      if (pose && !obj.passed) {
+        ctx.fillStyle = pose.windingUp ? '#f3b955' : '#160d2399';
+        ctx.beginPath();
+        ctx.ellipse(
+          x,
+          y - height * OBSTACLES.goblin.padding,
+          width * 0.3,
+          Math.max(3, width * 0.06),
+          0,
+          0,
+          Math.PI * 2
         );
-        const objDrawWidth = rawDrawWidth * CRYSTAL_COLLISION_WIDTH_SCALE;
-        const objHalfWidth = (objDrawWidth / 2) * COLLISION_FUDGE;
-        const screenSeparation = Math.abs(objScreenX - playerScreenX);
-        const isHit = objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
-
-        ctx.strokeStyle = isHit ? 'rgba(255, 60, 60, 0.9)' : 'rgba(255, 190, 0, 0.9)';
-        ctx.strokeRect(objScreenX - objHalfWidth, objScreenY - 24, objHalfWidth * 2, 24);
-        ctx.fillStyle = ctx.strokeStyle;
-        ctx.fillText(`z=${Math.round(zDiff)}`, objScreenX - objHalfWidth, objScreenY - 26);
+        ctx.fill();
+        if (pose.windingUp) {
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#fff4cb';
+          ctx.fillText('Goblin — dodge!', x, y - height - 10);
+        }
       }
-
-      ctx.fillStyle = 'rgba(80, 180, 255, 0.9)';
-      ctx.font = 'bold 12px monospace';
-      ctx.fillText('F3 DEBUG — collision boxes', 12, 20);
+      ctx.drawImage(
+        img,
+        x - width / 2,
+        y - height - (pose?.lift ?? 0) * height * 0.18,
+        width,
+        height
+      );
+      if (debug.current && !obj.passed) {
+        const c = contact(obj.kind);
+        ctx.strokeStyle = '#e8b64e';
+        ctx.lineWidth = 2;
+        const half = (gap * c.halfWidth) / z;
+        ctx.strokeRect(x - half, y - height * OBSTACLES[obj.kind].padding - 8, half * 2, 16);
+      }
+    }
+    const anchor = cartAnchor(w, h);
+    if (r.warning && phaseRef.current === 'playing') {
+      ctx.strokeStyle = '#f3b955';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(playerX, anchor, cartWidth(w, h) * 0.5, 10, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fff4cb';
+      ctx.fillText('Steer clear!', playerX, anchor - cartWidth(w, h) / CART_ASPECT - 10);
+    }
+    if (images.player) {
+      const width = cartWidth(w, h),
+        height = width / CART_ASPECT;
+      ctx.save();
+      if (phaseRef.current === 'crashed') {
+        ctx.translate(playerX, anchor);
+        ctx.rotate(-0.2);
+        ctx.translate(-playerX, -anchor);
+      }
+      ctx.drawImage(
+        images.player,
+        playerX - width / 2,
+        h - cartBottom(w, h) - height,
+        width,
+        height
+      );
       ctx.restore();
     }
-  }, []);
-
-  // ─── Game loop ───
-  useEffect(() => {
-    if (!assetsLoaded) return;
-
-    // Pre-populate the tunnel once, on the first run of this effect — see
-    // SkiingGame.tsx's identical prefill comment for why this matters.
-    if (!seededRef.current) {
-      seededRef.current = true;
-      const PREFILL_MIN_Z = Z_NEAR + 200;
-      const prefillCount = Math.round((Z_SPAWN - PREFILL_MIN_Z) / BASE_SPEED / 0.5);
-      for (let i = 0; i < prefillCount; i++) {
-        const worldZ = PREFILL_MIN_Z + Math.random() * (Z_SPAWN - PREFILL_MIN_Z);
-        const worldX = pickNearObstacleX(objectsRef.current, worldZ);
-        if (worldX === null) continue;
-        objectsRef.current.push({ id: nextIdRef.current++, worldX, worldZ });
-      }
+    if (debug.current) {
+      ctx.strokeStyle = '#50b4ff';
+      ctx.beginPath();
+      ctx.moveTo(0, anchor);
+      ctx.lineTo(w, anchor);
+      ctx.stroke();
     }
-
-    let lastTime = performance.now();
-    const loop = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, MAX_DT);
-      lastTime = time;
-      if (phaseRef.current === 'playing') update(dt);
-      render();
-      rafRef.current = requestAnimationFrame(loop);
+  }, [contact]);
+  useEffect(() => {
+    if (!loaded) return;
+    let raf = 0,
+      last = performance.now(),
+      accumulator = 0;
+    const loop = (now: number) => {
+      const elapsed = (now - last) / 1000;
+      last = now;
+      if (phaseRef.current === 'playing') {
+        if (elapsed > 0.25) {
+          pause();
+          accumulator = 0;
+        } else {
+          accumulator += Math.max(0, elapsed);
+          while (accumulator >= FIXED_DT && phaseRef.current === 'playing') {
+            update(FIXED_DT);
+            accumulator -= FIXED_DT;
+          }
+        }
+        render();
+        dirty.current = false;
+      } else {
+        accumulator = 0;
+        if (dirty.current) {
+          render();
+          dirty.current = false;
+        }
+      }
+      raf = requestAnimationFrame(loop);
     };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [assetsLoaded, update, render]);
-
-  // ─── Touch controls (mirror the keyboard held-state refs) ───
-  const bindHold = (key: 'left' | 'right') => ({
-    onTouchStart: (e: React.TouchEvent) => {
-      e.preventDefault();
-      heldRef.current[key] = true;
-    },
-    onTouchEnd: (e: React.TouchEvent) => {
-      e.preventDefault();
-      heldRef.current[key] = false;
-    },
-    onMouseDown: () => {
-      heldRef.current[key] = true;
-    },
-    onMouseUp: () => {
-      heldRef.current[key] = false;
-    },
-    onMouseLeave: () => {
-      heldRef.current[key] = false;
-    },
-  });
-
-  const touchButtonStyle: React.CSSProperties = {
-    width: 72,
-    height: 72,
-    borderRadius: '50%',
-    border: '2px solid rgba(255,255,255,0.6)',
-    background: 'rgba(30,41,59,0.55)',
-    color: '#fff',
-    fontSize: 28,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    touchAction: 'none',
-    userSelect: 'none',
-  };
-
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [loaded, pause, render, update]);
   return (
     <div
-      ref={containerRef}
       className={zClass(Z_MINI_GAME)}
       style={{
         position: 'fixed',
         inset: 0,
-        background: '#0f172a',
-        userSelect: 'none',
+        background: '#161020',
         overflow: 'hidden',
+        userSelect: 'none',
       }}
     >
-      <canvas
-        ref={canvasRef}
-        style={{ display: 'block', width: '100%', height: '100%', touchAction: 'none' }}
-      />
-
-      {!assetsLoaded && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontSize: 20,
-          }}
-        >
-          Loading...
+      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+      {!loaded ? (
+        <div className="cart-ui">
+          <div className="cart-scrim">
+            <section className="cart-panel">
+              <p>
+                {loadError ? 'The tunnel artwork could not load.' : 'Opening the crystal tunnels…'}
+              </p>
+              {loadError && <button onClick={exit}>Return to antechamber</button>}
+            </section>
+          </div>
         </div>
-      )}
-
-      {assetsLoaded && (
-        <>
-          {/* HUD: distance progress */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 16,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-              background: 'rgba(15,23,42,0.55)',
-              borderRadius: 12,
-              padding: '8px 16px',
-              color: '#fff',
-              fontFamily: 'sans-serif',
-            }}
-          >
-            <div
-              style={{
-                width: 220,
-                height: 8,
-                borderRadius: 4,
-                background: 'rgba(255,255,255,0.2)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: `${distancePct}%`,
-                  height: '100%',
-                  background: '#a78bfa',
-                  transition: 'width 0.15s linear',
-                }}
-              />
-            </div>
-            <span style={{ fontSize: 13 }}>
-              {distanceMeters}m / {Math.round(WIN_DISTANCE * METERS_PER_WORLD_UNIT)}m
-            </span>
-          </div>
-
-          {phase === 'crashed' && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(255,80,80,0.35)',
-                color: '#1e293b',
-                fontFamily: 'sans-serif',
-                fontSize: 28,
-                fontWeight: 600,
-              }}
-            >
-              The cart crashed!
-            </div>
-          )}
-
-          {/* Touch controls */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 24,
-              left: 24,
-              display: 'flex',
-              gap: 16,
-            }}
-          >
-            <div style={touchButtonStyle} {...bindHold('left')}>
-              ◀
-            </div>
-            <div style={touchButtonStyle} {...bindHold('right')}>
-              ▶
-            </div>
-          </div>
-        </>
+      ) : (
+        <MineCartHud
+          practice={practice}
+          canPractice={
+            (record?.distance ?? 0) >= TRIAL_DISTANCE ||
+            gameState.isQuestStarted('wizard_trials_patience')
+          }
+          onPractice={() => start(true)}
+          phase={phase}
+          distance={distance}
+          best={record?.score ?? 0}
+          record={record}
+          onStart={() => start(false)}
+          onResume={() => setRunPhase('playing')}
+          onRetry={() => start(practiceRef.current)}
+          onExit={exit}
+          onHold={(key, value) => {
+            held.current[key] = phaseRef.current === 'playing' && value;
+          }}
+        />
       )}
     </div>
   );

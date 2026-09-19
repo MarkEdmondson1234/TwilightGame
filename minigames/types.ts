@@ -257,6 +257,9 @@ export interface MiniGameResult {
   /** Whether the player succeeded */
   success: boolean;
 
+  /** Agility free play closes in place without changing wizard-trial progression. */
+  agilityPractice?: boolean;
+
   /** Optional score (game-specific meaning) */
   score?: number;
 
