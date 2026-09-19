@@ -2959,7 +2959,7 @@ const App: React.FC = () => {
             }
             // Winning "Test of Agility" sends the player on to the Test of Patience;
             // crashing casts them back to the Wizard Trials antechamber instead.
-            if (miniGameId === 'test-of-agility') {
+            if (miniGameId === 'test-of-agility' && !result?.agilityPractice) {
               if (result?.success) {
                 startWizardTrialsPatience();
                 const spawn = mapManager.getMap('test_of_patience')?.spawnPoint ?? { x: 4, y: 10 };

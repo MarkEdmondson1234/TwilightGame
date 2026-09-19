@@ -1,0 +1,183 @@
+/* Amethyst trial signage over the painted crystal tunnels. */
+.cart-ui {
+  color: #f8f3ff;
+  font-family: 'Trebuchet MS', sans-serif;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cart-ui button {
+  font: inherit;
+  color: inherit;
+  background: #493659;
+  border: 1px solid #b6a0d1;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+  min-height: 44px;
+}
+.cart-ui button:focus-visible {
+  outline: 3px solid #f5c265;
+  outline-offset: 3px;
+}
+.cart-ui button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cart-hud {
+  position: absolute;
+  inset: max(12px, env(safe-area-inset-top)) 16px auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 12px 16px;
+  background: #211b35ed;
+  border-radius: 12px;
+}
+.cart-trail {
+  display: grid;
+  gap: 3px;
+  min-width: 130px;
+  flex: 1;
+}
+.cart-trail span,
+.cart-score span {
+  font-size: 12px;
+  color: #e0d5ed;
+}
+.cart-trail progress {
+  width: min(100%, 240px);
+  height: 6px;
+  accent-color: #f5c265;
+}
+.cart-score {
+  display: grid;
+  text-align: right;
+}
+.cart-score strong {
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+}
+.cart-wood {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: #e1edf0;
+}
+.cart-controls {
+  position: absolute;
+  inset: auto 20px max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+}
+.cart-controls div {
+  display: flex;
+  gap: 14px;
+}
+.cart-controls button {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border-radius: 50%;
+  touch-action: none;
+  background: #211b35d9;
+}
+.cart-scrim {
+  position: absolute;
+  inset: 0;
+  background: #16102088;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+.cart-panel {
+  box-sizing: border-box;
+  width: min(100%, 500px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: clamp(20px, 4vw, 34px);
+  background: #272035;
+  color: #f8f3ff;
+  border-radius: 16px;
+  box-shadow: 0 12px 60px #10091f66;
+}
+.cart-panel h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1.15;
+  margin: 0 0 16px;
+}
+.cart-panel p {
+  margin: 0.7em 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cart-panel .cart-primary {
+  width: 100%;
+  background: #684987;
+  color: white;
+  margin: 8px 0;
+}
+.cart-result {
+  display: grid;
+  gap: 4px;
+}
+.cart-result strong {
+  font-size: 42px;
+  font-variant-numeric: tabular-nums;
+}
+.cart-records {
+  border-top: 1px solid #bacfd1;
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.cart-records h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.cart-records small {
+  display: block;
+  font-weight: normal;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.cart-records ol {
+  padding-left: 24px;
+  font-size: 14px;
+}
+.cart-records li {
+  padding: 4px 0;
+}
+.cart-records li span {
+  display: inline-block;
+  width: 75%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .cart-hud {
+    inset-inline: 8px;
+    gap: 8px;
+    padding: 10px;
+  }
+  .cart-hud button {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .cart-score strong {
+    font-size: 20px;
+  }
+  .cart-trail {
+    min-width: 100px;
+  }
+}
+
+.cart-panel button:not(.cart-primary) {
+  background: transparent;
+  color: #f8f3ff;
+}

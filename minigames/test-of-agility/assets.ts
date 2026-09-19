@@ -14,6 +14,8 @@ export const testOfAgilityAssets = {
   layer2: `${BASE}/cart_game_layer2.png`,
   layer3: `${BASE}/cart_game_layer3.png`,
   floor: `${BASE}/cart_game_floor.png`,
+  goblin: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
+  rock: '/TwilightGame/assets-optimized/tiles/rock_1.png',
   crystal: `${BASE}/crystal.png`,
   player: `${BASE}/mine_cart_male.png`,
 } as const;
