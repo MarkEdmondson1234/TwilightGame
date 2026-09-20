@@ -82,7 +82,7 @@ describe('communal kitchen easel', () => {
       position: { x: 10, y: 5 },
       onOpenMiniGame: open,
     } as unknown as InteractionContext);
-    expect(options.map((o) => o.label).sort()).toEqual(['Craft Workshop', 'Draw']);
+    expect(options.map((o) => o.label).sort()).toEqual(['Craft Workshop', 'Draw', 'Make a Wreath']);
     options.find((o) => o.label === 'Draw')!.execute();
     expect(open).toHaveBeenCalledWith(
       'painting-easel',

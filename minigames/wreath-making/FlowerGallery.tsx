@@ -12,6 +12,7 @@ import { FLOWER_COLOURS, GALLERY_PREVIEW_SIZE } from './wreathConstants';
 import type { AvailableFlower } from './wreathTypes';
 
 interface FlowerGalleryProps {
+  placedCount?: number;
   availableFlowers: AvailableFlower[];
   selectedFlower: string | null;
   previewFlowerId: string | null;
@@ -21,6 +22,7 @@ interface FlowerGalleryProps {
 }
 
 export const FlowerGallery: React.FC<FlowerGalleryProps> = ({
+  placedCount = 0,
   availableFlowers,
   selectedFlower,
   previewFlowerId,
@@ -62,7 +64,9 @@ export const FlowerGallery: React.FC<FlowerGalleryProps> = ({
         </div>
         {availableFlowers.length === 0 ? (
           <div style={{ color: '#5a6a4a', fontSize: 12, fontStyle: 'italic' }}>
-            You have no flowers. Forage or grow some first!
+            {placedCount > 0
+              ? 'Your available flowers are on the wreath. Create it, or remove a flower to rearrange it.'
+              : 'You have no flowers. Ask Mum about her starter basket, or forage or grow some.'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -72,6 +76,7 @@ export const FlowerGallery: React.FC<FlowerGalleryProps> = ({
               return (
                 <button
                   key={f.itemId}
+                  aria-label={`Select ${f.displayName} (${f.available} available)`}
                   onClick={() => onSelectFlower(f.itemId)}
                   onMouseDown={(e) => onGalleryDragStart(e, f.itemId)}
                   onTouchStart={(e) => onGalleryDragStart(e, f.itemId)}

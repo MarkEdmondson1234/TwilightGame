@@ -12,6 +12,7 @@ import type { SlotData } from './wreathTypes';
 import type { WreathQuality } from './wreathQuality';
 
 interface WreathStageProps {
+  canvasScale?: number;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   placedItems: SlotData[];
   editingSlot: number | null;
@@ -32,6 +33,7 @@ interface WreathStageProps {
 }
 
 export const WreathStage: React.FC<WreathStageProps> = ({
+  canvasScale = 1,
   canvasRef,
   placedItems,
   editingSlot,
@@ -61,23 +63,33 @@ export const WreathStage: React.FC<WreathStageProps> = ({
       }}
     >
       {/* Wreath area — freehand placement canvas */}
-      <WreathCanvas
-        canvasRef={canvasRef}
-        placedItems={placedItems}
-        editingSlot={editingSlot}
-        selectedFlower={selectedFlower}
-        isCropping={isCropping}
-        filledCount={filledCount}
-        uniqueCount={uniqueCount}
-        canCreate={canCreate}
-        quality={quality}
-        onCanvasClick={onCanvasClick}
-        onFlowerClick={onFlowerClick}
-        onFlowerDragStart={onFlowerDragStart}
-        onZoom={onZoom}
-        onCropZoom={onCropZoom}
-      />
-
+      <div style={{ width: 480 * canvasScale, height: 480 * canvasScale }}>
+        <div
+          style={{
+            width: 480,
+            height: 480,
+            transform: `scale(${canvasScale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <WreathCanvas
+            canvasRef={canvasRef}
+            placedItems={placedItems}
+            editingSlot={editingSlot}
+            selectedFlower={selectedFlower}
+            isCropping={isCropping}
+            filledCount={filledCount}
+            uniqueCount={uniqueCount}
+            canCreate={canCreate}
+            quality={quality}
+            onCanvasClick={onCanvasClick}
+            onFlowerClick={onFlowerClick}
+            onFlowerDragStart={onFlowerDragStart}
+            onZoom={onZoom}
+            onCropZoom={onCropZoom}
+          />
+        </div>
+      </div>
       {/* Hint */}
       {editingSlot === null && filledCount > 0 && (
         <div
@@ -130,6 +142,7 @@ export const WreathStage: React.FC<WreathStageProps> = ({
           }}
           style={{
             padding: '10px 20px',
+            minHeight: 44,
             background: '#2a3a22',
             border: '2px solid #3a5a2a',
             borderRadius: 8,
@@ -149,6 +162,7 @@ export const WreathStage: React.FC<WreathStageProps> = ({
           disabled={!canCreate || isCreating}
           style={{
             padding: '10px 20px',
+            minHeight: 44,
             background: canCreate && !isCreating ? '#4a6a3a' : '#2a3a22',
             border: `2px solid ${canCreate && !isCreating ? '#6b8e5a' : '#3a5a2a'}`,
             borderRadius: 8,

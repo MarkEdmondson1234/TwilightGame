@@ -1,3 +1,5 @@
+import { getMumTeaAcknowledgement } from './mumTeaAcknowledgement';
+import { startTinyWreathLesson } from './tinyWreathLesson';
 import { startPaintingLesson, finishPaintingLesson } from './paintingLesson';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
@@ -111,6 +113,7 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   }
 
   if (npcId === 'mum_kitchen') {
+    if (nodeId === 'tiny_wreath_accept') startTinyWreathLesson();
     if (nodeId === 'picture_accept') startPaintingLesson();
     if (nodeId === 'picture_check' && finishPaintingLesson()) return 'picture_finished';
   }
@@ -120,6 +123,10 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     handleRecipeTeaching(nodeId);
     const redirect = handleMumQuestActions(nodeId);
     if (redirect) return redirect;
+    if (npcId === 'mum_kitchen') {
+      const teaAcknowledgement = getMumTeaAcknowledgement(nodeId);
+      if (teaAcknowledgement) return teaAcknowledgement;
+    }
   }
 
   // Handle Althea's chores quest (NPC id is 'old_woman_knitting', not 'althea')

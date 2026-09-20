@@ -39,6 +39,39 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
     },
     dialogue: [
       {
+        id: 'tea_success',
+        expression: 'happy',
+        text: '“You made your tea! Well done, love. That is your first cooking lesson finished. Keep the cup — you don’t need to give it to me or fetch the ingredients again. What would you like to learn next?”',
+        responses: [
+          { text: 'Choose my next cooking lesson.', nextId: 'teach_cooking' },
+          { text: 'I’ll decide later.' },
+        ],
+      },
+      {
+        id: 'tiny_wreath_offer',
+        expression: 'smile',
+        text: 'Mum opens a basket of dried flowers. “Mushra left these for you! Two lavender and two heather sprigs — enough for a little wreath. Shall we try her flower workshop at the easel beside the stairs?”',
+        responses: [
+          { text: 'Yes, I’d like to try!', nextId: 'tiny_wreath_accept' },
+          { text: 'Maybe later.' },
+        ],
+      },
+      {
+        id: 'tiny_wreath_accept',
+        expression: 'happy',
+        text: '“The four flowers are in your bag. Tap the easel beside the stairs and choose Make a Wreath. Select a flower, then tap the ring to place it. Repeat until all four are arranged, then Create Wreath. You only spend the flowers when you finish; there’s no gold fee.”',
+        responses: [
+          { text: 'What can I do with my wreath?', nextId: 'tiny_wreath_help' },
+          { text: 'I’ll try it!' },
+        ],
+      },
+      {
+        id: 'tiny_wreath_help',
+        expression: 'smile',
+        text: '“Your finished wreath goes in your bag. Select it to hold it, then tap a clear spot to place your decoration. Try more flowers and colours next time! If you’ve used these flowers elsewhere, you can gather or grow replacements — straw and berries work too. Mushra also makes wreaths in the mushroom forest.”',
+        responses: [{ text: 'Thank you!' }],
+      },
+      {
         id: 'picture_offer',
         expression: 'smile',
         text: 'Mum glances at the easel beside the stairs. “This kitchen could use a picture of somewhere you love. A forest? A dragon’s garden? I have a canvas for your first try. You can paint whenever you like, even while we’re learning to cook.”',
@@ -107,6 +140,16 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
         responses: [
           ...(id === 'mum_kitchen'
             ? [
+                {
+                  text: 'What is in the flower basket?',
+                  nextId: 'tiny_wreath_offer',
+                  hiddenIfQuestStarted: 'tiny_wreath_lesson',
+                },
+                {
+                  text: 'About my little wreath…',
+                  nextId: 'tiny_wreath_help',
+                  requiredQuest: 'tiny_wreath_lesson',
+                },
                 {
                   text: 'Could I make a picture?',
                   nextId: 'picture_offer',

@@ -172,6 +172,24 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
             draggable={false}
             style={{ width: '100%', height: '100%' }}
           />
+          <img
+            src="/TwilightGame/assets-optimized/items/quest/picnic_basket.png"
+            alt="Mushra's flower basket"
+            draggable={false}
+            style={{ position: 'absolute', left: '4%', bottom: 0, width: '35%' }}
+          />
+          <img
+            src="/TwilightGame/assets-optimized/herbs/lavender_bunch.png"
+            alt=""
+            draggable={false}
+            style={{
+              position: 'absolute',
+              left: '10%',
+              bottom: '8%',
+              width: '23%',
+              transform: 'rotate(-20deg)',
+            }}
+          />
           <div
             style={{
               position: 'absolute',
@@ -188,7 +206,11 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
       )}
       {locations.map(({ def, x, y }) => {
         // Draw and Craft share one physical easel and one visual signpost.
-        if (currentMapId === 'mums_kitchen' && def.id === 'decoration-crafting') return null;
+        if (
+          currentMapId === 'mums_kitchen' &&
+          (def.id === 'decoration-crafting' || def.id === 'wreath-making')
+        )
+          return null;
         // Don't advertise a mini-game the player couldn't actually start
         // right now (season/time/friendship/item requirements not met).
         if (!miniGameManager.checkRequirements(def.id).canPlay) return null;

@@ -5,6 +5,13 @@ export const NEWS_MILESTONES: Record<
   string,
   { title: string; story: string; lead?: ActivityLeadId; itemId?: string }
 > = {
+  'tiny-wreath': {
+    title: 'A little wreath of their own',
+    story:
+      'A neighbour has made a starter wreath. Ask Mum about Mushra’s flower basket, then try the kitchen easel’s wreath workshop.',
+    lead: 'tiny-wreath',
+    itemId: 'crop_lavender',
+  },
   'crate-trail': {
     title: 'A clear path through the crates',
     story:

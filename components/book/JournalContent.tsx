@@ -1,4 +1,9 @@
 import {
+  TINY_WREATH_LESSON,
+  TINY_WREATH_TITLE,
+  readTinyWreathNextStep,
+} from '../../utils/tinyWreathLesson';
+import {
   PAINTING_LESSON,
   PAINTING_LESSON_TITLE,
   readPaintingNextStep,
@@ -139,6 +144,16 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         nextStep: paintingStep,
       });
 
+    const wreathStep = readTinyWreathNextStep();
+    if (wreathStep)
+      activeQuests.unshift({
+        id: TINY_WREATH_LESSON,
+        type: 'quest',
+        title: TINY_WREATH_TITLE,
+        subtitle: wreathStep.action,
+        nextStep: wreathStep,
+      });
+
     // Completed quests
     const completedQuests: JournalEntry[] = eventChainManager
       .getCompletedChains()
@@ -178,6 +193,16 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         title: 'The child’s Crate Trail',
         subtitle:
           'You cleared the delivery path. The village child is ready for another game whenever you like.',
+        progressPercent: 100,
+      });
+
+    if (gameState.isQuestCompleted(TINY_WREATH_LESSON))
+      completedQuests.unshift({
+        id: TINY_WREATH_LESSON,
+        type: 'quest',
+        title: TINY_WREATH_TITLE,
+        subtitle:
+          'You made a wreath of your own. Select it in your bag and place it in a clear spot to display it.',
         progressPercent: 100,
       });
 

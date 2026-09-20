@@ -1,5 +1,6 @@
 /** Small, authored leads. These record knowledge, never quest completion. */
 export type ActivityLeadId =
+  | 'tiny-wreath'
   | 'crate-trail'
   | 'painting'
   | 'skiing'
@@ -19,6 +20,15 @@ export interface ActivityLead {
 }
 
 export const ACTIVITY_LEADS: ActivityLead[] = [
+  {
+    id: 'tiny-wreath',
+    title: 'Mushra’s Tiny Wreath',
+    itemId: 'crop_lavender',
+    invitation:
+      'A basket of dried flowers rests beside the kitchen easel. Mum smiles. “Mushra left you a little flower workshop to try!”',
+    directions:
+      'Ask Mum at home about the flower basket for four starter flowers. Tap the easel beside the kitchen stairs and choose Make a Wreath. Select a flower, tap the ring, and repeat until you have at least four. Create Wreath puts your decoration in your bag and uses the arranged materials. No gold fee; available all year.',
+  },
   {
     id: 'crate-trail',
     title: 'The child’s Crate Trail',
@@ -117,6 +127,7 @@ export function getActivityCandidates(
     if (ctx.mapId === 'mums_kitchen' && npc.id === 'mum_kitchen') {
       candidates.push({ id: 'cooking', npcId: npc.id });
       candidates.push({ id: 'painting', npcId: npc.id });
+      candidates.push({ id: 'tiny-wreath', npcId: npc.id });
     }
     if (npc.name === 'Cinder the Guide') candidates.push({ id: 'lava-leap', npcId: npc.id });
     if (npc.id === 'mushra') candidates.push({ id: 'wreath-making', npcId: npc.id });

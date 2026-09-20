@@ -1,3 +1,4 @@
+import { finishTinyWreathLesson } from '../../utils/tinyWreathLesson';
 /**
  * Wreath Making mini-game — Mushra's Wreath Workshop
  *
@@ -15,7 +16,7 @@
  * Using more unique flower types produces a higher-quality wreath
  * (Rustic → Fine → Magnificent).
  *
- * Cost: 15 gold + the flowers used (consumed on completion).
+ * Cost: the flowers used (consumed on completion).
  * Rewards: A wreath decoration item + friendship with Mushra.
  *
  * This file is the component shell — layout plus wreath creation. The rest
@@ -30,7 +31,7 @@
  *     `EditingToolPanel.tsx` / `FlowerSprites.tsx` — UI
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { decorationManager } from '../../utils/DecorationManager';
 import { EditingToolPanel } from './EditingToolPanel';
@@ -52,12 +53,18 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const { placedItems } = editor;
 
   const [isCreating, setIsCreating] = useState(false);
+  const creatingRef = useRef(false);
+  const [createError, setCreateError] = useState('');
   /** Current viewport width — used to scale down the workshop on small screens. */
   const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
+  const [windowHeight, setWindowHeight] = useState(() => window.innerHeight);
 
   // Track viewport width for responsive scaling
   useEffect(() => {
-    const onResize = () => setWindowWidth(window.innerWidth);
+    const onResize = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -68,17 +75,35 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const handleCreate = useCallback(async () => {
     const filled = placedItems;
-    if (filled.length < MIN_FLOWERS || isCreating) return;
+    if (filled.length < MIN_FLOWERS || creatingRef.current) return;
 
+    creatingRef.current = true;
     setIsCreating(true);
+    setCreateError('');
+    const fail = (message: string) => {
+      setCreateError(message);
+      creatingRef.current = false;
+      setIsCreating(false);
+    };
 
     // Consume the flowers
     const counts: Record<string, number> = {};
     for (const f of filled) {
       counts[f.itemId] = (counts[f.itemId] || 0) + 1;
     }
+    if (Object.entries(counts).some(([id, qty]) => context.actions.getItemQuantity(id) < qty)) {
+      fail('Some materials are no longer in your bag. Remove those flowers or return with more.');
+      return;
+    }
+    const consumed: Array<[string, number]> = [];
+    const refund = () => consumed.forEach(([id, qty]) => context.actions.addItem(id, qty));
     for (const [itemId, qty] of Object.entries(counts)) {
-      context.actions.removeItem(itemId, qty);
+      if (!context.actions.removeItem(itemId, qty)) {
+        refund();
+        fail('Your materials changed. Please try again.');
+        return;
+      }
+      consumed.push([itemId, qty]);
     }
 
     const q = getWreathQuality(placedItems);
@@ -101,17 +126,24 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     }
 
     // Add the wreath item to inventory, linking it to its custom decoration image
-    if (decorationId) {
-      context.actions.addItemWithDecoration(q.itemId, decorationId);
-    } else {
-      context.actions.addItem(q.itemId, 1); // fallback if image capture failed
+    const added = decorationId
+      ? context.actions.addItemWithDecoration(q.itemId, decorationId)
+      : context.actions.addItem(q.itemId, 1); // fallback if image capture failed
+    if (!added) {
+      refund();
+      if (decorationId) decorationManager.deletePainting(decorationId);
+      fail(
+        'Your wreath could not be put in your bag. Your flowers were returned. Please try again.'
+      );
+      return;
     }
+    finishTinyWreathLesson();
 
     const result: MiniGameResult = {
       success: true,
       score: new Set(filled.map((f) => f.itemId)).size,
       rewards: [], // Item added directly above
-      friendshipRewards: [{ npcId: 'forest_mushra', points: q.friendship }],
+      friendshipRewards: [{ npcId: 'mushra', points: q.friendship }],
       message:
         q.tier === 'magnificent'
           ? 'What a breathtaking wreath! Mushra is absolutely delighted!'
@@ -127,10 +159,16 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     };
 
     onComplete(result);
-  }, [placedItems, context.actions, context.storage, onComplete, isCreating]);
+  }, [placedItems, context.actions, context.storage, onComplete]);
 
   // Scale the workshop down proportionally when the viewport is too narrow
-  const workshopScale = Math.min(1, (windowWidth * 0.95) / TARGET_WORKSHOP_WIDTH);
+  const canvasScale = Math.min(
+    1,
+    Math.max(0.4, Math.min(windowWidth * 0.9 - 40, windowHeight * 0.9 - 100) / 480)
+  );
+  const closeWorkshop = () => {
+    if (!creatingRef.current) onClose();
+  };
 
   // =========================================================================
   // Render
@@ -142,14 +180,15 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         background: '#1a2e1a',
         border: '3px solid #6b8e5a',
         borderRadius: 16,
-        padding: 24,
+        padding: 16,
         width: TARGET_WORKSHOP_WIDTH,
-        maxWidth: '96vw',
+        maxWidth: '90vw',
+        maxHeight: '90dvh',
+        overflow: 'auto',
+        boxSizing: 'border-box',
         color: '#e0e8d0',
         userSelect: 'none',
         fontFamily: 'inherit',
-        transform: workshopScale < 1 ? `scale(${workshopScale})` : undefined,
-        transformOrigin: 'top center',
       }}
       onMouseMove={editor.handleAnyMove}
       onMouseUp={editor.handleAnyEnd}
@@ -168,10 +207,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       >
         <h2 style={{ margin: 0, fontSize: 20 }}>Mushra&apos;s Wreath Workshop</h2>
         <button
-          onClick={onClose}
+          aria-label="Close wreath workshop"
+          disabled={isCreating}
+          onClick={closeWorkshop}
           onTouchEnd={(e) => {
             e.preventDefault();
-            onClose();
+            closeWorkshop();
           }}
           style={{
             background: 'none',
@@ -180,18 +221,39 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             fontSize: 24,
             cursor: 'pointer',
             padding: 4,
+            minWidth: 44,
+            minHeight: 44,
           }}
         >
           ✕
         </button>
       </div>
 
+      <p style={{ fontSize: 14, lineHeight: 1.5, margin: '0 0 12px', color: '#e0e8d0' }}>
+        Select a flower, then tap the ring to place it. Arrange at least four, then Create Wreath.
+        Only the materials you use are spent; no gold fee. Scroll down for the create button and
+        editing tools.
+      </p>
+      {createError && (
+        <p role="alert" style={{ color: '#ffcda8' }}>
+          {createError}
+        </p>
+      )}
       {/* ================================================================= */}
       {/* Two-column layout: Gallery (left) + Wreath (right)                */}
       {/* ================================================================= */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 20,
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
         {/* ——————————————— LEFT: Flower Gallery ——————————————— */}
         <FlowerGallery
+          placedCount={placedItems.length}
           availableFlowers={editor.availableFlowers}
           selectedFlower={editor.selectedFlower}
           previewFlowerId={editor.previewFlowerId}
@@ -202,6 +264,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
         {/* ——————————————— CENTRE: Wreath Canvas + Buttons ——————————————— */}
         <WreathStage
+          canvasScale={canvasScale}
           canvasRef={editor.wreathRef}
           placedItems={placedItems}
           editingSlot={editor.editingSlot}
@@ -217,7 +280,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           onFlowerDragStart={editor.handleDragStart}
           onZoom={editor.handleZoom}
           onCropZoom={editor.handleCropZoom}
-          onClose={onClose}
+          onClose={closeWorkshop}
           onCreate={handleCreate}
         />
 

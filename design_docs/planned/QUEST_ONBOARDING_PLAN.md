@@ -1,6 +1,6 @@
 # Quest onboarding and feature discovery plan
 
-**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues and the kitchen painting introduction implemented; Crate Trail adventure practice implemented; Tiny Wreath, cooking tasters and wider world signposting remain planned.
+**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues and the kitchen painting introduction implemented; Crate Trail adventure practice implemented; Tiny Wreath implemented; cooking tasters and wider world signposting remain planned.
 **Audit date:** 18 September 2026. **Code baseline:** `26a02b78`.  
 **Audience:** New players aged 11–12, with optional help for any player.  
 **Scope clarification:** Make every existing player-facing feature discoverable and reachable, including activities outside quest chains. New quests are one possible tool, not the default solution.  
@@ -99,6 +99,20 @@ Validation: keyboard and touch solution tests, Undo/Restart, optional hints, lea
 Test in game: approach the village child in any season → ask **What is Crate Trail?** or choose **Play Crate Trail** from her interaction menu → try a move, Undo, Restart and Hint → reach the golden door → **Back to the village**. Check the completed journal entry and Things to try; replay and confirm it adds no trial progress. Another account should receive the authored puzzle clue through village news.
 
 Next: Mushra’s Tiny Wreath; then cooking tasters and remaining-chain guides. The fuller Delivery Mix-up parcel story and Lava Leap practice remain optional follow-ups.
+
+### Ninth release — Tiny Wreath and Mum’s tea acknowledgement
+
+Implemented: Mum hosts Mushra’s starter basket beside the kitchen easel in every season. Ask about the basket to receive two Fresh Lavender and two Heather Sprigs once per character. The kitchen easel now offers Make a Wreath alongside Draw and Craft Workshop; forest Mushra and crafting-table access remain. The personal journal/pin tracks available materials, and successful creation adds a keepsake, completed entry and authored village-news clue. No gardening, cooking or autumn-workshop completion is required. This first slice supplies the materials; a guided foraging outing remains a possible extension.
+
+The workshop now wraps and scrolls instead of shrinking its controls. Only the arrangement canvas scales to fit, including short landscape viewports. Instructions explain selecting, placing at least four flowers, creating and material costs (no gold fee). The empty gallery distinguishes no materials from all materials already arranged. Creation checks inventory, prevents duplicate taps and refunds spent flowers when adding the finished item fails; personal completion happens only after an actual item is added. Friendship uses Mushra’s registered NPC identity.
+
+**Tea follow-up reported during implementation:** Mum’s dialogue button filter did not evaluate `hiddenIfFireplaceTutorialComplete` or `requiredFireplaceTutorialComplete`, despite those conditions existing on her responses. Added both checks, so the first-cup option disappears after success and the three next-lesson choices appear. Mum also explicitly acknowledges a saved successful tea once on the next cooking/greeting interaction. Existing successful tea history qualifies; holding or giving her the cup is not required. Existing picnic-story redirects retain priority. A legacy unlock with no recorded successful tea does not fabricate a cooking achievement.
+
+Validation: all 1,669 local tests passed; includes real Mum-response filtering before/after tea, acknowledgement from saved cook history, one-time/restored flower supplies, alternate materials, no unaccepted completion, and crafting failure/duplicate-click checks. Touch arrangement of four starter flowers verified at 1024×768, 844×390 and 390×844; kitchen basket and responsive editor screenshots reviewed. Types/lint checked. Live-world entry, existing-save tea response and two-account news still need player testing.
+
+Test in game: after a recorded successful tea, talk to Mum; expect acknowledgement and **Choose my next cooking lesson**. The first-cup prompt should be gone. For wreaths, ask Mum **What is in the flower basket?** → accept → kitchen easel → **Make a Wreath** → select/place four flowers → **Create Wreath**. Check the bag, journal and pin; repeat the conversation to confirm no duplicate supplies. The autumn village-decoration quest should remain separate.
+
+Next: cooking tasters, followed by remaining-chain guides and broader world signposting.
 
 ## Recommendation
 

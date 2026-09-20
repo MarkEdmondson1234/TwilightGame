@@ -57,6 +57,7 @@ export const WreathCanvas: React.FC<WreathCanvasProps> = ({
   return (
     <div
       ref={canvasRef}
+      aria-label="Wreath arrangement"
       onClick={onCanvasClick}
       style={{
         position: 'relative',

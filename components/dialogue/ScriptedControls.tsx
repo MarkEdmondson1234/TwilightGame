@@ -24,6 +24,10 @@ function filterResponses(responses: DialogueResponse[] | undefined): DialogueRes
   if (!responses) return [];
 
   return responses.filter((response) => {
+    if (response.hiddenIfFireplaceTutorialComplete && cookingManager.isFireplaceTutorialComplete())
+      return false;
+    if (response.requiredFireplaceTutorialComplete && !cookingManager.isFireplaceTutorialComplete())
+      return false;
     if (response.requiredRecipeUnlocked) {
       if (!cookingManager.isRecipeUnlocked(response.requiredRecipeUnlocked)) return false;
     }
