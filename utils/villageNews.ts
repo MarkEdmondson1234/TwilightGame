@@ -5,6 +5,12 @@ export const NEWS_MILESTONES: Record<
   string,
   { title: string; story: string; lead?: ActivityLeadId; itemId?: string }
 > = {
+  'crate-trail': {
+    title: 'A clear path through the crates',
+    story:
+      'A neighbour has solved the village child’s Crate Trail. She has a short puzzle for you to try, too, with hints and as many retries as you like.',
+    lead: 'crate-trail',
+  },
   painting: {
     title: 'A new picture at home',
     story:

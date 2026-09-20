@@ -90,3 +90,12 @@ const LEVEL_1_ROWS = [
 
 /** All authored levels. Only one is populated for v1; the array shape stays open for more. */
 export const CRATE_LEVELS: CrateLevel[] = [parseLevel('crate-puzzle-1', LEVEL_1_ROWS)];
+
+/** Village sampler: six moves, two pushes, with room to see where the crate goes. */
+export const CRATE_PRACTICE_LEVEL = parseLevel('village-crate-trail', [
+  '#######',
+  '#..C..#',
+  '#.##E##',
+  '#S#####',
+  '#######',
+]);

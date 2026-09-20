@@ -1,3 +1,4 @@
+import { crateTrailDefinition } from './crate-trail/definition';
 /**
  * Mini-Game Registry
  *
@@ -34,6 +35,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   umbraWolfCombatDefinition,
   skiingDefinition,
   slidingCratePuzzleDefinition,
+  crateTrailDefinition,
   lavaLeapDefinition,
   testOfAgilityDefinition,
 ];

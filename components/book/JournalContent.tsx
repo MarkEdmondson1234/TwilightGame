@@ -171,6 +171,16 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         progressPercent: 100,
       });
 
+    if (gameState.isQuestCompleted('village_crate_trail'))
+      completedQuests.unshift({
+        id: 'village_crate_trail',
+        type: 'quest',
+        title: 'The child’s Crate Trail',
+        subtitle:
+          'You cleared the delivery path. The village child is ready for another game whenever you like.',
+        progressPercent: 100,
+      });
+
     // NPC conversations
     const npcIds = getNPCIdsWithConversations();
     const conversations: JournalEntry[] = npcIds

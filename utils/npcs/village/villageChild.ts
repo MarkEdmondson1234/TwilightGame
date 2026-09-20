@@ -67,6 +67,7 @@ export function createVillageChildNPC(
             "Hi! Look at all the petals falling! It's like pink snow! I've been trying to catch them - want to see how many we can catch together?",
         },
         responses: [
+          { text: 'What is Crate Trail?', nextId: 'crate_trail_invitation' },
           { text: 'Can we carve a pumpkin?', nextId: 'pumpkin_invitation', requiredSeason: 'autumn' },
           {
             text: 'What do you like to play?',
@@ -89,6 +90,11 @@ export function createVillageChildNPC(
             text: 'Maybe another time!',
           },
         ],
+      },
+      {
+        id: 'crate_trail_invitation',
+        text: '*She sketches a tiny path in the dirt and sets pebbles across it.* “Pretend these are delivery crates! Push them aside and find the golden door. Close our chat, interact with me and choose Play Crate Trail. You can Undo a move or Restart, and there’s a Hint if you want one. No coins or supplies needed!”',
+        responses: [{ text: 'Let’s try it!' }],
       },
       {
         id: 'pumpkin_invitation',

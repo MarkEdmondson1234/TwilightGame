@@ -11,9 +11,9 @@
  * single one (a single-empty-tile version is mathematically unsolvable past move one).
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
-import { CRATE_LEVELS, CellKind, type GridPosition } from './levels';
+import { CRATE_LEVELS, CRATE_PRACTICE_LEVEL, CellKind, type GridPosition } from './levels';
 import { Direction } from '../../types';
 import { gameState } from '../../GameState';
 import { generateCharacterSprites, DEFAULT_CHARACTER } from '../../utils/characterSprites';
@@ -23,6 +23,15 @@ import { tileAssets } from '../../assets';
 
 // Cell size is computed responsively (see useResponsiveCellSize below) so the board fills
 // most of the full-screen viewport on desktop but still shrinks to fit a tablet in portrait.
+const PRACTICE_BUTTON: React.CSSProperties = {
+  minHeight: 44,
+  padding: '0 14px',
+  border: '1px solid #a8a1bc',
+  borderRadius: 8,
+  background: '#302d45',
+  color: '#fff',
+  cursor: 'pointer',
+};
 const MIN_CELL_SIZE = 32;
 const MAX_CELL_SIZE = 120;
 // Rough space reserved for the header row and margins around the board — subtracted from
@@ -40,8 +49,16 @@ const WALL_TEXTURE_TILE_SPAN = 4;
 // (see cellStyle's CellKind.Wall case for the full explanation).
 const WALL_OVERLAP = 1;
 
-function useResponsiveCellSize(gridWidth: number, gridHeight: number, reserveForDPad: boolean): number {
-  const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
+function useResponsiveCellSize(
+  gridWidth: number,
+  gridHeight: number,
+  reserveForDPad: boolean,
+  practice = false
+): number {
+  const [viewport, setViewport] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
 
   useEffect(() => {
     const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
@@ -56,10 +73,13 @@ function useResponsiveCellSize(gridWidth: number, gridHeight: number, reserveFor
   return useMemo(() => {
     const availableWidth = viewport.width - MARGIN_RESERVE;
     const availableHeight =
-      viewport.height - HEADER_RESERVE - MARGIN_RESERVE - (reserveForDPad ? DPAD_RESERVE : 0);
+      viewport.height -
+      (practice ? 130 : HEADER_RESERVE) -
+      MARGIN_RESERVE -
+      (reserveForDPad ? DPAD_RESERVE : 0);
     const raw = Math.min(availableWidth / gridWidth, availableHeight / gridHeight);
     return Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, Math.floor(raw)));
-  }, [viewport, gridWidth, gridHeight, reserveForDPad]);
+  }, [viewport, gridWidth, gridHeight, reserveForDPad, practice]);
 }
 
 const DIRECTION_BY_KEY: Record<string, GridPosition> = {
@@ -86,18 +106,23 @@ function directionFromDelta(dx: number, dy: number): Direction {
   return Direction.Up;
 }
 
-export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
+export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps & { practice?: boolean }> = ({
   onClose,
   onComplete,
+  practice = false,
 }) => {
-  const level = CRATE_LEVELS[0];
+  const level = practice ? CRATE_PRACTICE_LEVEL : CRATE_LEVELS[0];
   const isTouchDevice = useTouchDevice();
-  const cellSize = useResponsiveCellSize(level.width, level.height, isTouchDevice);
+  const reserveDPad = isTouchDevice && (!practice || window.innerWidth < 600);
+  const cellSize = useResponsiveCellSize(level.width, level.height, reserveDPad, practice);
+  const [showHint, setShowHint] = useState(false);
+  const reported = useRef(false);
 
   // Crates are tracked separately from the static grid (walls/floor/exit never change)
   // so each crate can carry a stable id for a CSS-transitioned slide when it moves.
   const staticGrid = useMemo<CellKind[][]>(
-    () => level.grid.map((row) => row.map((cell) => (cell === CellKind.Crate ? CellKind.Floor : cell))),
+    () =>
+      level.grid.map((row) => row.map((cell) => (cell === CellKind.Crate ? CellKind.Floor : cell))),
     [level]
   );
 
@@ -114,16 +139,19 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
   // Player position and crates update together atomically (one setState call, one updater
   // function) — splitting them across two separate setState calls would mean reading a
   // "moved to" result back out before React guarantees the paired update has run.
-  const [board, setBoard] = useState<{ playerPos: GridPosition; crates: Crate[] }>({
+  type BoardSnapshot = { playerPos: GridPosition; crates: Crate[] };
+  const [board, setBoard] = useState<BoardSnapshot & { history: BoardSnapshot[] }>({
+    history: [],
     playerPos: level.playerStart,
     crates: initialCrates,
   });
   const [facing, setFacing] = useState<Direction>(Direction.Down);
-  const [won, setWon] = useState(false);
+  const won = board.playerPos.x === level.exit.x && board.playerPos.y === level.exit.y;
 
   const cellAt = useCallback(
     (x: number, y: number): CellKind => {
-      if (y < 0 || y >= staticGrid.length || x < 0 || x >= staticGrid[0].length) return CellKind.Wall;
+      if (y < 0 || y >= staticGrid.length || x < 0 || x >= staticGrid[0].length)
+        return CellKind.Wall;
       return staticGrid[y][x];
     },
     [staticGrid]
@@ -141,8 +169,13 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
         const crateIndex = prev.crates.findIndex((c) => c.x === target.x && c.y === target.y);
         if (crateIndex === -1) {
           // No crate in the way — a plain walk onto floor or the exit.
-          if (target.x === level.exit.x && target.y === level.exit.y) setWon(true);
-          return { playerPos: target, crates: prev.crates };
+          return {
+            playerPos: target,
+            crates: prev.crates,
+            history: practice
+              ? [...prev.history.slice(-99), { playerPos: prev.playerPos, crates: prev.crates }]
+              : [],
+          };
         }
 
         const beyond = { x: target.x + dx, y: target.y + dy };
@@ -155,11 +188,19 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
 
         // A crate cell can never be the exit, so the player landing on `target` here
         // never coincides with the exit — no win check needed on this branch.
-        const crates = prev.crates.map((c, i) => (i === crateIndex ? { ...c, x: beyond.x, y: beyond.y } : c));
-        return { playerPos: target, crates };
+        const crates = prev.crates.map((c, i) =>
+          i === crateIndex ? { ...c, x: beyond.x, y: beyond.y } : c
+        );
+        return {
+          playerPos: target,
+          crates,
+          history: practice
+            ? [...prev.history.slice(-99), { playerPos: prev.playerPos, crates: prev.crates }]
+            : [],
+        };
       });
     },
-    [cellAt, level.exit, won]
+    [cellAt, level.exit, won, practice]
   );
 
   // Discrete grid-step keyboard input. Safe to attach unconditionally — the overworld's
@@ -184,14 +225,15 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
   // cutscene) rather than waiting on a "Claim" button click — stepping onto the exit
   // tile is the win, so there's nothing left to confirm.
   useEffect(() => {
-    if (!won) return;
+    if (!won || practice || reported.current) return;
+    reported.current = true;
     const result: MiniGameResult = {
       success: true,
       message: 'Congratulations! You passed the Test of Wits!',
       messageType: 'success',
     };
     onComplete(result);
-  }, [won, onComplete]);
+  }, [won, onComplete, practice]);
 
   const boardWidth = level.width * cellSize;
   const boardHeight = level.height * cellSize;
@@ -262,12 +304,94 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
           flexShrink: 0,
         }}
       >
-        <h2 style={{ margin: 0 }}>Test of Wits</h2>
-        <button onClick={onClose} style={{ background: 'transparent', color: '#e0e0e0', border: 'none', cursor: 'pointer', fontSize: 24 }}>
+        <h2 style={{ margin: 0, fontSize: practice ? 22 : undefined }}>
+          {practice ? 'Crate Trail' : 'Test of Wits'}
+        </h2>
+        <button
+          aria-label="Leave puzzle"
+          onClick={onClose}
+          style={{
+            background: 'transparent',
+            color: '#e0e0e0',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 24,
+            minWidth: 44,
+            minHeight: 44,
+          }}
+        >
           ✕
         </button>
       </div>
 
+      {practice && (
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 640,
+            padding: '0 16px 8px',
+            boxSizing: 'border-box',
+            textAlign: 'center',
+            fontSize: 14,
+          }}
+        >
+          <p style={{ margin: '0 0 6px' }}>
+            {won
+              ? '“You cleared the delivery path!” The child cheers.'
+              : showHint
+                ? 'Go up twice, right three times (push the crate twice), then down to the door.'
+                : '“A delivery crate is in the way! Can you clear a path to the golden door?” Use arrow keys, WASD or the arrow buttons.'}
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            {won ? (
+              <button
+                style={PRACTICE_BUTTON}
+                onClick={() => {
+                  if (reported.current) return;
+                  reported.current = true;
+                  onComplete({
+                    success: true,
+                    message: 'You cleared the Crate Trail!',
+                    messageType: 'success',
+                  });
+                }}
+              >
+                Back to the village
+              </button>
+            ) : (
+              <>
+                <button
+                  style={PRACTICE_BUTTON}
+                  disabled={!board.history.length}
+                  onClick={() =>
+                    setBoard((prev) => {
+                      const last = prev.history.at(-1);
+                      return last ? { ...last, history: prev.history.slice(0, -1) } : prev;
+                    })
+                  }
+                >
+                  Undo
+                </button>
+                <button
+                  style={PRACTICE_BUTTON}
+                  onClick={() =>
+                    setBoard({ playerPos: level.playerStart, crates: initialCrates, history: [] })
+                  }
+                >
+                  Restart
+                </button>
+                <button
+                  style={PRACTICE_BUTTON}
+                  aria-pressed={showHint}
+                  onClick={() => setShowHint(!showHint)}
+                >
+                  {showHint ? 'Hide hint' : 'Hint'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div
         style={{
           flex: 1,
@@ -278,7 +402,8 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
           boxSizing: 'border-box',
           // Matches the sizing hook's reserveForDPad budget — without this, the board would
           // still center across the full flex area and could sit under the D-pad's corner.
-          paddingBottom: isTouchDevice ? DPAD_RESERVE : 0,
+          paddingBottom: reserveDPad ? DPAD_RESERVE : 0,
+          paddingRight: practice && isTouchDevice && !reserveDPad ? DPAD_RESERVE : 0,
         }}
       >
         <div
@@ -293,57 +418,56 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
             backgroundRepeat: 'repeat',
           }}
         >
-        {staticGrid.map((row, y) =>
-          row.map((kind, x) => {
-            const style = cellStyle(kind, x, y);
-            if (!style) return null;
-            return (
-              <div
-                key={`bg-${x}-${y}`}
-                style={{
-                  position: 'absolute',
-                  left: x * cellSize,
-                  top: y * cellSize,
-                  width: cellSize,
-                  height: cellSize,
-                  ...style,
-                }}
-              />
-            );
-          })
-        )}
+          {staticGrid.map((row, y) =>
+            row.map((kind, x) => {
+              const style = cellStyle(kind, x, y);
+              if (!style) return null;
+              return (
+                <div
+                  key={`bg-${x}-${y}`}
+                  style={{
+                    position: 'absolute',
+                    left: x * cellSize,
+                    top: y * cellSize,
+                    width: cellSize,
+                    height: cellSize,
+                    ...style,
+                  }}
+                />
+              );
+            })
+          )}
 
-        {board.crates.map((crate) => (
+          {board.crates.map((crate) => (
+            <div
+              key={crate.id}
+              style={{
+                position: 'absolute',
+                left: crate.x * cellSize,
+                top: crate.y * cellSize,
+                width: cellSize,
+                height: cellSize,
+                backgroundImage: `url(${tileAssets.crate})`,
+                backgroundSize: 'cover',
+                transition: 'left 120ms ease, top 120ms ease',
+              }}
+            />
+          ))}
+
           <div
-            key={crate.id}
             style={{
               position: 'absolute',
-              left: crate.x * cellSize,
-              top: crate.y * cellSize,
+              left: board.playerPos.x * cellSize,
+              top: board.playerPos.y * cellSize,
               width: cellSize,
               height: cellSize,
-              backgroundImage: `url(${tileAssets.crate})`,
-              backgroundSize: 'cover',
               transition: 'left 120ms ease, top 120ms ease',
+              backgroundImage: playerSprite ? `url(${playerSprite})` : undefined,
+              backgroundSize: practice ? '230%' : 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
             }}
           />
-        ))}
-
-        <div
-          style={{
-            position: 'absolute',
-            left: board.playerPos.x * cellSize,
-            top: board.playerPos.y * cellSize,
-            width: cellSize,
-            height: cellSize,
-            transition: 'left 120ms ease, top 120ms ease',
-            backgroundImage: playerSprite ? `url(${playerSprite})` : undefined,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-          }}
-        />
-
         </div>
       </div>
 
@@ -380,7 +504,16 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
 };
 
 const DPadButton: React.FC<{ label: string; onPress: () => void }> = ({ label, onPress }) => (
-  <div
+  <button
+    aria-label={
+      label === '▲'
+        ? 'Move up'
+        : label === '▼'
+          ? 'Move down'
+          : label === '◀'
+            ? 'Move left'
+            : 'Move right'
+    }
     onClick={onPress}
     style={{
       width: 56,
@@ -399,5 +532,5 @@ const DPadButton: React.FC<{ label: string; onPress: () => void }> = ({ label, o
     }}
   >
     {label}
-  </div>
+  </button>
 );

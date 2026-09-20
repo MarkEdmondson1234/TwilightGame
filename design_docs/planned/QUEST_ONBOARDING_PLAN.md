@@ -1,6 +1,6 @@
 # Quest onboarding and feature discovery plan
 
-**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues and the kitchen painting introduction implemented; adventure practice and wider world signposting remain planned.
+**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues and the kitchen painting introduction implemented; Crate Trail adventure practice implemented; Tiny Wreath, cooking tasters and wider world signposting remain planned.
 **Audit date:** 18 September 2026. **Code baseline:** `26a02b78`.  
 **Audience:** New players aged 11–12, with optional help for any player.  
 **Scope clarification:** Make every existing player-facing feature discoverable and reachable, including activities outside quest chains. New quests are one possible tool, not the default solution.  
@@ -87,6 +87,18 @@ Test in game: talk to Mum → **Could I make a picture?** → accept; tap the ea
 
 Next: an all-season adventure practice route, followed by Tiny Wreath, cooking tasters and remaining-chain guides.
 
+
+### Eighth release — the child’s Crate Trail
+
+Implemented: an all-season, free village-child activity with a six-move beginner crate board, two pushes, labelled touch arrows, keyboard movement, Undo (last 100 moves), Restart and an optional explicit hint. The child introduces it through dialogue and a nearby discovery invitation. Reaching the golden door shows a short celebration; **Back to the village** records the independent lesson, adds a completed journal entry and publishes a deduplicated village-news milestone. Directions remain in **Things to try**, including a lead towards the harder Test of Wits.
+
+This is the first playable slice of the proposed Delivery Mix-up: the puzzle is immediately available, with no parcel hand-in prerequisite. It has a separate mini-game ID and personal quest ID; it cannot trigger the Wizard Trials victory branch, cutscenes, travel or equipment rewards. Leaving before finishing/acknowledging the result gives no completion; replay is free. The full Test of Wits retains its original level and immediate completion result.
+
+Validation: keyboard and touch solution tests, Undo/Restart, optional hints, leaving without credit, one-time personal/news completion and the original Test of Wits solution. Full local suite: 1,658 passed, three import/hook timeouts; affected suites rerun separately. Types and lint checked (nine existing warnings). Actual practice component solved through browser touch controls at 1024×768, 844×390 and 390×844, with screenshots reviewed. Live village entry and two-account news playtesting remain needed.
+
+Test in game: approach the village child in any season → ask **What is Crate Trail?** or choose **Play Crate Trail** from her interaction menu → try a move, Undo, Restart and Hint → reach the golden door → **Back to the village**. Check the completed journal entry and Things to try; replay and confirm it adds no trial progress. Another account should receive the authored puzzle clue through village news.
+
+Next: Mushra’s Tiny Wreath; then cooking tasters and remaining-chain guides. The fuller Delivery Mix-up parcel story and Lava Leap practice remain optional follow-ups.
 
 ## Recommendation
 
@@ -261,7 +273,7 @@ After a first success, let players sample the three cooking domains. Keep three-
 
 ## New short quests and mini-game rewards
 
-These are proposals, not existing content. Start with two or three; avoid building a new tutorial chain for every control.
+The release notes above track what has shipped (tea repair, kitchen painting and the Crate Trail puzzle sampler). Remaining rows describe proposals; avoid building a new tutorial chain for every control.
 
 | Proposed quest | What the player actually does | Teaches / signposts | Reward and reuse | Scope |
 |---|---|---|---|---|

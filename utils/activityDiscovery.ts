@@ -1,5 +1,6 @@
 /** Small, authored leads. These record knowledge, never quest completion. */
 export type ActivityLeadId =
+  | 'crate-trail'
   | 'painting'
   | 'skiing'
   | 'pumpkin-carving'
@@ -18,6 +19,14 @@ export interface ActivityLead {
 }
 
 export const ACTIVITY_LEADS: ActivityLead[] = [
+  {
+    id: 'crate-trail',
+    title: 'The child’s Crate Trail',
+    invitation:
+      'The village child sketches a delivery path in the dirt. “Oh no! Crates everywhere! Can you help me get through?”',
+    directions:
+      'Interact with the village child and choose Play Crate Trail. Push crates to reach the golden door. Try Undo, Restart or Hint whenever you like. It costs nothing and is available all year. This is a small practice puzzle; the harder Test of Wits waits in the Wizard Trials deep in the mines.',
+  },
   {
     id: 'painting',
     title: 'A Picture for the Kitchen',
@@ -111,6 +120,7 @@ export function getActivityCandidates(
     }
     if (npc.name === 'Cinder the Guide') candidates.push({ id: 'lava-leap', npcId: npc.id });
     if (npc.id === 'mushra') candidates.push({ id: 'wreath-making', npcId: npc.id });
+    if (npc.id === 'child') candidates.push({ id: 'crate-trail', npcId: npc.id });
     if (npc.id === 'child' && ctx.season.toLowerCase() === 'autumn') {
       candidates.push({ id: 'pumpkin-carving', npcId: npc.id });
     }

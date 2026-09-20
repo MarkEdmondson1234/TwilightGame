@@ -17,9 +17,12 @@ describe('activity discovery eligibility', () => {
   it('requires the nearby host and correct season for pumpkin carving', () => {
     const nearbyNpcs = [{ id: 'child', name: 'Village Child' }];
     expect(getActivityCandidates({ mapId: 'village', season: 'autumn', nearbyNpcs })).toEqual([
+      { id: 'crate-trail', npcId: 'child' },
       { id: 'pumpkin-carving', npcId: 'child' },
     ]);
-    expect(getActivityCandidates({ mapId: 'village', season: 'spring', nearbyNpcs })).toEqual([]);
+    expect(getActivityCandidates({ mapId: 'village', season: 'spring', nearbyNpcs })).toEqual([
+      { id: 'crate-trail', npcId: 'child' },
+    ]);
     expect(getActivityCandidates({ mapId: 'village', season: 'autumn', nearbyNpcs: [] })).toEqual(
       []
     );
