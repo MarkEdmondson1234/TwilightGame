@@ -62,3 +62,22 @@ export function readQuestNextStep(id: string): QuestNextStep | undefined {
       cookiesUnlocked: cookingManager.isRecipeUnlocked('cookies'),
     });
 }
+
+/** Only active personal objectives can advertise a useful NPC conversation. */
+export function readQuestConversations() {
+  const steps = [
+    readCookingNextStep(),
+    ...eventChainManager
+      .getActiveChains()
+      .filter(
+        (progress) => progress.chainId === 'gardening_quest' || progress.chainId === 'althea_chores'
+      )
+      .map((progress) => readQuestNextStep(progress.chainId)),
+  ];
+  const cues = new Map<string, NonNullable<QuestNextStep['conversation']>>();
+  for (const step of steps) {
+    const cue = step?.conversation;
+    if (cue && (!cues.has(cue.npcId) || cue.kind === 'delivery')) cues.set(cue.npcId, cue);
+  }
+  return cues;
+}

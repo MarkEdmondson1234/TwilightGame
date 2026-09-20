@@ -1,6 +1,6 @@
 # Quest onboarding and feature discovery plan
 
-**Status:** In progress — discovery invitations, village news, tea repair, three quest guides and optional pinning implemented; introductory quests and wider world signposting remain planned.
+**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues implemented; introductory quests and wider world signposting remain planned.
 **Audit date:** 18 September 2026. **Code baseline:** `26a02b78`.  
 **Audience:** New players aged 11–12, with optional help for any player.  
 **Scope clarification:** Make every existing player-facing feature discoverable and reachable, including activities outside quest chains. New quests are one possible tool, not the default solution.  
@@ -60,6 +60,20 @@ Validation: persistence/read validation, quest switching, stale/completed pins, 
 Test in game: select a supported quest, choose **Pin next step while exploring**, close the book and follow the reminder. Collect a requested item and check the action changes to delivery. Tap the reminder to return to that journal entry. Switch to another quest, reload, open an invitation or mini-game, and finish or unpin the quest. Other accepted quests and their progress should remain intact.
 
 Next: NPC readiness cues and reminders, then **A Picture for the Kitchen** and an all-season adventure practice route. Cooking tasters and remaining-chain adapters are still outstanding.
+
+### Sixth release — nearby quest conversation cues
+
+Implemented: nearby Mum, Elias and Althea can show a quiet speech cue when a supported personal quest has a useful conversation or delivery. Within talking range it expands into a short explanation and a keyboard/touch **Talk** button that opens ordinary dialogue. Reading or selecting a cue never gives an item, spends inventory or advances the quest. Unaccepted/completed chains do not advertise deliveries simply because the player carries an item.
+
+The same next-step adapters supply journal, pinned guidance and conversation readiness. Mum offers the next cooking lesson after the current unlocked recipes are mastered. Elias distinguishes accepting the gardening offer, requesting a new seasonal task, honey advice and an actual crop/honey hand-in; waiting for a season is not marked ready. Althea distinguishes undelivered tea/cookies and her final story conversation. Her cookie-learning lead can point to Mum without promising to bypass the current cooking-path requirement.
+
+Cues respect NPC visibility, proximity and interaction range, refresh after inventory/quest changes, and yield to dialogue, books, mini-games, cutscenes, village news and activity invitations. The existing shop indicator remains. Prompts stay inside the viewport at screen edges and use no looping animation. Scope remains the three existing adapted quest lines; new world props and wider quest coverage are still planned.
+
+Validation: tests cover actionable versus waiting stages, autumn honey, winter carry-over, independent chores, active-only adapter reads, parallel quests, range, live refresh, hidden NPCs, overlay precedence, touch/click activation and preservation of the shop indicator. Browser fixtures were reviewed at 1024×768, 844×390 and 390×844, including an edge-clamped prompt. Live village/cottage playtesting remains needed.
+
+Test in game: finish the tea lesson and approach Mum; carry a crop for Elias's assigned spring/summer task, or honey for autumn; bring Althea an undelivered food item. Approach to read the cue, choose **Talk**, and use the named dialogue topic. After hand-in the old delivery cue should disappear. Check winter waiting has no ready-delivery cue unless an earlier assigned task has a valid item in the bag.
+
+Next: **A Picture for the Kitchen**, an all-season creative introduction with a starter canvas, followed by an adventure practice route. Cooking tasters and remaining-chain adapters remain outstanding.
 
 ## Recommendation
 

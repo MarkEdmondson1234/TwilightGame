@@ -1,8 +1,15 @@
 /** Read-only guidance: these functions never spend items or grant quest credit. */
+export interface QuestConversation {
+  npcId: 'mum_kitchen' | 'village_elder' | 'old_woman_knitting';
+  kind: 'talk' | 'delivery';
+  label: string;
+  topic: string;
+}
 export interface QuestNextStep {
   action: string;
   where: string;
   details: string[];
+  conversation?: QuestConversation;
 }
 export interface CookingGuideState {
   teaComplete: boolean;
@@ -22,6 +29,12 @@ export function cookingNextStep(state: CookingGuideState): QuestNextStep {
   if (!recipe)
     return {
       action: 'Ask Mum for your next recipe',
+      conversation: {
+        npcId: 'mum_kitchen',
+        kind: 'talk',
+        label: 'Ask for your next cooking lesson',
+        topic: 'Ask Mum to teach you to cook.',
+      },
       where: 'Mum’s kitchen',
       details: [
         'Ask Mum to teach you to cook. Choose a cooking path, or continue your current one.',
@@ -53,6 +66,12 @@ export function gardeningNextStep(s: GardenGuideState): QuestNextStep {
   if (s.offered)
     return {
       action: 'Accept Elias’s gardening offer',
+      conversation: {
+        npcId: 'village_elder',
+        kind: 'talk',
+        label: 'Help with the kitchen garden',
+        topic: 'Tell Elias you would like to help with the kitchen garden.',
+      },
       where: 'Elias in the village',
       details: ['Ask about helping with the garden whenever you are ready.'],
     };
@@ -60,6 +79,22 @@ export function gardeningNextStep(s: GardenGuideState): QuestNextStep {
     const honey = s.task === 'autumn';
     const count = honey ? s.honeyCount : s.cropCount;
     return {
+      conversation:
+        count > 0
+          ? {
+              npcId: 'village_elder',
+              kind: 'delivery',
+              label: `Bring Elias ${honey ? '1 Honey' : '1 crop'}`,
+              topic: 'Ask how the gardening is going, then choose the delivery response.',
+            }
+          : honey
+            ? {
+                npcId: 'village_elder',
+                kind: 'talk',
+                label: 'Ask where to find honey',
+                topic: 'Ask for foraging wisdom, then ask about honey.',
+              }
+            : undefined,
       action:
         count > 0
           ? `Deliver ${honey ? '1 Honey' : '1 crop'} to Elias`
@@ -102,6 +137,12 @@ export function gardeningNextStep(s: GardenGuideState): QuestNextStep {
     };
   return {
     action: 'Ask Elias for this season’s task',
+    conversation: {
+      npcId: 'village_elder',
+      kind: 'talk',
+      label: 'Ask about this season’s garden task',
+      topic: 'Ask Elias how the gardening is going.',
+    },
     where: 'Elias in the village',
     details: [
       progress,
@@ -131,11 +172,23 @@ export function altheaNextStep(s: ChoresGuideState): QuestNextStep {
   if (s.done)
     return {
       action: 'Return to Althea to hear her story',
+      conversation: {
+        npcId: 'old_woman_knitting',
+        kind: 'talk',
+        label: 'Althea’s story is ready',
+        topic: 'Speak to Althea now that her chores are done.',
+      },
       where: 'Althea’s cottage in the village',
       details,
     };
   if ((!s.teaDelivered && s.teaCount > 0) || (!s.cookiesDelivered && s.cookiesCount > 0))
     return {
+      conversation: {
+        npcId: 'old_woman_knitting',
+        kind: 'delivery',
+        label: `Bring Althea your ${!s.teaDelivered && s.teaCount > 0 ? 'tea' : 'cookies'}`,
+        topic: 'Use her chores dialogue to hand it over, or give her the requested item.',
+      },
       action: `Give Althea your ${!s.teaDelivered && s.teaCount > 0 ? 'tea' : 'cookies'}`,
       where: 'Althea’s cottage in the village',
       details: [
@@ -155,6 +208,15 @@ export function altheaNextStep(s: ChoresGuideState): QuestNextStep {
   if (!s.teaDelivered)
     return { action: 'Make tea for Althea', where: 'Mum’s kitchen → Recipe book → Tea', details };
   return {
+    conversation: s.cookiesUnlocked
+      ? undefined
+      : {
+          npcId: 'mum_kitchen',
+          kind: 'talk',
+          label: 'Ask about learning cookies',
+          topic:
+            'Ask Mum to teach you to cook, then ask about baking. Your current path may need finishing first.',
+        },
     action: s.cookiesUnlocked ? 'Bake cookies for Althea' : 'Ask Mum about learning cookies',
     where: s.cookiesUnlocked ? 'Recipe book → Baking' : 'Mum’s kitchen',
     details: [

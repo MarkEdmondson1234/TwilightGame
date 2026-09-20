@@ -2571,6 +2571,8 @@ const App: React.FC = () => {
 
         {/* NPC interaction indicators (shows when player is near interactable NPCs) */}
         <NPCInteractionIndicators
+          blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || activityInvitationVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
+          onTalk={setActiveNPC}
           npcs={allNPCs}
           playerPos={playerPos}
           gridOffset={effectiveGridOffset}

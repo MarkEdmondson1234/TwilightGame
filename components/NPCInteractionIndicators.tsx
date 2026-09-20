@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuestGuideRefresh } from '../hooks/useQuestGuideRefresh';
+import { readQuestConversations } from '../utils/readQuestNextSteps';
+import { npcManager } from '../NPCManager';
+import QuestConversationCue from './QuestConversationCue';
 import { NPC, Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
@@ -8,6 +12,8 @@ import GameIcon from './GameIcon';
 
 interface NPCInteractionIndicatorsProps {
   npcs: NPC[];
+  blocked?: boolean;
+  onTalk?: (npcId: string) => void;
   playerPos: Position;
   gridOffset?: Position; // Offset for background-image rooms with centered layers
   tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
@@ -139,11 +145,12 @@ const ParchmentTooltip: React.FC<{
 
 /**
  * Visual indicators for NPC interactions
- * Only shows for NPCs with special UI actions (like shop counter)
- * Regular dialogue NPCs don't need indicators
+ * Shows shop affordances and useful conversations for supported personal quests.
  */
 const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
   npcs,
+  blocked = false,
+  onTalk,
   playerPos,
   gridOffset,
   tileSize = TILE_SIZE,
@@ -151,11 +158,22 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
   const offsetX = gridOffset?.x ?? 0;
   const offsetY = gridOffset?.y ?? 0;
   const isTouchDevice = useTouchDevice();
+  const revision = useQuestGuideRefresh();
+  const conversations = useMemo(
+    () => (blocked ? new Map() : readQuestConversations()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revision invalidates manager reads
+    [blocked, revision]
+  );
+  if (blocked) return null;
 
   return (
     <>
       {npcs
-        .filter((npc) => NPCS_WITH_INDICATORS.includes(npc.id))
+        .filter(
+          (npc) =>
+            npcManager.isNPCVisible(npc) &&
+            (NPCS_WITH_INDICATORS.includes(npc.id) || (onTalk && conversations.has(npc.id)))
+        )
         .map((npc) => {
           // Calculate distance to NPC
           const dx = Math.abs(playerPos.x - npc.position.x);
@@ -183,6 +201,19 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
           const screenX = (npc.position.x + 1) * tileSize + offsetX;
           const screenY = npc.position.y * tileSize + offsetY - npcScale * 8;
 
+          const cue = conversations.get(npc.id);
+          if (cue && onTalk)
+            return (
+              <QuestConversationCue
+                key={`quest-cue-${npc.id}`}
+                cue={cue}
+                screenX={screenX}
+                screenY={screenY - 8}
+                inRange={isInRange}
+                onTalk={() => onTalk(npc.id)}
+              />
+            );
+
           return (
             <React.Fragment key={`npc-indicator-${npc.id}`}>
               {/* Floating icon above the NPC */}
@@ -205,19 +236,15 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
   );
 };
 
-// Skip re-render when player has moved less than 0.5 tiles —
-// NPC indicator visibility only changes at interaction radii of 1.5+ tiles
-const POS_THRESHOLD = 0.5;
-
+// Position updates keep the talk button's range exact; quest reads are memoised separately.
 export default React.memo(NPCInteractionIndicators, (prev, next) => {
-  if (prev.npcs !== next.npcs) return false;
-  if (prev.tileSize !== next.tileSize) return false;
-  if (prev.gridOffset !== next.gridOffset) return false;
-  if (
-    Math.abs(prev.playerPos.x - next.playerPos.x) >= POS_THRESHOLD ||
-    Math.abs(prev.playerPos.y - next.playerPos.y) >= POS_THRESHOLD
-  ) {
-    return false;
-  }
-  return true;
+  return (
+    prev.npcs === next.npcs &&
+    prev.blocked === next.blocked &&
+    prev.onTalk === next.onTalk &&
+    prev.tileSize === next.tileSize &&
+    prev.gridOffset === next.gridOffset &&
+    prev.playerPos.x === next.playerPos.x &&
+    prev.playerPos.y === next.playerPos.y
+  );
 });
