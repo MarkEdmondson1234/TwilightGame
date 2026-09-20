@@ -19,6 +19,7 @@ interface Props {
   mapId: string;
   playerPosition: RefObject<Position>;
   blocked: boolean;
+  onVisibilityChange?: (visible: boolean) => void;
   onTalk: (npcId: string) => void;
   onSki: () => void;
   onJournal: () => void;
@@ -29,6 +30,7 @@ export default function ActivityInvitation({
   playerPosition,
   blocked,
   onTalk,
+  onVisibilityChange,
   onSki,
   onJournal,
 }: Props) {
@@ -76,6 +78,15 @@ export default function ActivityInvitation({
   useEffect(() => {
     setExpanded(false);
   }, [candidate?.id]);
+  const visible =
+    !blocked &&
+    !!candidate &&
+    candidate.mapId === mapId &&
+    (candidate.id !== 'skiing' || canSkiHere(mapId, TimeManager.getCurrentTime().season));
+  useEffect(() => {
+    onVisibilityChange?.(visible);
+    return () => onVisibilityChange?.(false);
+  }, [visible, onVisibilityChange]);
   if (blocked || !candidate || candidate.mapId !== mapId) return null;
   const lead = ACTIVITY_LEADS.find((entry) => entry.id === candidate.id)!;
   // Recheck at render/action time too: a season change must not leave a stale ski launch.

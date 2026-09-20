@@ -1,0 +1,61 @@
+.pinned-quest {
+  position: fixed;
+  top: calc(112px + env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left));
+  width: min(300px, calc(100vw - 24px));
+  display: flex;
+  align-items: flex-start;
+  border: 1px solid;
+  border-left-width: 5px;
+  border-radius: 3px 12px 12px 3px;
+  box-shadow: 0 3px 8px #30251c25;
+}
+.pinned-quest button {
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  min-height: 44px;
+}
+.pinned-quest-open {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 4px 10px 12px;
+  text-align: left;
+  overflow-y: auto;
+  max-height: min(190px, calc(100dvh - 320px));
+}
+.pinned-quest-open span,
+.pinned-quest-open strong {
+  display: block;
+}
+.pinned-quest-title {
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.pinned-quest-open strong {
+  font-size: 16px;
+  line-height: 1.3;
+}
+.pinned-quest-open span:last-child {
+  font-size: 13px;
+  margin-top: 5px;
+  line-height: 1.3;
+}
+.pinned-quest .pinned-quest-remove {
+  min-width: 44px;
+  font-size: 24px;
+}
+.pinned-quest button:focus-visible {
+  outline: 3px solid #4a6741;
+  outline-offset: 2px;
+}
+@media (max-height: 500px) {
+  .pinned-quest {
+    top: calc(76px + env(safe-area-inset-top, 0px));
+  }
+  .pinned-quest-open {
+    max-height: calc(100dvh - 250px);
+  }
+}

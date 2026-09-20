@@ -1,3 +1,5 @@
+import { getPinnedQuestId, isPinnableQuest, pinQuest } from '../../utils/pinnedQuest';
+import { useQuestGuideRefresh } from '../../hooks/useQuestGuideRefresh';
 import { readCookingNextStep, readQuestNextStep } from '../../utils/readQuestNextSteps';
 import type { QuestNextStep } from '../../utils/questNextSteps';
 import { getAuthService } from '../../firebase/safe';
@@ -5,9 +7,8 @@ import { readVillageNews, updateVillageNews } from '../../utils/villageNewsStora
 import { compareNews } from '../../utils/villageNews';
 import { rememberActivityLead } from '../../utils/activityLeadStorage';
 import type { ActivityLeadId } from '../../utils/activityDiscovery';
-import { eventBus, GameEvent } from '../../utils/EventBus';
 import { getRememberedActivityLeads } from '../../utils/activityLeadStorage';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
@@ -90,17 +91,7 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   // Counter to force diary data refresh after Firestore sync
   const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const refresh = () => setDiaryRefreshKey((n) => n + 1);
-    const unsubscribe = [
-      GameEvent.QUEST_DATA_CHANGED,
-      GameEvent.EVENT_CHAIN_UPDATED,
-      GameEvent.INVENTORY_CHANGED,
-      GameEvent.TIME_CHANGED,
-      GameEvent.PLAYER_MILESTONE,
-    ].map((event) => eventBus.on(event, refresh));
-    return () => unsubscribe.forEach((off) => off());
-  }, []);
+  const questRevision = useQuestGuideRefresh();
 
   // Build journal entries for each chapter
   const entriesByChapter = useMemo(() => {
@@ -205,9 +196,18 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       conversations,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- diaryRefreshKey is a version counter: the entries read manager singletons, not React state, so the counter is the invalidation mechanism
-  }, [diaryRefreshKey]);
+  }, [diaryRefreshKey, questRevision]);
 
   const pagination = useBookPagination(JOURNAL_CHAPTERS, entriesByChapter, 6);
+
+  const openedPin = useRef(false);
+  const { findAndSelectItem } = pagination;
+  useEffect(() => {
+    if (openedPin.current) return;
+    openedPin.current = true;
+    const pinnedId = getPinnedQuestId();
+    if (pinnedId) findAndSelectItem((entry) => entry.id === pinnedId);
+  }, [findAndSelectItem]);
 
   // Sync diary from Firestore when conversations chapter is selected
   useEffect(() => {
@@ -360,6 +360,21 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
           }}
         >
           Keep this lead in Things to try
+        </button>
+      )}
+      {selectedEntry?.nextStep && isPinnableQuest(selectedEntry.id) && (
+        <button
+          className="p-3 rounded mb-3"
+          style={{ background: theme.accentPrimary, color: '#fff', minHeight: 44 }}
+          aria-pressed={getPinnedQuestId() === selectedEntry.id}
+          onClick={() => {
+            if (isPinnableQuest(selectedEntry.id))
+              pinQuest(getPinnedQuestId() === selectedEntry.id ? null : selectedEntry.id);
+          }}
+        >
+          {getPinnedQuestId() === selectedEntry.id
+            ? 'Unpin this quest'
+            : 'Pin next step while exploring'}
         </button>
       )}
       {selectedEntry ? (

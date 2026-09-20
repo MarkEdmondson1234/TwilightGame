@@ -1,6 +1,6 @@
 # Quest onboarding and feature discovery plan
 
-**Status:** In progress — first activity-discovery slice implemented; remaining phases planned.  
+**Status:** In progress — discovery invitations, village news, tea repair, three quest guides and optional pinning implemented; introductory quests and wider world signposting remain planned.
 **Audit date:** 18 September 2026. **Code baseline:** `26a02b78`.  
 **Audience:** New players aged 11–12, with optional help for any player.  
 **Scope clarification:** Make every existing player-facing feature discoverable and reachable, including activities outside quest chains. New quests are one possible tool, not the default solution.  
@@ -48,6 +48,18 @@ Gardening keeps an assigned task across season changes, accepts an already-held 
 Removed estimated active-chain percentages: stage-array position is not a reliable completion measure in branching stories. Completed history entries retain their completion marker. Pinning, world markers, wider quest adapters and cooking-path flexibility remain planned.
 
 Validation: all 1,620 tests passed; type check and lint passed (nine existing warnings). The journal panel was reviewed in an isolated 1024×768 touch browser. State-transition tests cover tea, mastery, ingredients, seasonal rollover, winter, inventory versus delivery and independent chores; a journal interaction test covers simultaneous activities and live inventory refresh. Playtest by switching among all three entries, handing over only one of Althea's items, and revisiting Elias after a season change. No quest state or inventory is changed by opening these guides.
+
+### Fifth release — a next step while exploring
+
+Implemented: players can pin cooking, gardening or Althea's next step from **Journal → Active Quests**. A compact cottage-style reminder shows the current action and location while exploring; selecting it opens the journal at the pinned quest. Pinning another quest replaces the preference without changing either quest's progress. Unpinning removes the reminder and leaves the quest active. The preference travels through existing character saves; old saves default to no pin.
+
+The reminder reads the same personal guidance as the journal, refreshes after inventory, quest and cloud-sync events, and hides when the quest is no longer active. Dialogue, books, mini-games, cutscenes, village news and activity invitations take precedence. Touch controls retain their space, and the reminder has keyboard focus and labelled open/unpin actions. Only the three chains with reliable next-step adapters are pinnable in this release.
+
+Validation: persistence/read validation, quest switching, stale/completed pins, inventory updates, cloud refresh, unpinning, invitation precedence and journal integration are covered by tests. The full local suite had one existing global-event dynamic-import timeout; that test passed on an isolated rerun. Type checking passes; lint has no errors and nine existing warnings. Browser fixture checks cover tablet and portrait/landscape phone sizes; a live fresh-save playtest remains needed.
+
+Test in game: select a supported quest, choose **Pin next step while exploring**, close the book and follow the reminder. Collect a requested item and check the action changes to delivery. Tap the reminder to return to that journal entry. Switch to another quest, reload, open an invitation or mini-game, and finish or unpin the quest. Other accepted quests and their progress should remain intact.
+
+Next: NPC readiness cues and reminders, then **A Picture for the Kitchen** and an all-season adventure practice route. Cooking tasters and remaining-chain adapters are still outstanding.
 
 ## Recommendation
 

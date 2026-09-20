@@ -52,6 +52,17 @@ describe('activity invitations', () => {
     expect(screen.getByText(/Mr Fox sells skis/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go Skiing' })).not.toBeInTheDocument();
   });
+  it('reports visibility so the exploration reminder can yield and return', () => {
+    const onVisibilityChange = vi.fn();
+    const view = render(
+      <ActivityInvitation {...props()} onVisibilityChange={onVisibilityChange} />
+    );
+    expect(onVisibilityChange).toHaveBeenLastCalledWith(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Later' }));
+    expect(onVisibilityChange).toHaveBeenLastCalledWith(false);
+    view.unmount();
+    expect(onVisibilityChange).toHaveBeenLastCalledWith(false);
+  });
   it('remembers Later and does not repeat after remounting', () => {
     const p = props();
     const view = render(<ActivityInvitation {...p} />);

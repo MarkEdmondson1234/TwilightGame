@@ -1,3 +1,4 @@
+import PinnedQuest from './components/PinnedQuest';
 import VillageNews from './components/VillageNews';
 import { useVillageNews } from './hooks/useVillageNews';
 import ActivityInvitation from './components/ActivityInvitation';
@@ -2278,6 +2279,7 @@ const App: React.FC = () => {
     !showSplashScreen && !isLoadingCutscene && !isCutscenePlaying && isMapInitialized;
 
   const villageNews = useVillageNews(isInWorld);
+  const [activityInvitationVisible, setActivityInvitationVisible] = useState(false);
 
   const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
 
@@ -2745,7 +2747,12 @@ const App: React.FC = () => {
         />
       )}
       <VillageNews key={villageNews.uid ?? 'offline'} news={villageNews} blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible} onJournal={() => openUI('journal')} />
+      <PinnedQuest
+        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || activityInvitationVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
+        onJournal={() => openUI('journal')}
+      />
       <ActivityInvitation
+        onVisibilityChange={setActivityInvitationVisible}
         mapId={currentMapId}
         playerPosition={playerPosRef}
         blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
