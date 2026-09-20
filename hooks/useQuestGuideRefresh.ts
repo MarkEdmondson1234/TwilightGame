@@ -8,6 +8,8 @@ export function useQuestGuideRefresh() {
     const refresh = () => setRevision((value) => value + 1);
     const unsubscribe = [
       GameEvent.QUEST_DATA_CHANGED,
+      GameEvent.QUEST_COMPLETED,
+      GameEvent.PLACED_ITEMS_CHANGED,
       GameEvent.EVENT_CHAIN_UPDATED,
       GameEvent.INVENTORY_CHANGED,
       GameEvent.TIME_CHANGED,

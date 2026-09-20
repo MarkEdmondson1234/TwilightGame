@@ -39,6 +39,43 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
     },
     dialogue: [
       {
+        id: 'picture_offer',
+        expression: 'smile',
+        text: 'Mum glances at the easel beside the stairs. “This kitchen could use a picture of somewhere you love. A forest? A dragon’s garden? I have a canvas for your first try. You can paint whenever you like, even while we’re learning to cook.”',
+        responses: [
+          { text: 'I’d like to paint!', nextId: 'picture_accept' },
+          { text: 'Maybe later.' },
+        ],
+      },
+      {
+        id: 'picture_accept',
+        expression: 'happy',
+        text: '“Your starter canvas is in your bag, love. Tap the easel beside the stairs and choose Draw. Pick a colour and draw, then give your picture a name and Save. You don’t need paint for a fancy frame. Saving uses a canvas and puts a Framed Painting in your bag.”',
+        responses: [
+          { text: 'How do I display it?', nextId: 'picture_display' },
+          { text: 'I’ll try!' },
+        ],
+      },
+      {
+        id: 'picture_check',
+        text: '“The easel is beside the stairs, love. Draw something, give it a name and Save. Your journal has the next step whenever you need it.”',
+        responses: [
+          { text: 'How do I display it?', nextId: 'picture_display' },
+          { text: 'Back to my picture!' },
+        ],
+      },
+      {
+        id: 'picture_display',
+        text: '“Open your bag and select Framed Painting to hold it. Close your bag, tap a clear spot in this kitchen and choose Place. Leave the doors and stairs clear! Then come and tell me about your picture.”',
+        responses: [{ text: 'All right!' }],
+      },
+      {
+        id: 'picture_finished',
+        expression: 'happy',
+        text: 'Mum steps back to admire your picture. “There! The kitchen feels more like ours already. Keep painting, love. You can make canvases and decorations using Craft at an easel. And if you want to move this picture later, you can pick it up again.”',
+        responses: [{ text: 'I made that!' }],
+      },
+      {
         id: 'greeting',
         text: 'Hello, love! Welcome home. Have you had a good day?',
         expression: 'smile',
@@ -68,6 +105,20 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
             'Look at those beautiful petals falling! The cherry tree is in full bloom. It reminds me of when you were little - you loved catching the petals.',
         },
         responses: [
+          ...(id === 'mum_kitchen'
+            ? [
+                {
+                  text: 'Could I make a picture?',
+                  nextId: 'picture_offer',
+                  hiddenIfQuestStarted: 'picture_for_kitchen',
+                },
+                {
+                  text: 'About my kitchen picture…',
+                  nextId: 'picture_check',
+                  requiredQuest: 'picture_for_kitchen',
+                },
+              ]
+            : []),
           { text: 'Tell me about the village.', nextId: 'village_chat' },
           {
             text: 'Can you teach me to cook?',

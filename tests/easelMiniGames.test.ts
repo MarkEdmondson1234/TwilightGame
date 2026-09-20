@@ -1,3 +1,4 @@
+import { mapLocationProvider } from '../utils/interactions/providers/mapLocation';
 /** @vitest-environment node */
 import { describe, it, expect, vi } from 'vitest';
 import { placedItemProvider } from '../utils/interactions/providers/placedItems';
@@ -65,9 +66,34 @@ describe('placed easel', () => {
   });
 
   it('keeps both mini-games registered against the easel', () => {
-    expect(getMiniGamesForPlacedItem('easel').map((mg) => mg.id).sort()).toEqual([
-      'decoration-crafting',
+    expect(
+      getMiniGamesForPlacedItem('easel')
+        .map((mg) => mg.id)
+        .sort()
+    ).toEqual(['decoration-crafting', 'painting-easel']);
+  });
+});
+
+describe('communal kitchen easel', () => {
+  it('opens drawing and crafting without owning an easel; cannot be picked up', () => {
+    const open = vi.fn();
+    const options = mapLocationProvider({
+      currentMapId: 'mums_kitchen',
+      position: { x: 10, y: 5 },
+      onOpenMiniGame: open,
+    } as unknown as InteractionContext);
+    expect(options.map((o) => o.label).sort()).toEqual(['Craft Workshop', 'Draw']);
+    options.find((o) => o.label === 'Draw')!.execute();
+    expect(open).toHaveBeenCalledWith(
       'painting-easel',
-    ]);
+      expect.objectContaining({ triggerType: 'mapLocation' })
+    );
+    expect(
+      mapLocationProvider({
+        currentMapId: 'village',
+        position: { x: 10, y: 5 },
+        onOpenMiniGame: open,
+      } as unknown as InteractionContext)
+    ).toEqual([]);
   });
 });

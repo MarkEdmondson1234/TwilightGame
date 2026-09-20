@@ -8,6 +8,8 @@ const state = vi.hoisted(() => ({
 vi.mock('../GameState', () => ({
   gameState: {
     startQuest: vi.fn(),
+    isQuestStarted: () => false,
+    isQuestCompleted: () => false,
     getQuestData: () => state.pin,
     setQuestData: (questId: string, key: string, value: string | null) => {
       state.pin = value;

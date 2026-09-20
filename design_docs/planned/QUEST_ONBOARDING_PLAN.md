@@ -1,6 +1,6 @@
 # Quest onboarding and feature discovery plan
 
-**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues implemented; introductory quests and wider world signposting remain planned.
+**Status:** In progress — discovery invitations, village news, tea repair, three quest guides, optional pinning and nearby conversation cues and the kitchen painting introduction implemented; adventure practice and wider world signposting remain planned.
 **Audit date:** 18 September 2026. **Code baseline:** `26a02b78`.  
 **Audience:** New players aged 11–12, with optional help for any player.  
 **Scope clarification:** Make every existing player-facing feature discoverable and reachable, including activities outside quest chains. New quests are one possible tool, not the default solution.  
@@ -74,6 +74,19 @@ Validation: tests cover actionable versus waiting stages, autumn honey, winter c
 Test in game: finish the tea lesson and approach Mum; carry a crop for Elias's assigned spring/summer task, or honey for autumn; bring Althea an undelivered food item. Approach to read the cue, choose **Talk**, and use the named dialogue topic. After hand-in the old delivery cue should disappear. Check winter waiting has no ready-delivery cue unless an earlier assigned task has a valid item in the bag.
 
 Next: **A Picture for the Kitchen**, an all-season creative introduction with a starter canvas, followed by an adventure practice route. Cooking tasters and remaining-chain adapters remain outstanding.
+
+### Seventh release — A Picture for the Kitchen
+
+Implemented: a permanent communal easel beside the kitchen stairs, available all year with Draw and Craft Workshop; Mum’s optional painting dialogue and one saved starter canvas per character. This lesson runs independently of cooking. Saving a drawing records its identity; the journal and optional pin guide drawing → placing the picture → showing Mum. A nearby Mum cue appears when the player's lesson picture is actually displayed in the kitchen. Completion leaves the artwork in place and publishes an authored painting milestone for village news. Neighbours’ pictures never satisfy the personal lesson.
+
+Recovery: repeating the acceptance dialogue cannot grant more canvases. The easel’s Craft Workshop can make another Blank Canvas (linen + wooden frame). Lost pictures can be replaced with another saved drawing; moving the finished picture later does not undo completion. Drawing and crafting remain available after the lesson.
+
+Validation: lesson tests cover repeated/restored acceptance, genuine drawing identity and local kitchen placement, no credit from another picture or another room, completion/news once, and lost-material directions. Registry integration verifies both easel activities without owning equipment. Types and lint pass (nine existing warnings). Full local suite: 1,654 passed; two existing dynamic-import timeouts passed on isolated rerun. Easel artwork reviewed in a local room fixture at 1024×768 and 844×390. Live in-world touch and two-account news tests remain needed.
+
+Test in game: talk to Mum → **Could I make a picture?** → accept; tap the easel beside the stairs → **Draw**; draw, name and save; select **Framed Painting** in your bag, close the bag and tap a clear kitchen spot → **Place**; talk to Mum → **About my kitchen picture…**. Check the journal/pin between steps. Log in with another account after publication to test the painting news lead.
+
+Next: an all-season adventure practice route, followed by Tiny Wreath, cooking tasters and remaining-chain guides.
+
 
 ## Recommendation
 

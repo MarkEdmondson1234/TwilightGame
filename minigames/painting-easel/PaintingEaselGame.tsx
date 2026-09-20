@@ -1,3 +1,4 @@
+import { recordLessonPainting } from '../../utils/paintingLesson';
 /**
  * Painting Easel mini-game — Freehand drawing overlay
  *
@@ -134,6 +135,7 @@ const PaintingEaselGame: React.FC<MiniGameComponentProps> = ({ onClose }) => {
 
     if (result.success && result.paintingId) {
       await savePaintingImage(result.paintingId, dataUrl, paintingName.trim());
+      recordLessonPainting(result.paintingId);
     }
 
     setIsSaving(false);

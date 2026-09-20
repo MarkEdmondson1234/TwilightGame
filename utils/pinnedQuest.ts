@@ -1,10 +1,11 @@
+import { PAINTING_LESSON, PAINTING_LESSON_TITLE, readPaintingNextStep } from './paintingLesson';
 import { gameState } from '../GameState';
 import { eventChainManager } from './EventChainManager';
 import { readCookingNextStep, readQuestNextStep } from './readQuestNextSteps';
 
 const KNOWLEDGE_ID = 'activity_discovery_knowledge';
 const PIN_KEY = 'pinnedQuest';
-const SUPPORTED = ['cooking_lessons', 'gardening_quest', 'althea_chores'] as const;
+const SUPPORTED = [PAINTING_LESSON, 'cooking_lessons', 'gardening_quest', 'althea_chores'] as const;
 export type PinnableQuestId = (typeof SUPPORTED)[number];
 
 export function isPinnableQuest(id: unknown): id is PinnableQuestId {
@@ -26,6 +27,10 @@ export function pinQuest(id: PinnableQuestId | null): void {
 export function readPinnedQuest() {
   const id = getPinnedQuestId();
   if (!id) return;
+  if (id === PAINTING_LESSON) {
+    const nextStep = readPaintingNextStep();
+    return nextStep ? { id, title: PAINTING_LESSON_TITLE, nextStep } : undefined;
+  }
   if (id === 'cooking_lessons') {
     const nextStep = readCookingNextStep();
     return nextStep ? { id, title: 'Cooking with Mum', nextStep } : undefined;

@@ -1,3 +1,4 @@
+import { readPaintingNextStep } from './paintingLesson';
 import { cookingManager } from './CookingManager';
 import { inventoryManager } from './inventoryManager';
 import { eventChainManager } from './EventChainManager';
@@ -67,6 +68,7 @@ export function readQuestNextStep(id: string): QuestNextStep | undefined {
 export function readQuestConversations() {
   const steps = [
     readCookingNextStep(),
+    readPaintingNextStep(),
     ...eventChainManager
       .getActiveChains()
       .filter(

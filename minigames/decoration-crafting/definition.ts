@@ -17,6 +17,7 @@ export const decorationCraftingDefinition: MiniGameDefinition = {
   component: DecorationCraftingGame,
   triggers: {
     placedItemId: 'easel',
+    mapLocation: { mapId: 'mums_kitchen', x: 10, y: 5 },
   },
   customBackdrop: true,
 };

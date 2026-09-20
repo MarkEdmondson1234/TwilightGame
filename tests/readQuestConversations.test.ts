@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('../GameState', () => ({ gameState: { isQuestStarted: () => false } }));
 const state = vi.hoisted(() => ({ active: [] as string[], cooking: false, crops: 1 }));
 vi.mock('../utils/CookingManager', () => ({
   cookingManager: {

@@ -17,6 +17,7 @@ export const paintingEaselDefinition: MiniGameDefinition = {
   component: PaintingEaselGame,
   triggers: {
     placedItemId: 'easel',
+    mapLocation: { mapId: 'mums_kitchen', x: 10, y: 5 },
   },
   // Canvas requirement is checked inside the component's save flow
   // rather than at entry, since you can draw without saving

@@ -152,7 +152,43 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
 
   return (
     <>
+      {currentMapId === 'mums_kitchen' && (
+        <div
+          className="absolute pointer-events-none"
+          role="img"
+          aria-label="Kitchen easel with a blank canvas"
+          style={{
+            left: 10.5 * tileSize + offsetX,
+            top: 6 * tileSize + offsetY,
+            width: tileSize * 2.4,
+            height: tileSize * 2.4,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 99,
+          }}
+        >
+          <img
+            src="/TwilightGame/assets-optimized/items/mushras_shop/easel.png"
+            alt="Kitchen easel"
+            draggable={false}
+            style={{ width: '100%', height: '100%' }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: '35%',
+              top: '21%',
+              width: '31%',
+              height: '34%',
+              background: '#fff8df',
+              border: '2px solid #c4a47b',
+              boxShadow: '1px 2px 2px #46322166',
+            }}
+          />
+        </div>
+      )}
       {locations.map(({ def, x, y }) => {
+        // Draw and Craft share one physical easel and one visual signpost.
+        if (currentMapId === 'mums_kitchen' && def.id === 'decoration-crafting') return null;
         // Don't advertise a mini-game the player couldn't actually start
         // right now (season/time/friendship/item requirements not met).
         if (!miniGameManager.checkRequirements(def.id).canPlay) return null;

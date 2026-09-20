@@ -1,3 +1,9 @@
+import {
+  PAINTING_LESSON,
+  PAINTING_LESSON_TITLE,
+  readPaintingNextStep,
+} from '../../utils/paintingLesson';
+import { gameState } from '../../GameState';
 import { getPinnedQuestId, isPinnableQuest, pinQuest } from '../../utils/pinnedQuest';
 import { useQuestGuideRefresh } from '../../hooks/useQuestGuideRefresh';
 import { readCookingNextStep, readQuestNextStep } from '../../utils/readQuestNextSteps';
@@ -123,6 +129,16 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
         nextStep: cookingStep,
       });
 
+    const paintingStep = readPaintingNextStep();
+    if (paintingStep)
+      activeQuests.unshift({
+        id: PAINTING_LESSON,
+        type: 'quest',
+        title: PAINTING_LESSON_TITLE,
+        subtitle: paintingStep.action,
+        nextStep: paintingStep,
+      });
+
     // Completed quests
     const completedQuests: JournalEntry[] = eventChainManager
       .getCompletedChains()
@@ -144,6 +160,15 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
           progressPercent: 100,
           choicesSummary: choices.length > 0 ? choices : undefined,
         };
+      });
+
+    if (gameState.isQuestCompleted(PAINTING_LESSON))
+      completedQuests.unshift({
+        id: PAINTING_LESSON,
+        type: 'quest',
+        title: PAINTING_LESSON_TITLE,
+        subtitle: 'You made and displayed your own kitchen picture.',
+        progressPercent: 100,
       });
 
     // NPC conversations

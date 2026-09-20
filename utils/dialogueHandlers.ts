@@ -1,3 +1,4 @@
+import { startPaintingLesson, finishPaintingLesson } from './paintingLesson';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { cutsceneManager } from './CutsceneManager';
@@ -107,6 +108,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle seed pickup from seed shed NPCs
   if (npcId.startsWith('seed_keeper_')) {
     handleSeedPickup(nodeId);
+  }
+
+  if (npcId === 'mum_kitchen') {
+    if (nodeId === 'picture_accept') startPaintingLesson();
+    if (nodeId === 'picture_check' && finishPaintingLesson()) return 'picture_finished';
   }
 
   // Handle recipe teaching and quest actions from Mum

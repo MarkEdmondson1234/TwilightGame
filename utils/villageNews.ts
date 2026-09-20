@@ -5,6 +5,13 @@ export const NEWS_MILESTONES: Record<
   string,
   { title: string; story: string; lead?: ActivityLeadId; itemId?: string }
 > = {
+  painting: {
+    title: 'A new picture at home',
+    story:
+      'A neighbour has made and displayed a kitchen picture. Mum has an easel and a starter canvas if you would like to try.',
+    lead: 'painting',
+    itemId: 'easel',
+  },
   cooking: {
     title: 'Something delicious is cooking',
     story: 'A neighbour has cooked a dish. Mum might have a recipe for you to try, too.',

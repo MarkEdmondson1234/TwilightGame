@@ -1,5 +1,6 @@
 /** Small, authored leads. These record knowledge, never quest completion. */
 export type ActivityLeadId =
+  | 'painting'
   | 'skiing'
   | 'pumpkin-carving'
   | 'wreath-making'
@@ -17,6 +18,15 @@ export interface ActivityLead {
 }
 
 export const ACTIVITY_LEADS: ActivityLead[] = [
+  {
+    id: 'painting',
+    title: 'A Picture for the Kitchen',
+    itemId: 'easel',
+    invitation:
+      'Mum has set out an easel beside the stairs. “This kitchen could use a picture of somewhere you love. Shall we make one?”',
+    directions:
+      'Ask Mum at home about making a picture. She has one starter canvas for you. Tap the easel beside the kitchen stairs, choose Draw, make a picture, name it and Save. Select Framed Painting in your bag, then tap a clear spot in the kitchen to place it. Tell Mum when it is on display.',
+  },
   {
     id: 'cooking',
     title: 'A dish of your own',
@@ -97,6 +107,7 @@ export function getActivityCandidates(
   for (const npc of ctx.nearbyNpcs) {
     if (ctx.mapId === 'mums_kitchen' && npc.id === 'mum_kitchen') {
       candidates.push({ id: 'cooking', npcId: npc.id });
+      candidates.push({ id: 'painting', npcId: npc.id });
     }
     if (npc.name === 'Cinder the Guide') candidates.push({ id: 'lava-leap', npcId: npc.id });
     if (npc.id === 'mushra') candidates.push({ id: 'wreath-making', npcId: npc.id });
