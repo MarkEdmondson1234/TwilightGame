@@ -101,6 +101,47 @@ export function getTouchControlRects(
   ];
 }
 
+/**
+ * How far past the map's edges the camera may scroll on a touch device, in
+ * screen pixels, so the edge rows and columns can be brought out from under the
+ * controls. The bottom clears the tallest control (so an exit anywhere along the
+ * bottom edge lands above the D-pad and chat button, not just the quick bar); the
+ * sides clear the D-pad on the left and the chat/emote/satchel column on the
+ * right, for exits low down on a side edge.
+ */
+export interface CameraOverscroll {
+  left: number;
+  right: number;
+  bottom: number;
+}
+
+export const NO_OVERSCROLL: CameraOverscroll = { left: 0, right: 0, bottom: 0 };
+
+export function getTouchCameraOverscroll(compact: boolean): CameraOverscroll {
+  const dpad = dpadFootprint(compact);
+  const right = rightClusterFootprint();
+  return {
+    left: dpad.width,
+    right: right.width,
+    bottom: Math.max(dpad.height, right.height, TOUCH_BOTTOM_GAP_PX + QUICK_BAR_HEIGHT_PX),
+  };
+}
+
+/**
+ * The camera overscroll for the current device and map. Only tiled maps on a
+ * touch device get one: desktop has no controls over the world, and
+ * background-image rooms have their own framing (utils/mobileInteriorFraming.ts)
+ * and must not show anything past their painted edges.
+ */
+export function getCameraOverscroll(
+  isTouchDevice: boolean,
+  renderMode: string | undefined,
+  viewportHeight: number
+): CameraOverscroll {
+  if (!isTouchDevice || renderMode === 'background-image') return NO_OVERSCROLL;
+  return getTouchCameraOverscroll(isCompactTouchLayout(viewportHeight));
+}
+
 /** Viewport height below which the touch controls use their compact size. */
 export const TOUCH_COMPACT_MAX_HEIGHT_PX = 600;
 

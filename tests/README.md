@@ -71,6 +71,10 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `farmContextMenu.test.ts` | A right-click farm action that is offered without the tool, or runs with the wrong one | Touching `providers/farming.ts` or `isContextMenu` |
 | `longPress.test.ts` | Long press cancelling on finger drift, or failing to swallow its trailing tap | Touching `utils/longPress.ts` or adding a long-press surface |
 | `radialMenuClamp.test.tsx` | A menu opening partly off-screen — most of a phone screen is near an edge | Touching `RadialMenu` positioning |
+| `touchMenuPlacement.test.ts` | The touch action menu opening under the finger or off-screen | Touching `utils/touchMenuPlacement.ts` |
+| `touchActionMenuLayering.test.tsx` | The touch action menu drawn behind the chat button / quick bar, or opened on top of the controls (#157) | Changing `Z_TOUCH_ACTION_MENU*`, HUD-level z-indexes, or `utils/touchLayout.ts` |
+| `touchCameraOverscroll.test.ts` | An exit on the bottom or side edge of a map stuck under the quick bar / D-pad on a phone (#157) | Touching `computeCameraPosition` or the touch-control footprint |
+| `touchActionTransition.test.ts` | The touch action handler no longer taking the exit the player stands at | Touching `useTouchControls.handleActionPress` |
 | `quickSlotContextMenu.test.tsx` | The quick slot bar offering fewer actions than the same slot in the inventory | Touching `QuickSlotBar` |
 | `remotePlayerInteractions.test.ts` | Player options leaking onto plain clicks, or naming the wrong person | Touching `providers/remotePlayers.ts` |
 | `doorDestinationLabel.test.ts` | "Go to undefined" on a procedural map, or a size-blocked door losing its reason | Touching `providers/transition.ts` |
