@@ -2073,6 +2073,7 @@ const App: React.FC = () => {
     highlightLayerRef,
     thoughtBubbleLayerRef,
     updateAnimations,
+    canvasKey,
   } = usePixiRenderer({
     // Mobile keeps the title/account screen free of the world GPU allocation.
     // Desktop retains background warming for a fast Play transition.
@@ -2413,7 +2414,8 @@ const App: React.FC = () => {
       {/* PixiJS Renderer (WebGL - High Performance) */}
       {/* Z_TILE_BACKGROUND ensures canvas stays below foreground parallax (z-250) and weather overlays */}
       {USE_PIXI_RENDERER && (
-        <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`}
+        // key: a lost WebGL context is recovered on a fresh canvas (issue #157)
+        <canvas key={canvasKey} ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`}
           style={{
             touchAction: isTouchDevice && zoomLimits.enabled ? 'none' : undefined,
             clipPath: interiorControlInset > 0 ? `inset(0 0 ${interiorControlInset}px 0)` : undefined,

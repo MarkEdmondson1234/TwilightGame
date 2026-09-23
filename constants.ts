@@ -222,6 +222,10 @@ export const TIMING = {
 
   // Game systems
   MAP_TRANSITION_MS: 1000, // Map transition fade duration
+  // How long to wait for the browser to hand a lost WebGL context back before
+  // rebuilding the renderer on a fresh canvas anyway. iOS often never fires
+  // `webglcontextrestored`, and until the rebuild the world is simply gone.
+  WEBGL_RESTORE_WAIT_MS: 2000,
   WEATHER_CHECK_MS: 3000, // Interval for weather update checks
   WEATHER_TRANSITION_S: 3, // Weather/darkness fade duration in seconds
   AUTOSAVE_INTERVAL_MS: 60000, // Autosave frequency
