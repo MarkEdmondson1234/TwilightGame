@@ -14,10 +14,11 @@
  * do, or a long press. It never opens by itself.
  */
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import GameIcon from './GameIcon';
 import { useMenuViewport } from '../hooks/useMenuViewport';
 import { placeTouchMenu, TOUCH_MENU_MARGIN_PX } from '../utils/touchMenuPlacement';
+import { getTouchControlRects, isCompactTouchLayout } from '../utils/touchLayout';
 import type { RadialMenuOption } from './RadialMenu';
 
 /** Round button: Apple's minimum comfortable tap target. */
@@ -42,20 +43,35 @@ interface TouchActionMenuProps {
   position: { x: number; y: number };
   options: RadialMenuOption[];
   onClose: () => void;
-  /** Backdrop z-index; the menu sits one above it. */
-  zIndex: number;
-  /** Screen rectangles the menu must not cover (the fixed touch controls). */
-  avoid?: readonly { left: number; top: number; right: number; bottom: number }[];
+  /** Tap-to-close backdrop layer. */
+  backdropZIndex: number;
+  /** The menu itself, above its backdrop. */
+  menuZIndex: number;
 }
 
 const TouchActionMenu: React.FC<TouchActionMenuProps> = ({
   position,
   options,
   onClose,
-  zIndex,
-  avoid,
+  backdropZIndex,
+  menuZIndex,
 }) => {
   const viewport = useMenuViewport();
+  // The D-pad, quick bar, chat, emote and satchel buttons: the menu opens clear
+  // of them rather than under or over them, so neither hides the other.
+  const avoid = useMemo(
+    () =>
+      getTouchControlRects(
+        { width: viewport.width, height: viewport.height },
+        isCompactTouchLayout(viewport.height)
+      ).map((r) => ({
+        left: r.left + viewport.left,
+        right: r.right + viewport.left,
+        top: r.top + viewport.top,
+        bottom: r.bottom + viewport.top,
+      })),
+    [viewport]
+  );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [placed, setPlaced] = useState<{ left: number; top: number } | null>(null);
@@ -97,7 +113,7 @@ const TouchActionMenu: React.FC<TouchActionMenuProps> = ({
     <>
       <div
         data-testid="touch-action-menu-backdrop"
-        style={{ position: 'fixed', inset: 0, background: 'transparent', zIndex }}
+        style={{ position: 'fixed', inset: 0, background: 'transparent', zIndex: backdropZIndex }}
         onClick={onClose}
       />
       <div
@@ -110,7 +126,7 @@ const TouchActionMenu: React.FC<TouchActionMenuProps> = ({
           position: 'fixed',
           left: placed?.left ?? position.x,
           top: placed?.top ?? position.y,
-          zIndex: zIndex + 1,
+          zIndex: menuZIndex,
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'center',

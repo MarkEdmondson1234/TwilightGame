@@ -220,6 +220,16 @@ export const Z_EMOTE_WHEEL = 1060;
  */
 export const Z_BATTLE_SPECTATOR = 1058;
 
+/**
+ * The touch action menu (RadialMenu on a touch device) and its tap-to-close
+ * backdrop. At Z_RADIAL_MENU (400) it opened underneath the HUD, quick bar,
+ * touch controls and chat button (issue #157). It must sit above all of those —
+ * the player has just asked for it — but below modals and dialogue (2000+),
+ * which it opens from and must not cover.
+ */
+export const Z_TOUCH_ACTION_MENU_BACKDROP = 1070;
+export const Z_TOUCH_ACTION_MENU = 1071;
+
 // =============================================================================
 // DEBUG PANELS (1100-1199)
 // =============================================================================

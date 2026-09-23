@@ -59,6 +59,7 @@ import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLayout';
 import { getMobileInteriorFraming, getRoomHeightFitZoom } from './utils/mobileInteriorFraming';
+import { isCompactTouchLayout } from './utils/touchLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -1762,7 +1763,7 @@ const App: React.FC = () => {
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
-    return viewportSize.height < 600;
+    return isCompactTouchLayout(viewportSize.height);
   }, [viewportSize.height]);
 
   // One pre-zoom transform for artwork, entities, labels, and pointer inversion,

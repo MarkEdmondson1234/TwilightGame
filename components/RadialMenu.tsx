@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Z_RADIAL_MENU } from '../zIndex';
+import { Z_RADIAL_MENU, Z_TOUCH_ACTION_MENU, Z_TOUCH_ACTION_MENU_BACKDROP } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import GameIcon from './GameIcon';
 import TouchActionMenu from './TouchActionMenu';
@@ -61,7 +61,8 @@ const RadialMenu: React.FC<RadialMenuProps> = (props) => {
         position={props.position}
         options={props.options}
         onClose={props.onClose}
-        zIndex={props.zIndex ?? Z_RADIAL_MENU}
+        backdropZIndex={props.zIndex ?? Z_TOUCH_ACTION_MENU_BACKDROP}
+        menuZIndex={props.zIndex !== undefined ? props.zIndex + 1 : Z_TOUCH_ACTION_MENU}
       />
     );
   }

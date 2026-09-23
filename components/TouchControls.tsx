@@ -2,6 +2,13 @@ import { EMOTES } from '../multiplayer/emotes';
 import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
 import { DpadPointerTracker, type DpadDirection } from '../utils/dpadPointers';
+import {
+  EMOTE_BUTTON_BOTTOM_PX,
+  EMOTE_BUTTON_RIGHT_PX,
+  EMOTE_BUTTON_SIZE_PX,
+  TOUCH_BOTTOM_GAP_PX,
+  TOUCH_SIDE_PADDING_PX,
+} from '../utils/touchLayout';
 
 type Direction = DpadDirection;
 
@@ -96,13 +103,14 @@ const TouchControls: React.FC<TouchControlsProps> = ({
       data-game-ui
       className={`touch-controls fixed inset-x-0 pointer-events-none ${zClass(Z_TOUCH_CONTROLS)}`}
       style={{
-        bottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-        paddingLeft: 'max(12px, env(safe-area-inset-left))',
-        paddingRight: 'max(12px, env(safe-area-inset-right))',
+        bottom: `calc(${TOUCH_BOTTOM_GAP_PX}px + env(safe-area-inset-bottom, 0px))`,
+        paddingLeft: `max(${TOUCH_SIDE_PADDING_PX}px, env(safe-area-inset-left))`,
+        paddingRight: `max(${TOUCH_SIDE_PADDING_PX}px, env(safe-area-inset-right))`,
       }}
     >
       <div
         aria-label="Movement"
+        // w-36 / w-44 must stay literal for Tailwind; they are DPAD_COMPACT_SIZE_PX / DPAD_SIZE_PX.
         className={`no-touch-callout relative select-none ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}
       >
         {DPAD_FRAME_STATES.map((state) => (
@@ -148,10 +156,12 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onClick={onEmotePress}
           aria-label="Emotes"
-          className="no-touch-callout pointer-events-auto absolute w-12 h-12 bg-amber-700/90 rounded-full border-2 border-amber-400/70 text-xl shadow-md"
+          className="no-touch-callout pointer-events-auto absolute bg-amber-700/90 rounded-full border-2 border-amber-400/70 text-xl shadow-md"
           style={{
-            right: 'max(24px, env(safe-area-inset-right))',
-            bottom: '88px',
+            width: EMOTE_BUTTON_SIZE_PX,
+            height: EMOTE_BUTTON_SIZE_PX,
+            right: `max(${EMOTE_BUTTON_RIGHT_PX}px, env(safe-area-inset-right))`,
+            bottom: EMOTE_BUTTON_BOTTOM_PX,
             touchAction: 'manipulation',
           }}
         >
