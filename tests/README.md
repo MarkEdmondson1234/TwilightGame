@@ -60,9 +60,10 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | File | Catches | You'll hit this when |
 |---|---|---|
 | `assetIntegrity.test.ts` | Asset paths that don't resolve to a real file, including case mismatches | Adding any sprite, icon, or audio file |
-| `itemSSoT.test.ts` | Recipes/shops referencing items that don't exist; duplicate items | Adding an item, recipe, or shop entry |
+| `itemSSoT.test.ts` | Recipes/shops referencing items that don't exist; duplicate items; a quest recipe with an ingredient the shop does not sell all year | Adding an item, recipe, or shop entry |
 | `tileRegistration.test.ts` | Tiles missing from `TILE_LEGEND` or `TILE_TYPE_TO_COLOR_KEY`; unrecognised grid codes | Adding a tile type or editing a map grid |
 | `mapValidation.test.ts` | Out-of-bounds spawn points, NPCs, and transition targets | Adding or editing a map |
+| `npcSpawnClear.test.ts` | A wandering NPC spawned inside collision, so it never moves (the duck on the well) | Placing a moving NPC, or changing a sprite's collision box |
 | `spriteMetadata.test.ts` | Square artwork declared with non-square tile dimensions (visible stretching) | Adding a multi-tile sprite |
 | `minigameRegistry.test.ts` | Duplicate ids, missing fields, trigger items **or NPCs** that don't exist | Adding a mini-game |
 | `minigameRequirements.test.ts` | Required items not actually gating play; a game being unreachable | Adding a mini-game with requirements |
