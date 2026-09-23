@@ -43,7 +43,7 @@ export function cookingProvider(ctx: InteractionContext): AvailableInteraction[]
   // Keep ordinary clicks local to the fireplace. Explicit context menus and the
   // book can reach the kettle anywhere in the room without turning floor clicks into cooks.
   const tile = getTileCoords(position);
-  const nearFireplace = Math.abs(tile.x - 4) + Math.abs(tile.y - 5) <= 1;
+  const nearFireplace = Math.abs(tile.x - 5) + Math.abs(tile.y - 4) <= 1;
   if (currentMapId === 'mums_kitchen' && (ctx.isContextMenu || nearFireplace)) {
     interactions.push({
       type: 'fireplace_tea',

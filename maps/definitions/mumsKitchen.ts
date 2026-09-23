@@ -17,7 +17,6 @@ import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
  * . = Floor (walkable)
  * # = Wall/Obstacle (solid - walls, outside image area)
  * D = Door (transition)
- * _ = Desk (surface for placing items)
  *
  * The grid is invisible - only used for collision!
  *
@@ -33,11 +32,11 @@ const gridString = `
 ###############
 ###############
 ###############
-###########.###
-###########..##
-#####_.......##
-####.........##
-###D.........##
+############.##
+############..#
+#####.........#
+####...........
+###D...........
 ###############
 `;
 
@@ -51,7 +50,7 @@ const kitchenLayers: RoomLayer[] = [
   // Layer 1: Background image (kitchen scene)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.jpeg',
+    image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -104,7 +103,7 @@ export const mumsKitchen: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 11, y: 3 }, // Base of stairs (right side of kitchen)
+      fromPosition: { x: 12, y: 3 }, // Base of stairs (right side of kitchen; matches new artwork)
       tileType: TileType.DOOR,
       toMapId: 'home_upstairs',
       toPosition: { x: 3, y: 6 }, // Spawn near stairs in upstairs map

@@ -24,7 +24,7 @@ describe('kitchen tea interaction', () => {
   });
   it('offers a confirmed action beside the fireplace and forwards its result', () => {
     const onFireplaceTea = vi.fn();
-    const [tea] = cookingProvider(context({ position: { x: 4, y: 6 }, onFireplaceTea }));
+    const [tea] = cookingProvider(context({ position: { x: 5, y: 5 }, onFireplaceTea }));
     expect(tea.requireConfirmation).toBe(true);
     tea.execute();
     expect(makeTea).toHaveBeenCalledOnce();
