@@ -65,7 +65,7 @@ audioManager.toggleMute();
 | Door transitions | `sfx_door_open` | useInteractionController (onTransition callback, DOOR tiles only) |
 | Talking to ducks | `sfx_ducks_quack` | useInteractionController (onNPC callback) |
 | Interacting with cat | `sfx_meow_01`/`02`/`03` | useInteractionController (onNPC callback, random) |
-| Cooking | `sfx_frying` | RecipeContent.tsx / CookingInterface.tsx (handleCook) |
+| Cooking | `sfx_frying` | RecipeContent.tsx (handleCook) |
 | Magic potions | `sfx_magic_transition` | App.tsx (usePotion handler) |
 | Background music | `music_village`/`music_forest` | useEnvironmentController (useEffect with timers) |
 

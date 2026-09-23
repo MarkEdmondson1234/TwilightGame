@@ -94,7 +94,7 @@ Complete list of all player-facing emojis in the game, organised by component.
 | 🌻 | Garden/shed | `sunflower` |
 | ➡️ | Generic | `arrow_right` |
 
-## Cooking Interface (`components/CookingInterface.tsx`)
+## Recipe Book (`components/book/RecipeContent.tsx`)
 
 | Emoji | Meaning | Suggested Icon Name |
 |-------|---------|---------------------|

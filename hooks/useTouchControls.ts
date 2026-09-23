@@ -10,7 +10,7 @@ import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
 import {
   checkMirrorInteraction,
-  checkStoveInteraction,
+  checkCookingStationInteraction,
   checkNPCInteraction,
   checkTransition,
   handleFarmAction,
@@ -31,7 +31,8 @@ export interface TouchControlsConfig {
   }>;
   keysPressed: Record<string, boolean>;
   onShowCharacterCreator: (show: boolean) => void;
-  onSetShowCookingUI: (show: boolean) => void;
+  /** Open the recipe book to cook, if a fire is close. */
+  onOpenCooking: () => void;
   onSetActiveNPC: (npcId: string | null) => void;
   onSetPlayerPos: (pos: Position) => void;
   onMapTransition: (mapId: string, spawnPos: Position) => Position | void;
@@ -52,7 +53,7 @@ export function useTouchControls(config: TouchControlsConfig) {
     inventoryItems,
     keysPressed,
     onShowCharacterCreator,
-    onSetShowCookingUI,
+    onOpenCooking,
     onSetActiveNPC,
     onSetPlayerPos,
     onMapTransition,
@@ -123,18 +124,18 @@ export function useTouchControls(config: TouchControlsConfig) {
       return; // Don't check for transitions if we found a mirror
     }
 
-    // Check for stove interaction (opens cooking interface)
-    const foundStove = checkStoveInteraction(playerPosRef.current);
-    if (foundStove) {
-      onSetShowCookingUI(true);
-      return; // Don't check for other interactions if we found a stove
-    }
-
     // Check for NPC interaction
     const npcId = checkNPCInteraction(playerPosRef.current);
     if (npcId) {
       onSetActiveNPC(npcId);
       return; // Don't check for transitions if talking to NPC
+    }
+
+    // Beside a stove, campfire or Mum's fireplace: open the recipe book to cook.
+    // Same order as the keyboard E key, so both inputs agree.
+    if (checkCookingStationInteraction(playerPosRef.current, currentMapId)) {
+      onOpenCooking();
+      return;
     }
 
     // Check for transition

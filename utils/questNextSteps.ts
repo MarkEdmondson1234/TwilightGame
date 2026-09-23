@@ -21,7 +21,7 @@ export function cookingNextStep(state: CookingGuideState): QuestNextStep {
       action: 'Make your first tea',
       where: 'Mum’s kitchen',
       details: [
-        'Open your recipe book, choose Tea, then Cook. You can also use Make Tea at the Fireplace.',
+        'Stand by the glowing fireplace and press Cook here, then choose Tea and Cook. You can also use Make Tea at the Fireplace.',
         'Mum supplies missing ingredients for one practice cup after you ask her to teach you. The tea goes into your bag.',
       ],
     };
@@ -43,8 +43,9 @@ export function cookingNextStep(state: CookingGuideState): QuestNextStep {
     };
   return {
     action: recipe.missing.length ? `Gather ingredients for ${recipe.name}` : `Cook ${recipe.name}`,
-    where: 'Recipe book → All Recipes',
+    where: 'By a fire → Recipe book → All Recipes',
     details: [
+      'Cook beside a fire: Mum’s fireplace, or a campfire you buy at the general store and place outdoors.',
       `${recipe.name}: ${recipe.timesCooked}/3 successful cooks towards mastery.`,
       ...(recipe.missing.length
         ? [`Still needed for one cook: ${recipe.missing.join(', ')}.`]
@@ -206,7 +207,7 @@ export function altheaNextStep(s: ChoresGuideState): QuestNextStep {
       ],
     };
   if (!s.teaDelivered)
-    return { action: 'Make tea for Althea', where: 'Mum’s kitchen → Recipe book → Tea', details };
+    return { action: 'Make tea for Althea', where: 'Mum’s fireplace → Recipe book → Tea', details };
   return {
     conversation: s.cookiesUnlocked
       ? undefined
@@ -218,7 +219,7 @@ export function altheaNextStep(s: ChoresGuideState): QuestNextStep {
             'Ask Mum to teach you to cook, then ask about baking. Your current path may need finishing first.',
         },
     action: s.cookiesUnlocked ? 'Bake cookies for Althea' : 'Ask Mum about learning cookies',
-    where: s.cookiesUnlocked ? 'Recipe book → Baking' : 'Mum’s kitchen',
+    where: s.cookiesUnlocked ? 'By a fire → Recipe book → Baking' : 'Mum’s kitchen',
     details: [
       ...details,
       s.cookiesUnlocked

@@ -1,0 +1,96 @@
+/* Cooking stations (#151/#157): a gentle glow on every fire the player can cook at, and a
+   big tappable "Cook here" button beside the one they are standing at. */
+
+.cooking-station-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 196, 92, 0.55) 0%,
+    rgba(255, 150, 60, 0.28) 45%,
+    rgba(255, 150, 60, 0) 72%
+  );
+  animation: cooking-station-breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes cooking-station-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+.cooking-station-cue {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+
+.cooking-here-button {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  min-width: 160px;
+  padding: 10px 20px;
+  border: 3px solid #8b4513;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffb347 0%, #f97316 100%);
+  color: #3b1d06;
+  font: inherit;
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.45);
+  animation: cooking-here-pulse 1.4s ease-in-out infinite;
+  touch-action: manipulation;
+}
+
+.cooking-here-button:focus-visible {
+  outline: 3px solid #4a6741;
+  outline-offset: 3px;
+}
+
+.cooking-here-key {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #4a6741;
+  color: #fdf6e3;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.cooking-here-hint {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@keyframes cooking-here-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.45);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 4px 24px rgba(249, 115, 22, 0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cooking-station-glow,
+  .cooking-here-button {
+    animation: none;
+  }
+}

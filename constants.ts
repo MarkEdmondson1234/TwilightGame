@@ -347,6 +347,18 @@ export const INTERACTION = {
 } as const;
 
 /**
+ * COOKING - where cooking is allowed (see utils/cookingStations.ts)
+ */
+export const COOKING = {
+  /**
+   * How close (in tiles, square distance) the player must stand to a stove, campfire or
+   * Mum's fireplace for Cook to be enabled. Two tiles lets a player stand beside a fire
+   * drawn in a background painting, where the fire tile itself is usually a wall.
+   */
+  STATION_RANGE_TILES: 2,
+} as const;
+
+/**
  * AUDIO - decoded-audio residency policy (see utils/AudioManager.ts)
  */
 export const AUDIO = {

@@ -17,7 +17,6 @@ interface CottageBookProps {
   // Cooking-specific props (only used when theme="cooking")
   playerPosition?: Position;
   currentMapId?: string;
-  cookingPosition?: Position | null;
   nearbyNPCs?: string[];
   onItemPlaced?: () => void;
 }
@@ -38,7 +37,6 @@ const CottageBook: React.FC<CottageBookProps> = ({
   theme,
   playerPosition,
   currentMapId,
-  cookingPosition,
   nearbyNPCs = [],
   onItemPlaced,
 }) => {
@@ -137,7 +135,6 @@ const CottageBook: React.FC<CottageBookProps> = ({
               theme={themeConfig}
               playerPosition={playerPosition}
               currentMapId={currentMapId}
-              cookingPosition={cookingPosition}
               nearbyNPCs={nearbyNPCs}
               onItemPlaced={onItemPlaced}
             />

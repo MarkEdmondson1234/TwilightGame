@@ -14,12 +14,11 @@ import { TimeManager, Season } from '../utils/TimeManager';
 import { getTileCoords, findTileTypeNearby } from '../utils/mapUtils';
 import {
   checkMirrorInteraction,
-  checkStoveInteraction,
+  checkCookingStationInteraction,
   checkNPCInteraction,
   checkTransition,
   handleFarmAction,
   handleForageAction,
-  checkCookingLocation,
   ForageResult,
 } from '../utils/actionHandlers';
 import {
@@ -39,7 +38,6 @@ export interface KeyboardControlsConfig {
   /** Title screen is up. The world is live underneath it, so every key must be ignored. */
   isTitleScreenActive: boolean;
   showHelpBrowser: boolean;
-  showCookingUI: boolean;
   showRecipeBook: boolean;
   showJournal: boolean;
   showInventory: boolean;
@@ -71,7 +69,8 @@ export interface KeyboardControlsConfig {
   onSetShowSpriteEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
   onSetShowVFXTestPanel: (show: boolean | ((prev: boolean) => boolean)) => void;
   onSetShowHelpBrowser: (show: boolean) => void;
-  onSetShowCookingUI: (show: boolean) => void;
+  /** Open the recipe book to cook, if a fire is close (toasts why not otherwise). */
+  onOpenCooking: () => void;
   onSetShowRecipeBook: (show: boolean) => void;
   onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
@@ -107,7 +106,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     activeNPC,
     isTitleScreenActive,
     showHelpBrowser,
-    showCookingUI,
     showRecipeBook,
     showJournal,
     showInventory,
@@ -133,7 +131,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowSpriteEditor,
     onSetShowVFXTestPanel,
     onSetShowHelpBrowser,
-    onSetShowCookingUI,
+    onOpenCooking,
     onSetShowRecipeBook,
     onSetShowJournal,
     onSetShowInventory,
@@ -163,7 +161,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   const inventoryItemsRef = useRef(inventoryItems);
   const activeNPCRef = useRef(activeNPC);
   const showInventoryRef = useRef(showInventory);
-  const showCookingUIRef = useRef(showCookingUI);
   const showShopUIRef = useRef(showShopUI);
   const showRecipeBookRef = useRef(showRecipeBook);
   const showJournalRef = useRef(showJournal);
@@ -176,7 +173,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   inventoryItemsRef.current = inventoryItems;
   activeNPCRef.current = activeNPC;
   showInventoryRef.current = showInventory;
-  showCookingUIRef.current = showCookingUI;
   showShopUIRef.current = showShopUI;
   showRecipeBookRef.current = showRecipeBook;
   showJournalRef.current = showJournal;
@@ -187,7 +183,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   // Build handlers object for key handler utilities
   const uiHandlers = {
     showHelpBrowser,
-    showCookingUI,
     showRecipeBook,
     showJournal,
     showInventory,
@@ -204,7 +199,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showDevTools,
     showMiniGame,
     onSetShowHelpBrowser,
-    onSetShowCookingUI,
     onSetShowRecipeBook,
     onSetShowJournal,
     onSetShowInventory,
@@ -305,7 +299,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     // Use refs to get current values (avoid stale closure)
     if (
       isBlockingUIOpen(activeNPCRef.current, {
-        showCookingUI: showCookingUIRef.current,
         showShopUI: showShopUIRef.current,
         showRecipeBook: showRecipeBookRef.current,
         showJournal: showJournalRef.current,
@@ -429,18 +422,18 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         return; // Don't check for transitions if we found a mirror
       }
 
-      // Check for stove interaction (opens cooking interface)
-      const foundStove = checkStoveInteraction(playerPosRef.current);
-      if (foundStove) {
-        onSetShowCookingUI(true);
-        return; // Don't check for other interactions if we found a stove
-      }
-
       // Check for NPC interaction (including shop fox which opens shop UI)
       const npcId = checkNPCInteraction(playerPosRef.current);
       if (npcId) {
         onSetActiveNPC(npcId);
         return; // Don't check for transitions if interacting with NPC
+      }
+
+      // Beside a stove, campfire or Mum's fireplace: open the recipe book to cook.
+      // After NPCs, so standing by the fire next to Mum still talks to Mum.
+      if (checkCookingStationInteraction(playerPosRef.current, currentMapId)) {
+        onOpenCooking();
+        return;
       }
 
       // Check for transition
@@ -482,16 +475,10 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       return;
     }
 
-    // C key to open cooking interface (only if near stove or campfire)
+    // C key to cook — opens the recipe book beside a fire, otherwise says where to go
     if (e.key === 'c' || e.key === 'C') {
       e.preventDefault();
-      const cookingLocation = checkCookingLocation(playerPosRef.current);
-      if (cookingLocation.found) {
-        debugLog('Keyboard', `Opening cooking UI at ${cookingLocation.locationType}`);
-        onSetShowCookingUI(true);
-      } else {
-        debugLog('Keyboard', 'No stove or campfire nearby');
-      }
+      onOpenCooking();
       return;
     }
 

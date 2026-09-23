@@ -472,7 +472,12 @@ const ShopUI: React.FC<ShopUIProps> = ({
     ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
     farming: [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
     seeds: [ItemCategory.SEED],
-    materials: [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    materials: [
+      ItemCategory.MATERIAL,
+      ItemCategory.MISC,
+      ItemCategory.DECORATION,
+      ItemCategory.FURNITURE,
+    ],
     magical: [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
   };
 

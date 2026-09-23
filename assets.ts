@@ -908,6 +908,9 @@ export const furnitureAssets = {
   stripey_curtains: '/TwilightGame/assets-optimized/items/furniture/stripey_curtains.png',
   stripey_curtains_thumbnail:
     '/TwilightGame/assets-optimized/items/furniture/stripey_curtains_thumbnail.png',
+  // PLACEHOLDER (#157): composited from the hand-drawn fire animation (animations/fire) and
+  // the fine wood item. Replace public/assets/items/furniture/campfire.png with real art.
+  campfire: '/TwilightGame/assets-optimized/items/furniture/campfire.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds
