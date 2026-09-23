@@ -52,7 +52,7 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
     itemId: 'food_tea',
     invitation: 'Mum sets a cup beside the warm kettle. “Shall we make your first tea together?”',
     directions:
-      "Talk to Mum at home and ask her to teach you to cook. In Mum's kitchen, open your recipe book, select Tea and Cook, or choose Make Tea at the Fireplace. Mum helps with missing ingredients for your first practice cup after you ask her to teach you. Your tea goes into your bag. Ask Mum to teach you to cook again to choose your next lesson.",
+      "Talk to Mum at home and ask her to teach you to cook. Stand by the glowing fireplace in Mum's kitchen and press Cook here, then select Tea and Cook — or choose Make Tea at the Fireplace. You can only cook beside a fire. Mum helps with missing ingredients for your first practice cup after you ask her to teach you. Your tea goes into your bag. Ask Mum to teach you to cook again to choose your next lesson.",
   },
   {
     id: 'gardening',

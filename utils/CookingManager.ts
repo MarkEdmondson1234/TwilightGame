@@ -390,7 +390,7 @@ class CookingManagerClass {
       return {
         success: false,
         message:
-          "Take your recipe book to Mum's kitchen to use the kettle. You can make tea anywhere in that room.",
+          "Tea needs Mum's kettle — take your recipe book to the fireplace in Mum's kitchen.",
       };
     }
     const recipe = getRecipe(recipeId);

@@ -10,7 +10,6 @@
 
 export interface UIKeyHandlers {
   showHelpBrowser: boolean;
-  showCookingUI: boolean;
   showRecipeBook: boolean;
   showJournal: boolean;
   showInventory: boolean;
@@ -27,7 +26,6 @@ export interface UIKeyHandlers {
   showDevTools: boolean;
   showMiniGame: boolean;
   onSetShowHelpBrowser: (show: boolean) => void;
-  onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
   onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
@@ -76,10 +74,6 @@ export function handleEscape(handlers: UIKeyHandlers): boolean {
   }
   if (handlers.showShopUI) {
     handlers.onSetShowShopUI(false);
-    return true;
-  }
-  if (handlers.showCookingUI) {
-    handlers.onSetShowCookingUI(false);
     return true;
   }
   if (handlers.showBrewingUI) {
@@ -152,10 +146,6 @@ export function handleRecipeBook(
  * Returns true if a UI was closed, false otherwise
  */
 export function handleActionCloseUI(handlers: UIKeyHandlers): boolean {
-  if (handlers.showCookingUI) {
-    handlers.onSetShowCookingUI(false);
-    return true;
-  }
   if (handlers.showShopUI) {
     handlers.onSetShowShopUI(false);
     return true;
@@ -183,7 +173,6 @@ export function isBlockingUIOpen(
   activeNPC: string | null,
   handlers: Pick<
     UIKeyHandlers,
-    | 'showCookingUI'
     | 'showShopUI'
     | 'showRecipeBook'
     | 'showJournal'
@@ -193,7 +182,6 @@ export function isBlockingUIOpen(
 ): boolean {
   return !!(
     activeNPC ||
-    handlers.showCookingUI ||
     handlers.showShopUI ||
     handlers.showRecipeBook ||
     handlers.showJournal ||

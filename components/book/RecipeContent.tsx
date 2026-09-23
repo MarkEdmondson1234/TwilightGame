@@ -10,12 +10,16 @@ import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
 import CookingResultPopup from '../CookingResultPopup';
+import {
+  getNearbyCookingStation,
+  getCookBlockedReason,
+  getCookingStationLabel,
+} from '../../utils/cookingStations';
 
 interface RecipeContentProps {
   theme: BookThemeConfig;
   playerPosition?: Position;
   currentMapId?: string;
-  cookingPosition?: Position | null;
   nearbyNPCs?: string[];
   onItemPlaced?: () => void;
 }
@@ -34,8 +38,11 @@ const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
  *
  * Displays recipes organised by category (chapters) with a list on the
  * left page and recipe details on the right page.
+ *
+ * The book can be read anywhere, but Cook is only enabled beside a cooking station —
+ * a stove, a campfire or Mum's fireplace (utils/cookingStations.ts, #151/#157).
  */
-const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) => {
+const RecipeContent: React.FC<RecipeContentProps> = ({ theme, playerPosition, currentMapId }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
@@ -96,6 +103,16 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) =>
   // Get selected recipe details
   const selectedRecipe = pagination.selectedItem;
   const recipeUnlocked = selectedRecipe ? isUnlocked(selectedRecipe.id) : false;
+
+  // The player cannot move while the book is open, so this only changes on reopen.
+  const station = useMemo(
+    () => getNearbyCookingStation(playerPosition, currentMapId),
+    [playerPosition, currentMapId]
+  );
+  const cookBlockedReason = selectedRecipe
+    ? getCookBlockedReason(selectedRecipe.id, station)
+    : null;
+  const stationLabel = station ? getCookingStationLabel(station) : '';
 
   // Difficulty stars display
   const difficultyStars = (difficulty: 1 | 2 | 3) => {
@@ -251,6 +268,19 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) =>
                   );
                 })()}
               </div>
+
+              {/* Where the player may cook — always visible, so a greyed Cook explains itself */}
+              <p
+                role="note"
+                data-cooking-station-note
+                className="text-center text-sm font-semibold mt-2 px-2 py-1 rounded"
+                style={{
+                  color: cookBlockedReason ? theme.textPrimary : theme.successColour,
+                  backgroundColor: `${theme.accentPrimary}15`,
+                }}
+              >
+                {cookBlockedReason ?? `🔥 You are beside ${stationLabel} — ready to cook.`}
+              </p>
             </div>
 
             {/* Scrollable ingredients section */}
@@ -307,16 +337,13 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) =>
                 </div>
               )}
 
-              {/* Result message - now shown as popup overlay */}
-
-              {selectedRecipe.id === 'tea' && (
+              {selectedRecipe.id === 'tea' && !cookBlockedReason && (
                 <p
                   className="text-center text-sm italic mt-2"
                   style={{ color: theme.accentPrimary }}
                 >
-                  {currentMapId === 'mums_kitchen'
-                    ? 'The kettle is ready. Cook here, or use Make Tea by the fireplace. Mum helps with missing ingredients for your first practice cup after you ask her to teach you.'
-                    : "Bring this book to Mum's kitchen to use the kettle. You can read recipes anywhere."}
+                  The kettle is on the fire. Mum helps with missing ingredients for your first
+                  practice cup after you ask her to teach you.
                 </p>
               )}
             </div>
@@ -355,12 +382,8 @@ const RecipeContent: React.FC<RecipeContentProps> = ({ theme, currentMapId }) =>
         <button
           onClick={() => handleCook(selectedRecipe.id)}
           data-book-action
-          disabled={selectedRecipe.id === 'tea' && currentMapId !== 'mums_kitchen'}
-          title={
-            selectedRecipe.id === 'tea' && currentMapId !== 'mums_kitchen'
-              ? "Cook tea in Mum's kitchen"
-              : undefined
-          }
+          disabled={cookBlockedReason !== null}
+          title={cookBlockedReason ?? `Cook at ${stationLabel}`}
           className="absolute -top-5 left-1/2 ml-32 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-20"
           style={{
             backgroundColor: theme.buttonColour,

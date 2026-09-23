@@ -22,6 +22,7 @@ import {
   ForageResult,
   TransitionResult,
   getGiftPreferenceReveal,
+  handleOpenCooking,
 } from '../utils/actionHandlers';
 import {
   getAvailableInteractions,
@@ -250,7 +251,6 @@ export function useInteractionController(
     activeNPC ||
     isCutscenePlaying ||
     ui.helpBrowser ||
-    ui.cookingUI ||
     ui.recipeBook ||
     ui.magicBook ||
     ui.characterCreator ||
@@ -386,10 +386,10 @@ export function useInteractionController(
           gameState.updatePlayerLocation(result.mapId, actualSpawn || result.spawnPosition, seed);
         }
       },
-      onCooking: (locationType: string, position: Position | null) => {
-        openUI('cookingUI', {
-          cookingLocationType: locationType as 'stove' | 'campfire',
-          cookingPosition: position || undefined,
+      onCooking: () => {
+        handleOpenCooking(playerPosRef.current, currentMapId, {
+          onOpenRecipeBook: () => openUI('recipeBook'),
+          onShowToast,
         });
       },
       onFireplaceTea: (result) => {
@@ -566,6 +566,7 @@ export function useInteractionController(
     };
   }, [
     openUI,
+    playerPosRef,
     onMapTransition,
     onFarmUpdate,
     onShowToast,
@@ -886,8 +887,7 @@ export function useInteractionController(
       activeNPC ||
       isCutscenePlaying ||
       ui.helpBrowser ||
-      ui.cookingUI ||
-      ui.recipeBook ||
+        ui.recipeBook ||
       ui.characterCreator ||
       ui.inventory
     ) {
@@ -962,7 +962,6 @@ export function useInteractionController(
     activeNPC,
     isCutscenePlaying,
     ui.helpBrowser,
-    ui.cookingUI,
     ui.recipeBook,
     ui.characterCreator,
     ui.inventory,

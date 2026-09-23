@@ -125,6 +125,21 @@ You can rearrange your entire inventory to customize which items appear in quick
 - Use number keys 1-9 to switch between tools and seeds quickly
 - Reorganize anytime - changes save automatically
 
+## Cooking
+
+Ask **Mum** to teach you to cook and she will give you a **recipe book**. You can open it
+and read your recipes anywhere (**B**, or the book on the bookshelf), but you can only
+**cook beside a fire**:
+
+- **Mum's fireplace** in the kitchen at home. It glows gently while you are in the room.
+- **A campfire** of your own. Buy one at the general store, then select it in your bag and
+  tap a clear spot outdoors to set it down. Right-click (or long-press) it and choose
+  **Pick Up** to take it with you again.
+
+Walk up to a fire and a big **Cook here** button appears — tap it, or press **E** or **C**.
+Away from a fire, the Cook button in the book is greyed out and tells you where to go.
+Tea is special: it needs Mum's kettle, so make it at her fireplace.
+
 ## Meeting the Villagers
 
 Talk to everyone! Each character has their own personality:
@@ -154,6 +169,7 @@ To enable AI chat:
 | I | Open Inventory |
 | J | Open Journal |
 | B | Open Recipe Book |
+| C | Cook (beside a fire) |
 | 1-9 | Select Quick Slots |
 | F1 | Help Browser |
 | F3 | Debug Overlay |

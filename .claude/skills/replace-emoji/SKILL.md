@@ -136,7 +136,7 @@ The icon will automatically appear wherever that emoji was used in:
 - `utils/transitionIcons.ts` — Map transition icons
 - `components/Toast.tsx` — Notification icons
 - `components/TouchControls.tsx` — Touch button labels
-- `components/CookingInterface.tsx` — Cooking UI icons
+- `components/book/RecipeContent.tsx` — Recipe book (cooking) icons; `components/CookingStationIndicators.tsx` — cooking station markers
 - `components/FarmActionAnimation.tsx` — Farm action feedback
 
 ## Multi-Use Emojis
