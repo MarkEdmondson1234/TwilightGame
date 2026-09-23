@@ -324,6 +324,14 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    // Stored onions keep all year, so no availableSeasons. The witch's quest
+    // (pickled onions) needs four — see tests/itemSSoT.test.ts.
+    itemId: 'crop_onion',
+    buyPrice: 30,
+    sellPrice: 20, // Matches crop sellPrice
+    stock: 'unlimited',
+  },
+  {
     itemId: 'tea_leaves',
     buyPrice: 5,
     sellPrice: 2,

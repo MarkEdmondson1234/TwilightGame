@@ -17,7 +17,7 @@
 import { describe, it, expect } from 'vitest';
 import { ITEMS, getItem, getSeedItemId, ItemCategory } from '../data/items';
 import { RECIPES } from '../data/recipes';
-import { GENERAL_STORE_INVENTORY } from '../data/shopInventory';
+import { GENERAL_STORE_INVENTORY, getSeasonalInventory } from '../data/shopInventory';
 import { CROPS } from '../data/crops';
 
 // ============================================================================
@@ -254,5 +254,50 @@ describe('Item SSoT - Shop Inventory References Valid Items', () => {
 
     const oldTomatoEntry = GENERAL_STORE_INVENTORY.find((item) => item.itemId === 'tomato_fresh');
     expect(oldTomatoEntry).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// Quest recipes must be cookable in any season
+// ============================================================================
+
+/**
+ * Recipes a quest step asks the player to cook and hand over. A quest can be
+ * reached in any season, so every ingredient must be buyable in every season —
+ * otherwise the quest silently stalls until the right season comes round
+ * (#157: onions for the witch's pickled onions were never sold, and onion sets
+ * only plant in autumn). Add a recipe here when a quest starts requiring it.
+ */
+const QUEST_RECIPES: Record<string, string> = {
+  pickled_onions: "witch_garden (Juniper's pickled onions)",
+  lava_cake: "Davead's lava cake",
+};
+
+describe('Item SSoT - Quest recipe ingredients are buyable all year', () => {
+  it('every ingredient of a quest recipe is sold in the General Store in every season', () => {
+    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
+    const issues: string[] = [];
+    for (const [recipeId, quest] of Object.entries(QUEST_RECIPES)) {
+      const recipe = RECIPES[recipeId];
+      if (!recipe) {
+        issues.push(`${recipeId} (${quest}) is not in RECIPES`);
+        continue;
+      }
+      for (const ing of recipe.ingredients) {
+        const missing = seasons.filter(
+          (s) => !getSeasonalInventory(s).some((i) => i.itemId === ing.itemId)
+        );
+        if (missing.length > 0) {
+          issues.push(
+            `${recipeId} (${quest}) needs ${ing.itemId}, which the General Store does not sell in: ${missing.join(', ')} — add it to GENERAL_STORE_INVENTORY without availableSeasons`
+          );
+        }
+      }
+    }
+    expect(issues).toEqual([]);
+  });
+
+  it('crop_onion has a buyPrice (regression: #157)', () => {
+    expect(getItem('crop_onion')?.buyPrice).toBeGreaterThan(0);
   });
 });
