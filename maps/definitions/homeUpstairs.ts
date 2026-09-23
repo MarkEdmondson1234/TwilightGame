@@ -88,7 +88,7 @@ export const homeUpstairs: MapDefinition = {
       fromPosition: { x: 3, y: 7 }, // Stairs down
       tileType: TileType.DOOR,
       toMapId: 'mums_kitchen',
-      toPosition: { x: 12, y: 3 }, // Back to kitchen at the base of the stairs (matches new artwork)
+      toPosition: { x: 12.5, y: 4.5 }, // Foot of the kitchen stairs; (12,3) put the player box astride the wall at (11,3)
       label: 'Downstairs',
       hasDoor: true,
     },
