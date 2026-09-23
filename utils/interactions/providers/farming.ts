@@ -27,6 +27,7 @@ import { getCrop } from '../../../data/crops';
 import { getCropIdFromSeed } from '../../../data/items';
 import { inventoryManager } from '../../inventoryManager';
 import { handleFarmAction } from '../../actionHandlers';
+import { npcPlotPickRefusal } from '../../npcGardenAccess';
 import { debugLog } from '../../debugLog';
 
 /** Menu icon per crop. Falls back to a generic seedling for anything unlisted. */
@@ -193,8 +194,26 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
     if (plotTileType === TileType.SOIL_READY) {
       const readyPlot = farmManager.getPlot(currentMapId, farmTilePos);
       const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
+      // A villager's crop may only be picked once you are friends (issue #157).
+      // Offer a gentle explanation in place of every harvest/remove option.
+      const pickRefusal = npcPlotPickRefusal(readyPlot);
 
-      if (readyCrop?.isHerb) {
+      if (pickRefusal) {
+        interactions.push({
+          // farm_ prefix so the "Check Farm Action" fallback below is not added too
+          type: 'farm_npc_crop_not_yet',
+          label: 'Not yet — be better friends first',
+          icon: '🌱',
+          color: '#7c9a6d',
+          execute: () => {
+            if (onFarmAction) {
+              onFarmAction({ handled: false, message: pickRefusal, messageType: 'info' });
+            } else {
+              ctx.onShowToast?.(pickRefusal, 'info');
+            }
+          },
+        });
+      } else if (readyCrop?.isHerb) {
         // Herb: show Harvest and Remove options
         const completeHerbHarvest = () => {
           const inventoryData = inventoryManager.getInventoryData();
