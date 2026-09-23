@@ -7,7 +7,10 @@
  *
  * Left-click needs nothing from this provider: a READY NPC crop harvests
  * through the ordinary farming provider (with the shared-plot claim
- * transaction), and a growing one is just a plant you walk past. "Admire" is
+ * transaction) once the player is friends enough with the gardener — below
+ * NPC_GARDEN.PICK_MIN_TIER the farming provider offers a kind "not yet"
+ * message instead (utils/npcGardenAccess.ts, issue #157) — and a growing one
+ * is just a plant you walk past. "Admire" is
  * a right-click/long-press question — who planted this, and what do they
  * love growing? — so it is offered only in the context menu. Auto-executing
  * it on every walk-click through the field would turn a gentle touch into

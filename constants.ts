@@ -298,6 +298,14 @@ export const NPC_GARDEN = {
    *  The garden is ambience and snacks, not a seed farm. */
   HARVEST_YIELD_CAP: 2,
 
+  /** Friendship tier the player needs with a gardener before they may pick
+   *  that gardener's ready crops (issue #157 — friendship only, no quest).
+   *  'acquaintance' is the same bar as asking the gardener to plant something
+   *  for you (the `garden_favour` dialogue node), so the two unlock together.
+   *  Below it the harvest is replaced with a kind "not yet" message. This is
+   *  the player's OWN friendship, not the shared gardenLevel. */
+  PICK_MIN_TIER: 'acquaintance',
+
   /** Share of a gardener's patch given over to the requested crop:
    *  ceil(patchSize * min(REQUEST_SHARE_MAX, REQUEST_SHARE_BASE + REQUEST_SHARE_PER_LEVEL * level)).
    *  Level 3 (first requestable tier) ≈ a third, level 9 ≈ three fifths. */
