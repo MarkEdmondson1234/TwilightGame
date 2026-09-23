@@ -73,6 +73,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `quickSlotContextMenu.test.tsx` | The quick slot bar offering fewer actions than the same slot in the inventory | Touching `QuickSlotBar` |
 | `remotePlayerInteractions.test.ts` | Player options leaking onto plain clicks, or naming the wrong person | Touching `providers/remotePlayers.ts` |
 | `doorDestinationLabel.test.ts` | "Go to undefined" on a procedural map, or a size-blocked door losing its reason | Touching `providers/transition.ts` |
+| `kitchenClickThrough.test.ts` | A click on furniture painted into a background-image room (Mum's Kitchen shelving, #159) falling through to a nearby door | Moving a room's stairs/doors, re-authoring its walkmesh, or touching `providers/transition.ts` |
 | `shopClickQuantity.test.tsx` | A single click buying more than one, or the quantity picker becoming unreachable | Touching `ShopUI` slot handlers |
 | `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
 | `animationSheets.test.ts` | A tile animation pointing at a GIF, a sprite sheet without its `.sheet.json` sidecar, or a sidecar that disagrees with the PNG — the layer then draws nothing, or frames cut from the wrong place, with no error | Adding or changing an animation; forgetting `npm run optimize-assets` |

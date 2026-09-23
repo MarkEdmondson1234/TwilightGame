@@ -5,11 +5,40 @@
  */
 
 import type { AvailableInteraction, InteractionContext } from '../types';
-import { SizeTier } from '../../../types';
+import { SizeTier, isTileSolid, type Transition } from '../../../types';
+import { getTileCoords } from '../../mapUtils';
 import { getTierName } from '../../MagicEffects';
 import { mapManager, transitionToMap } from '../../../maps';
 import { cutsceneManager } from '../../CutsceneManager';
 import { transitionBlockedReason } from '../../transitionRequirements';
+
+/**
+ * Does something drawn in the room's artwork own this click, rather than the nearby door?
+ *
+ * `getTransitionAt(position, 0.9)` measures from `fromPosition` — the transition tile's
+ * top-left corner, not its centre — so its click box reaches 0.9 of a tile to the left of and
+ * above the door and only 0.9 into the door tile itself. That forgiveness is meant for a
+ * near-miss onto the floor around a doorway. In a background-image room, though, the grid is
+ * an invisible walkmesh authored against the picture, and every solid tile is a piece of
+ * furniture painted into it. Mum's Kitchen's upstairs transition sits at the top of the
+ * stairs with the shelving right beside and above it (issue #159): clicking those boxes
+ * fell through them and sent the player upstairs.
+ *
+ * So in those rooms a click on a solid tile only reaches a transition when it is the
+ * transition's own tile. Tiled maps keep the full tolerance: there the solid tiles beside a
+ * door are usually the building sprite the door belongs to, and clicking that art near the
+ * door is meant to go in.
+ */
+export function clickClaimedByDrawnObstacle(
+  ctx: Pick<InteractionContext, 'tileX' | 'tileY' | 'tileData'>,
+  transition: Transition
+): boolean {
+  const { tileX, tileY, tileData } = ctx;
+  if (!tileData || !isTileSolid(tileData.collisionType)) return false;
+  const doorTile = getTileCoords(transition.fromPosition);
+  if (doorTile.x === tileX && doorTile.y === tileY) return false;
+  return mapManager.getCurrentMap()?.renderMode === 'background-image';
+}
 
 export function transitionProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { position, playerSizeTier, isContextMenu, onTransition, currentMapId } = ctx;
@@ -31,7 +60,7 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
 
   // Check for transition (tight tolerance for click — must click on the door tile)
   const transitionData = mapManager.getTransitionAt(position, 0.9);
-  if (transitionData) {
+  if (transitionData && !clickClaimedByDrawnObstacle(ctx, transitionData.transition)) {
     const { transition } = transitionData;
     const blocked = transitionBlockedReason(transition);
     if (blocked)
