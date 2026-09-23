@@ -68,6 +68,10 @@ export interface WreathEditor {
   handleFlip: (axis: 'h' | 'v') => void;
   handleToggleCrop: () => void;
   handleRemoveFromSlot: () => void;
+  /** Take every flower off the ring (nothing is spent until Create Wreath). */
+  handleClear: () => void;
+  /** Stop editing the selected flower on the ring. */
+  handleDeselect: () => void;
   handleDragStart: (e: React.MouseEvent | React.TouchEvent, index: number) => void;
   handleGalleryDragStart: (e: React.MouseEvent | React.TouchEvent, itemId: string) => void;
   handleAnyMove: (e: React.MouseEvent | React.TouchEvent) => void;
@@ -164,26 +168,52 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
     setGalleryFlower(itemId);
   }, []);
 
-  /** Click empty canvas space to place the currently selected flower there. */
-  const handleWreathCanvasClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (!selectedFlower) return;
-      if (e.target !== e.currentTarget) return; // a placed flower was clicked
+  /**
+   * Place the selected gallery flower at a screen point on the canvas.
+   *
+   * Shared by taps on empty canvas and taps that land on a flower already on the
+   * ring: flowers are drawn large and overlap most of the ring, so on a phone
+   * "tap the ring to place" would otherwise keep selecting the flower underneath
+   * instead of placing the one the player just chose.
+   */
+  const placeSelectedAt = useCallback(
+    (clientX: number, clientY: number): boolean => {
+      if (!selectedFlower) return false;
       const avail = availableFlowers.find((f) => f.itemId === selectedFlower);
-      if (!avail || avail.available <= 0) return;
-      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-      const { x, y } = toCanvasCoords(e.clientX, e.clientY, rect);
+      const rect = wreathRef.current?.getBoundingClientRect();
+      if (!avail || avail.available <= 0 || !rect) return false;
+      const { x, y } = toCanvasCoords(clientX, clientY, rect);
       const newIndex = placedItems.length;
       setPlacedItems((prev) => [...prev, makeSlot(selectedFlower, x, y)]);
       setEditingSlot(newIndex);
       setGalleryFlower(selectedFlower);
       setSelectedFlower(null);
       setIsCropping(false);
+      return true;
     },
     [placedItems, selectedFlower, availableFlowers]
   );
 
-  /** Click a placed flower to select it for editing. */
+  /** Click empty canvas space to place the selected flower, or to stop editing. */
+  const handleWreathCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target !== e.currentTarget) return; // a placed flower was clicked
+      if (wasDragRef.current) {
+        // The click that ends a drag which strayed off its flower
+        wasDragRef.current = false;
+        return;
+      }
+      if (!selectedFlower) {
+        setEditingSlot(null);
+        setIsCropping(false);
+        return;
+      }
+      placeSelectedAt(e.clientX, e.clientY);
+    },
+    [selectedFlower, placeSelectedAt]
+  );
+
+  /** Click a placed flower to select it for editing (or place over it, if one is chosen). */
   const handleFlowerClick = useCallback(
     (e: React.MouseEvent, index: number) => {
       e.stopPropagation();
@@ -191,12 +221,13 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
         wasDragRef.current = false;
         return;
       }
+      if (selectedFlower && placeSelectedAt(e.clientX, e.clientY)) return;
       if (editingSlot !== index) setIsCropping(false);
       setEditingSlot(index);
       setSelectedFlower(null);
       setGalleryFlower(placedItems[index].itemId);
     },
-    [placedItems, editingSlot]
+    [placedItems, editingSlot, selectedFlower, placeSelectedAt]
   );
 
   const handleRemoveFromSlot = useCallback(() => {
@@ -205,6 +236,17 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
     setEditingSlot(null);
     setIsCropping(false);
   }, [editingSlot]);
+
+  const handleClear = useCallback(() => {
+    setPlacedItems([]);
+    setEditingSlot(null);
+    setIsCropping(false);
+  }, []);
+
+  const handleDeselect = useCallback(() => {
+    setEditingSlot(null);
+    setIsCropping(false);
+  }, []);
 
   // Delete/Backspace removes the selected flower
   useEffect(() => {
@@ -289,6 +331,9 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
     (e: React.MouseEvent | React.TouchEvent, index: number) => {
       const slot = placedItems[index];
       if (!slot) return;
+      // A flower is chosen from the gallery: this press is a placement, handled
+      // on click — do not grab (and deselect for) the flower underneath.
+      if (selectedFlower) return;
       const pos = getClientPos(e as React.MouseEvent);
       if (!pos) return;
       if ('touches' in e) e.preventDefault();
@@ -306,7 +351,7 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
       setEditingSlot(index);
       setSelectedFlower(null);
     },
-    [placedItems, isCropping]
+    [placedItems, isCropping, selectedFlower]
   );
 
   // =========================================================================
@@ -443,6 +488,8 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
     handleFlip,
     handleToggleCrop,
     handleRemoveFromSlot,
+    handleClear,
+    handleDeselect,
     handleDragStart,
     handleGalleryDragStart,
     handleAnyMove,

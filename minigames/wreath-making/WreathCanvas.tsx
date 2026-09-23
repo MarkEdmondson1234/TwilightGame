@@ -103,9 +103,7 @@ export const WreathCanvas: React.FC<WreathCanvasProps> = ({
             borderRadius: '50%',
           }}
         >
-          <span style={{ fontSize: 12, color: '#8a9a7a', fontStyle: 'italic' }}>
-            Click to place
-          </span>
+          <span style={{ fontSize: 12, color: '#8a9a7a', fontStyle: 'italic' }}>Tap to place</span>
         </div>
       )}
 
@@ -128,7 +126,7 @@ export const WreathCanvas: React.FC<WreathCanvasProps> = ({
         >
           {filledCount === 0 && (
             <div style={{ fontSize: 12, color: '#5a6a4a', fontStyle: 'italic' }}>
-              Drag flowers here
+              Choose a flower, then tap here
             </div>
           )}
           {canCreate && quality && (

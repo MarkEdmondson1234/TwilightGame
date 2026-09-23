@@ -25,9 +25,9 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
     title: 'Mushra’s Tiny Wreath',
     itemId: 'crop_lavender',
     invitation:
-      'A basket of dried flowers rests beside the kitchen easel. Mum smiles. “Mushra left you a little flower workshop to try!”',
+      'Mum smiles. “Mushra left you a basket of dried flowers, and a little flower workshop upstairs in your room to try!”',
     directions:
-      'Ask Mum at home about the flower basket for four starter flowers. Tap the easel beside the kitchen stairs and choose Make a Wreath. Select a flower, tap the ring, and repeat until you have at least four. Create Wreath puts your decoration in your bag and uses the arranged materials. No gold fee; available all year.',
+      'Ask Mum in the kitchen about making a little wreath for four starter flowers. Go upstairs to your room, tap the crafting table and choose Make a Wreath. Select a flower, tap the ring, and repeat until you have at least four. Create Wreath puts your decoration in your bag and uses the arranged materials. No gold fee; available all year.',
   },
   {
     id: 'crate-trail',

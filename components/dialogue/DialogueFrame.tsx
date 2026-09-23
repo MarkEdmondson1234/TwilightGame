@@ -158,6 +158,30 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
             <FittedName name={npcName} extra={nameExtra} />
           </div>
 
+          {/*
+           * Touch: the panel fills the screen, which hides the large portrait
+           * behind it — a phone showed the words but not who was saying them
+           * (issue #157). A small portrait sits in the frame's clear top-right,
+           * above the content area (which starts at 30%).
+           */}
+          {isTouchDevice && (
+            <img
+              data-dialogue-portrait
+              src={npcSprite}
+              alt=""
+              aria-hidden="true"
+              className="absolute object-contain object-bottom pointer-events-none"
+              style={{
+                top: '2%',
+                right: '12%',
+                height: 'min(26%, 112px)',
+                aspectRatio: '1',
+                imageRendering: 'auto',
+                filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45))',
+              }}
+            />
+          )}
+
           {/* Chat + controls — fills the grey content area, extends to bottom for buttons */}
           <div
             data-dialogue-content

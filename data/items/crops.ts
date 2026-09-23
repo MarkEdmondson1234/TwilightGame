@@ -164,6 +164,10 @@ export const CROP_ITEMS: Record<string, ItemDefinition> = {
     description: 'A pungent onion. Makes you cry!',
     stackable: true,
     sellPrice: 20,
+    // Sold year-round: the witch's pickled-onions quest step needs four, and
+    // onion sets only plant in autumn — without this a player reaching that
+    // step in spring was stuck for most of a year.
+    buyPrice: 30,
     image: groceryAssets.onion_bunch,
   },
 

@@ -39,6 +39,7 @@ import { CAVE_DRIP_PLACEMENTS } from '../data/caveDrips';
 import { hasWeatherVane, WEATHER_VANE } from '../data/weatherVane';
 import { getParallaxTreeUrls, hasForegroundParallax } from '../data/foregroundParallax';
 import { getTileAnimationSheetUrls } from './tileAnimationPlacement';
+import { getRoomPropImageUrls } from './roomProps';
 
 /** Season keys as they appear in SeasonalImageSet (lowercase, unlike TimeManager's enum). */
 export const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -215,6 +216,8 @@ export function getTexturesForMap(mapId: string, season: SeasonKey = 'spring'): 
   spriteImages(seen, season, out);
 
   npcImages(map.npcs, out);
+  // Static scenery (the kitchen easel), drawn by RoomPropsLayer
+  collect(out, getRoomPropImageUrls(map));
   collect(out, map.backgroundTexture?.image);
   // The parallax crowns framing outdoor maps: seven trees, resident for the map.
   if (hasForegroundParallax(map)) collect(out, getParallaxTreeUrls(season));

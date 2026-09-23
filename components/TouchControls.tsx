@@ -1,8 +1,9 @@
 import { EMOTES } from '../multiplayer/emotes';
 import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
+import { DpadPointerTracker, type DpadDirection } from '../utils/dpadPointers';
 
-type Direction = 'up' | 'down' | 'left' | 'right';
+type Direction = DpadDirection;
 
 /**
  * Hand-drawn D-pad artwork: one idle frame (no arrow lit) plus one frame per
@@ -28,40 +29,65 @@ interface TouchControlsProps {
   compact?: boolean;
 }
 
-/** Existing D-pad, with one owning pointer per direction and explicit cancellation. */
+/**
+ * Existing D-pad, with one owning pointer per direction and explicit cancellation.
+ *
+ * Every path that can end a touch releases its direction (issue #150 — one
+ * missed release on iPad walked the player into the nearest wall with the walk
+ * cycle still playing, and nothing short of switching apps stopped it): the
+ * owner's own up/cancel/lost-capture, the same pointer ending anywhere on the
+ * page, a touch ending with no fingers left on the screen, and the page losing
+ * focus or visibility. Ownership rules live in `utils/dpadPointers.ts`.
+ */
 const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
   onEmotePress,
   compact = false,
 }) => {
-  const held = useRef(new Map<Direction, number>());
+  const tracker = useRef(new DpadPointerTracker()).current;
   const releaseCallback = useRef(onDirectionRelease);
   releaseCallback.current = onDirectionRelease;
   const [pressed, setPressed] = useState<Direction[]>([]);
   useEffect(() => {
-    const pointers = held.current;
-    const releaseAll = () => {
-      for (const direction of pointers.keys()) releaseCallback.current(direction);
-      pointers.clear();
-      setPressed([]);
+    let mounted = true;
+    const emitReleased = (released: Direction[]) => {
+      if (released.length === 0) return;
+      for (const direction of released) releaseCallback.current(direction);
+      if (mounted) setPressed(tracker.held());
     };
+    const releaseAll = () => emitReleased(tracker.releaseAll());
+    // A pointer can end off its button (capture refused or lost) — match it by id.
+    const releasePointer = (e: PointerEvent) => emitReleased(tracker.releasePointer(e.pointerId));
+    // Safety net for a pointerup iOS never delivered: no fingers left, nothing held.
+    const releaseIfNoTouches = (e: TouchEvent) => {
+      if (e.touches.length === 0) releaseAll();
+    };
+    window.addEventListener('pointerup', releasePointer, true);
+    window.addEventListener('pointercancel', releasePointer, true);
+    window.addEventListener('touchend', releaseIfNoTouches, true);
+    window.addEventListener('touchcancel', releaseIfNoTouches, true);
     window.addEventListener('blur', releaseAll);
+    window.addEventListener('pagehide', releaseAll);
     window.addEventListener('orientationchange', releaseAll);
     document.addEventListener('visibilitychange', releaseAll);
     return () => {
+      mounted = false;
+      window.removeEventListener('pointerup', releasePointer, true);
+      window.removeEventListener('pointercancel', releasePointer, true);
+      window.removeEventListener('touchend', releaseIfNoTouches, true);
+      window.removeEventListener('touchcancel', releaseIfNoTouches, true);
       window.removeEventListener('blur', releaseAll);
+      window.removeEventListener('pagehide', releaseAll);
       window.removeEventListener('orientationchange', releaseAll);
-      document.addEventListener('visibilitychange', releaseAll);
-      for (const direction of pointers.keys()) releaseCallback.current(direction);
-      pointers.clear();
+      document.removeEventListener('visibilitychange', releaseAll);
+      releaseAll();
     };
-  }, []);
+  }, [tracker]);
   const release = (direction: Direction, pointerId: number) => {
-    if (held.current.get(direction) !== pointerId) return;
-    held.current.delete(direction);
+    if (!tracker.release(direction, pointerId)) return;
     releaseCallback.current(direction);
-    setPressed([...held.current.keys()]);
+    setPressed(tracker.held());
   };
   // Only one arrow can be lit at a time — the most recently pressed wins.
   const lit: Direction | null = pressed.length > 0 ? pressed[pressed.length - 1] : null;
@@ -75,7 +101,10 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         paddingRight: 'max(12px, env(safe-area-inset-right))',
       }}
     >
-      <div aria-label="Movement" className={`relative ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}>
+      <div
+        aria-label="Movement"
+        className={`no-touch-callout relative select-none ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}
+      >
         {DPAD_FRAME_STATES.map((state) => (
           <img
             key={state}
@@ -93,12 +122,18 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             aria-label={`Move ${direction}`}
             aria-pressed={pressed.includes(direction)}
             onPointerDown={(e) => {
-              if (e.button !== 0 || held.current.has(direction)) return;
+              if (e.button !== 0) return;
               e.preventDefault();
-              e.currentTarget.setPointerCapture(e.pointerId);
-              held.current.set(direction, e.pointerId);
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {
+                // Pointer already gone — the window-level listeners still release it.
+              }
+              // A new finger on a held arm takes it over, so a stuck arrow is
+              // unstuck by pressing it again. Pressing is idempotent on keysPressed.
+              tracker.press(direction, e.pointerId);
               onDirectionPress(direction);
-              setPressed([...held.current.keys()]);
+              setPressed(tracker.held());
             }}
             onPointerUp={(e) => release(direction, e.pointerId)}
             onPointerCancel={(e) => release(direction, e.pointerId)}
@@ -113,7 +148,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onClick={onEmotePress}
           aria-label="Emotes"
-          className="pointer-events-auto absolute w-12 h-12 bg-amber-700/90 rounded-full border-2 border-amber-400/70 text-xl shadow-md"
+          className="no-touch-callout pointer-events-auto absolute w-12 h-12 bg-amber-700/90 rounded-full border-2 border-amber-400/70 text-xl shadow-md"
           style={{
             right: 'max(24px, env(safe-area-inset-right))',
             bottom: '88px',

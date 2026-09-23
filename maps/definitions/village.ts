@@ -247,8 +247,11 @@ export const village: MapDefinition = {
     createDogNPC('village_dog', { x: 13, y: 8 }, 'child', 'Friendly Dog'),
     // Duck - spring seasonal creature near the well/pond area
     // Only appears in spring (uses visibilityConditions to hide during other seasons)
-    // Single duck to make it feel more special and rare
-    createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
+    // Single duck to make it feel more special and rare.
+    // Beside the well, not on it: at (20, 17) the duck stood inside the well's
+    // collision box, so every wander step collided and it never moved (#157).
+    // tests/npcSpawnClear.test.ts guards every moving NPC against this.
+    createDuckNPC('village_duck', { x: 22, y: 17 }, 'Duck'),
     // The Lost Kitten — subject of the lost_kitten discovery chain. Sits by the
     // well while the quest is available or in progress; after the ending it
     // remains only if it became the village cat (adopted kittens go home).

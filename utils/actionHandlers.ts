@@ -10,6 +10,7 @@ import { mapManager, transitionToMap } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
 import { farmManager } from './farmManager';
+import { npcPlotPickRefusal } from './npcGardenAccess';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
@@ -400,8 +401,13 @@ export function handleFarmAction(
         farmActionTaken = true;
       }
     } else if (plotTileType === TileType.SOIL_READY) {
-      // Check for herbs and dual-harvest crops — require click interaction for choice
       const readyPlot = farmManager.getPlot(currentMapId, position);
+      // A villager's crop may only be picked once you are friends (issue #157).
+      const pickRefusal = npcPlotPickRefusal(readyPlot);
+      if (pickRefusal) {
+        return { handled: false, message: pickRefusal, messageType: 'info' };
+      }
+      // Check for herbs and dual-harvest crops — require click interaction for choice
       const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
       if (readyCrop?.isHerb || readyCrop?.dualHarvest) {
         return {

@@ -53,9 +53,43 @@
   font-size: 12px;
 }
 @media (max-height: 500px) {
+  /* Below the top-right buttons (8px + 44px) and above the satchel (8px + 60px),
+     rather than on top of either: the card sits over the HUD layer (issue #157). */
   .activity-invitation {
-    top: 12px;
-    max-height: calc(100dvh - 100px);
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
     width: min(340px, calc(100vw - 110px));
   }
+}
+
+/* Touch: the discreet form. Only as wide as the title, and one tap opens the card. */
+.activity-invitation.activity-invitation-pill {
+  width: auto;
+  max-width: min(260px, calc(100vw - 110px));
+  padding: 0;
+  border-radius: 24px 24px 4px 24px;
+  overflow: hidden;
+}
+.activity-invitation-pill button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 14px 4px 6px;
+  background: transparent;
+  color: inherit;
+  font-weight: bold;
+  text-align: left;
+}
+.activity-invitation-pill img {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.activity-invitation-pill span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

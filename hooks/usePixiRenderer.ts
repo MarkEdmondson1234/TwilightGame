@@ -21,7 +21,8 @@ import {
 import { useRef, useState, useEffect, useCallback, MutableRefObject } from 'react';
 import * as PIXI from 'pixi.js';
 import { Position, Direction, MapDefinition, TileData, NPC } from '../types';
-import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE } from '../constants';
+import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE, TIMING } from '../constants';
+import { createContextRecovery } from '../utils/pixi/contextRecovery';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
 import { reportErrorOnce } from '../utils/errorReporting';
@@ -44,6 +45,7 @@ import { ForegroundParallaxLayer } from '../utils/pixi/ForegroundParallaxLayer';
 import { hasForegroundParallax } from '../data/foregroundParallax';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
+import { RoomPropsLayer } from '../utils/pixi/RoomPropsLayer';
 import { AnimationLayer } from '../utils/pixi/AnimationLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { HighlightLayer } from '../utils/pixi/HighlightLayer';
@@ -213,6 +215,13 @@ export interface UsePixiRendererReturn {
 
   /** Update animations (called from game loop) */
   updateAnimations: (deltaTime: number) => void;
+
+  /**
+   * React `key` for the world `<canvas>`. It changes when a lost WebGL context
+   * forces a rebuild: the renderer can only come back on a fresh canvas element
+   * (see utils/pixi/contextRecovery.ts), so App must pass this as the canvas key.
+   */
+  canvasKey: number;
 }
 
 /**
@@ -235,6 +244,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
   // State
   const [isPixiInitialized, setIsPixiInitialized] = useState(false);
+  // Bumped to remount the <canvas> after a WebGL context loss (see canvasKey).
+  const [canvasGeneration, setCanvasGeneration] = useState(0);
   /** Bumped when an on-demand texture arrives, so layers re-render with it. */
   const [textureVersion, setTextureVersion] = useState(0);
 
@@ -247,6 +258,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const npcLayerRef = useRef<NPCLayer | null>(null);
   const remotePlayerLayerRef = useRef<RemotePlayerLayer | null>(null);
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
+  const roomPropsLayerRef = useRef<RoomPropsLayer | null>(null);
   const animationLayerRef = useRef<AnimationLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
@@ -640,6 +652,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         gridOffset
       );
     }
+    if (offsetChanged && roomPropsLayerRef.current) {
+      roomPropsLayerRef.current.render(mapManager.getCurrentMap()?.props, tileSize, gridOffset);
+    }
     if (offsetChanged && animationLayerRef.current) {
       const map = mapManager.getCurrentMap();
       if (map) {
@@ -848,6 +863,12 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
 
+        // Static room scenery (the kitchen easel), depth-sorted with the player
+        const roomPropsLayer = new RoomPropsLayer();
+        roomPropsLayerRef.current = roomPropsLayer;
+        roomPropsLayer.setDepthContainer(depthSortedContainer);
+        app.stage.addChild(roomPropsLayer.getContainer());
+
         // Tile-triggered animations (petals, bees, hearth fire), depth-sorted
         // with everything else. A sheet's metadata arrives asynchronously;
         // re-render once so the animation appears when it does.
@@ -950,6 +971,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
             viewFrameRef.current.tileSize,
             viewFrameRef.current.gridOffset
           );
+          roomPropsLayer.render(
+            initialMap.props,
+            viewFrameRef.current.tileSize,
+            viewFrameRef.current.gridOffset
+          );
 
           if (shadowLayerRef.current) {
             const { hour, season } = TimeManager.getCurrentTime();
@@ -1000,46 +1026,35 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
     initPixi();
 
-    // Handle WebGL context loss (common on iPad Safari under memory pressure).
-    // Without this, context loss silently breaks rendering → blank page → Safari auto-reloads.
+    // Handle WebGL context loss (common on iOS Safari under memory pressure —
+    // issue #157 was the lava levels coming up as a blank green screen after a
+    // goblin fight). The renderer is rebuilt on a *fresh* canvas: bumping
+    // canvasGeneration remounts the <canvas> (App keys it on canvasKey) and
+    // re-runs this effect, whose cleanup below tears the old app down. Never
+    // re-initialise on this canvas — destroy(true) detaches it from the DOM and
+    // Pixi's destroy force-loses its context, so the world would draw nowhere.
     const canvas = canvasRef.current;
+    const recovery = createContextRecovery({
+      waitMs: TIMING.WEBGL_RESTORE_WAIT_MS,
+      onRebuild: () => {
+        debugLog('usePixiRenderer', 'Rebuilding renderer on a fresh canvas after context loss');
+        setIsPixiInitialized(false);
+        setCanvasGeneration((g) => g + 1);
+      },
+    });
     const handleContextLost = (e: Event) => {
-      e.preventDefault(); // Allow context restoration
-      console.warn('[usePixiRenderer] WebGL context lost — waiting for restoration');
+      e.preventDefault(); // Ask the browser to restore it, if it can
+      console.warn('[usePixiRenderer] WebGL context lost — rebuilding the renderer');
       reportDiagnosticContextLoss();
+      recovery.handleLost();
     };
-    const handleContextRestored = () => {
-      debugLog('usePixiRenderer', 'WebGL context restored — reinitializing');
-      // Force full re-initialization by destroying and re-creating
-      setIsPixiInitialized(false);
-      if (pixiAppRef.current) {
-        performanceMonitor.attachStage(null);
-        pixiAppRef.current.destroy(true);
-        pixiAppRef.current = null;
-      }
-      // initPixi() below creates a fresh BackgroundImageLayer with its own EventBus
-      // subscriptions — dispose the old one first or its listeners leak forever
-      // (this effect's own cleanup never runs here, since isPixiInitialized isn't
-      // one of its dependencies).
-      if (backgroundImageLayerRef.current) {
-        backgroundImageLayerRef.current.dispose();
-        backgroundImageLayerRef.current = null;
-      }
-      // Same leak risk as BackgroundImageLayer above: initPixi() creates a fresh
-      // DarknessLayer with its own setInterval-based flicker/transition timers —
-      // dispose the old one first or those timers run forever on an orphaned instance.
-      if (darknessLayerRef.current) {
-        darknessLayerRef.current.destroy();
-        darknessLayerRef.current = null;
-      }
-      // The effect will re-run because isPixiInitialized changed
-      setTimeout(() => initPixi(), 100);
-    };
+    const handleContextRestored = () => recovery.handleRestored();
     canvas?.addEventListener('webglcontextlost', handleContextLost);
     canvas?.addEventListener('webglcontextrestored', handleContextRestored);
 
     // Cleanup
     return () => {
+      recovery.dispose();
       canvas?.removeEventListener('webglcontextlost', handleContextLost);
       canvas?.removeEventListener('webglcontextrestored', handleContextRestored);
       if (pixiAppRef.current) {
@@ -1047,7 +1062,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         // Drop the stage reference BEFORE destroy, so nothing can walk a tree
         // that is being torn down.
         performanceMonitor.attachStage(null);
-        pixiAppRef.current.destroy(true);
+        try {
+          pixiAppRef.current.destroy(true);
+        } catch (error) {
+          // A lost context can make GPU-side teardown throw; the layers below
+          // must still be released, or the rebuild leaks their timers.
+          console.warn('[usePixiRenderer] Error destroying PixiJS application:', error);
+        }
         pixiAppRef.current = null;
       }
       if (tileLayerRef.current) {
@@ -1104,7 +1125,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init-once by design: the twelve flagged values are per-frame/per-render inputs consumed through refs and the game loop; re-initialising the whole PixiJS renderer when they change would tear down and rebuild the GPU context every frame
-  }, [enabled, isMapInitialized]); // Only initialize once when map is ready
+  }, [enabled, isMapInitialized, canvasGeneration]); // Once when the map is ready, and again on a fresh canvas after context loss
 
   // =========================================================================
   // EFFECT: Window Resize
@@ -1293,6 +1314,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       );
     }
 
+    // Static room scenery — same grid offset, same depth container
+    roomPropsLayerRef.current?.render(
+      map.props,
+      viewFrameRef.current.tileSize,
+      viewFrameRef.current.gridOffset
+    );
+
     // Tile-triggered animations, at this frame's grid offset
     if (animationLayerRef.current) {
       animationLayerRef.current.render(
@@ -1475,5 +1503,6 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     highlightLayerRef,
     thoughtBubbleLayerRef,
     updateAnimations,
+    canvasKey: canvasGeneration,
   };
 }

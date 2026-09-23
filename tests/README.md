@@ -60,9 +60,10 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | File | Catches | You'll hit this when |
 |---|---|---|
 | `assetIntegrity.test.ts` | Asset paths that don't resolve to a real file, including case mismatches | Adding any sprite, icon, or audio file |
-| `itemSSoT.test.ts` | Recipes/shops referencing items that don't exist; duplicate items | Adding an item, recipe, or shop entry |
+| `itemSSoT.test.ts` | Recipes/shops referencing items that don't exist; duplicate items; a quest recipe with an ingredient the shop does not sell all year | Adding an item, recipe, or shop entry |
 | `tileRegistration.test.ts` | Tiles missing from `TILE_LEGEND` or `TILE_TYPE_TO_COLOR_KEY`; unrecognised grid codes | Adding a tile type or editing a map grid |
 | `mapValidation.test.ts` | Out-of-bounds spawn points, NPCs, and transition targets | Adding or editing a map |
+| `npcSpawnClear.test.ts` | A wandering NPC spawned inside collision, so it never moves (the duck on the well) | Placing a moving NPC, or changing a sprite's collision box |
 | `spriteMetadata.test.ts` | Square artwork declared with non-square tile dimensions (visible stretching) | Adding a multi-tile sprite |
 | `minigameRegistry.test.ts` | Duplicate ids, missing fields, trigger items **or NPCs** that don't exist | Adding a mini-game |
 | `minigameRequirements.test.ts` | Required items not actually gating play; a game being unreachable | Adding a mini-game with requirements |
@@ -73,8 +74,10 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `quickSlotContextMenu.test.tsx` | The quick slot bar offering fewer actions than the same slot in the inventory | Touching `QuickSlotBar` |
 | `remotePlayerInteractions.test.ts` | Player options leaking onto plain clicks, or naming the wrong person | Touching `providers/remotePlayers.ts` |
 | `doorDestinationLabel.test.ts` | "Go to undefined" on a procedural map, or a size-blocked door losing its reason | Touching `providers/transition.ts` |
+| `kitchenClickThrough.test.ts` | A click on furniture painted into a background-image room (Mum's Kitchen shelving, #159) falling through to a nearby door | Moving a room's stairs/doors, re-authoring its walkmesh, or touching `providers/transition.ts` |
 | `shopClickQuantity.test.tsx` | A single click buying more than one, or the quantity picker becoming unreachable | Touching `ShopUI` slot handlers |
 | `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
+| `roomProps.test.ts` | Scenery drawn as DOM in the world overlay (it covers the PixiJS player whatever its z-index — issue #158), or a room prop that no longer sorts behind a player standing in front of it | Adding scenery to a background-image room; touching `MiniGameLocationIndicators` |
 | `animationSheets.test.ts` | A tile animation pointing at a GIF, a sprite sheet without its `.sheet.json` sidecar, or a sidecar that disagrees with the PNG — the layer then draws nothing, or frames cut from the wrong place, with no error | Adding or changing an animation; forgetting `npm run optimize-assets` |
 | `domEffectBudget.test.ts` | A CSS blur or blend mode over the game world — a blurred DOM layer over the WebGL canvas makes the compositor redraw the whole canvas every frame (the cloud shadows and weather tint were exactly that, until they became Pixi layers) | Adding a visual effect as a DOM overlay |
 | `pixiMaskSafety.test.ts` | Raw `.mask =` assignment outside `maskUtils` (guards the "this.mask is null" crash) | Adding/using a PixiJS mask (fog, lighting, spotlights) |
@@ -107,6 +110,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `multiplayerUI.test.tsx` | Render-time crashes in the emote wheel / presence indicator, which the headless probe does not reach (it does not click past the splash screen) | Touching multiplayer UI |
 | `mapTextureBudget.test.ts` | A texture reference that 404s (renders as *nothing*, with no error), a filename whose case only matches on macOS, or a map whose resident textures exceed what a phone can hold — which kills the tab with no catchable error | Adding a map, NPC, or tile; changing `scripts/optimize-assets.js` |
 | `textureManager.test.ts` | Unbounded texture fan-out at startup (mobile WebKit answers that by terminating requests as `TypeError: Load failed`), a render-loop miss retrying forever, or eviction destroying a texture still in use | Touching `utils/TextureManager.ts` or the loading policy |
+| `webglContextRecovery.test.ts` | A lost WebGL context (iOS under memory pressure) leaving a permanent plain-green screen with only the HUD — the renderer rebuilt on the detached, force-lost canvas instead of a fresh one, or waited for a `webglcontextrestored` iOS never sends (issue #157) | Touching renderer initialisation/teardown in `hooks/usePixiRenderer.ts`, the world `<canvas>` in `App.tsx`, or `utils/pixi/contextRecovery.ts` |
 | `errorReporting.test.ts` | Sentry reporting becoming a crash or a quota leak: helpers throwing when unconfigured, or the once-per-session dedupe stopping (repeats re-burning quota — the AbortError lesson) | Touching `utils/errorReporting.ts` |
 | `sessionHeartbeat.test.ts` | An iOS memory kill leaving no trace — the heartbeat the next boot reports (map, operation in flight, texture MB) is the only witness to "it refreshed back to the title screen" | Touching `utils/sessionHeartbeat.ts` or the diagnostics start-up |
 | `serviceWorkerVersion.test.ts` | A returning phone playing a build hours old: the SW cache name must come from the build stamp, and a new worker must reach the player (re-check on return, reload while hidden) | Touching `public/sw.js`, `scripts/stamp-sw.mjs`, `utils/serviceWorkerUpdates.ts` or the build script |

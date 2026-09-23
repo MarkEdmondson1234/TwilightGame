@@ -383,18 +383,20 @@ const Inventory: React.FC<InventoryProps> = ({
                   {/* Item Icon */}
                   {item && (
                     <>
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      {/* Sized to the slot rather than a fixed 48px box, which left the
+                          artwork small inside the wider touch slots (issue #157). */}
+                      <div className="absolute inset-0 flex items-center justify-center p-[10%]">
                         {item.icon.startsWith('/') ||
                         item.icon.startsWith('http') ||
                         item.icon.startsWith('data:') ? (
                           <img
                             src={item.icon}
                             alt={item.name}
-                            className="w-12 h-12 object-contain"
+                            className="w-full h-full object-contain"
                             style={{ imageRendering: 'auto' }}
                           />
                         ) : (
-                          <span className="text-3xl">{item.icon}</span>
+                          <span className={isTouchDevice ? 'text-4xl' : 'text-3xl'}>{item.icon}</span>
                         )}
                       </div>
 

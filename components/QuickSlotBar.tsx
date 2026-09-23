@@ -2,6 +2,13 @@ import React from 'react';
 import { Z_HUD, zClass } from '../zIndex';
 import { useLongPress } from '../hooks/useLongPress';
 
+/** The bar always shows the first nine inventory slots. */
+export const QUICK_SLOT_COUNT = 9;
+/** Largest slot, in CSS px. On narrow touch screens slots shrink below this to fit. */
+export const QUICK_SLOT_MAX_PX = 48;
+/** Gap between slots on touch, where every pixel of width counts. */
+const QUICK_SLOT_TOUCH_GAP_PX = 4;
+
 export interface InventoryItem {
   id: string;
   name: string;
@@ -50,9 +57,9 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
     onSlotContextMenuRef.current?.(slotIndex, { clientX, clientY });
   });
   // Create array of 9 slots (empty or with items)
-  const slots: (InventoryItem | null)[] = Array(9).fill(null);
+  const slots: (InventoryItem | null)[] = Array(QUICK_SLOT_COUNT).fill(null);
   items.forEach((item, index) => {
-    if (index < 9) {
+    if (index < QUICK_SLOT_COUNT) {
       slots[index] = item;
     }
   });
@@ -60,9 +67,10 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
   return (
     <div
       data-game-ui
-      aria-label="Quick slots — swipe to see more, hold an item for actions"
+      data-quick-slot-bar
+      aria-label="Quick slots — hold an item for actions"
       className={`fixed ${isTouchDevice ? '' : 'left-1/2 -translate-x-1/2'} ${zClass(Z_HUD)} pointer-events-auto
-        bottom-5 md:bottom-5 sm:bottom-[90px] px-2 py-2 rounded-lg`}
+        bottom-5 md:bottom-5 sm:bottom-[90px] ${isTouchDevice ? 'px-1.5 py-1.5' : 'px-2 py-2'} rounded-lg`}
       onClick={(e) => e.stopPropagation()} // Prevent clicks from passing through to game world
       style={{
         background: 'rgba(0, 0, 0, 0.3)',
@@ -72,14 +80,27 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               left: `calc(${compact ? 176 : 208}px + env(safe-area-inset-left, 0px))`,
               right: 'calc(80px + env(safe-area-inset-right, 0px))',
               transform: 'none',
-              overflowX: 'auto',
-              touchAction: 'pan-x',
-              overscrollBehaviorX: 'contain',
             }
           : {}),
       }} // Subtle backdrop for click area
     >
-      <div className="flex gap-2 w-max">
+      {/*
+       * Touch: the nine slots share the space between the D-pad and the satchel.
+       * Each column shrinks below QUICK_SLOT_MAX_PX rather than the bar scrolling
+       * sideways, so every slot is always on screen (issue #157).
+       */}
+      <div
+        className={isTouchDevice ? 'grid' : 'flex gap-2 w-max'}
+        style={
+          isTouchDevice
+            ? {
+                gridTemplateColumns: `repeat(${QUICK_SLOT_COUNT}, minmax(0, ${QUICK_SLOT_MAX_PX}px))`,
+                gap: QUICK_SLOT_TOUCH_GAP_PX,
+                justifyContent: 'center',
+              }
+            : undefined
+        }
+      >
         {slots.map((item, index) => {
           const isEmpty = item === null;
           const isSelected = selectedSlot === index;
@@ -110,7 +131,7 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               className={`
                 no-touch-callout
                 relative rounded-lg transition-all
-                w-12 h-12 shrink-0
+                ${isTouchDevice ? 'w-full aspect-square min-w-0' : 'w-12 h-12 shrink-0'}
                 ${
                   isSelected
                     ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
@@ -123,14 +144,16 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               {/* Item Icon */}
               {item && (
                 <>
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  {/* The icon fills the slot inside a thin inset, rather than a fixed
+                      32px box that left most of the slot empty on a phone. */}
+                  <div className="absolute inset-0 flex items-center justify-center p-[3px]">
                     {item.icon.startsWith('/') ||
                     item.icon.startsWith('http') ||
                     item.icon.startsWith('data:') ? (
                       <img
                         src={item.icon}
                         alt={item.name}
-                        className="w-8 h-8 object-contain"
+                        className="w-full h-full object-contain"
                         style={{ imageRendering: 'auto' }}
                       />
                     ) : (

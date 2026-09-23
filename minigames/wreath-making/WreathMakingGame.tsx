@@ -2,8 +2,11 @@ import { finishTinyWreathLesson } from '../../utils/tinyWreathLesson';
 /**
  * Wreath Making mini-game — Mushra's Wreath Workshop
  *
- * Wide two-column layout with a flower gallery on the left and wreath
- * on the right. Flowers are free-floating on the wreath ring — they can
+ * Two layouts, chosen by `wreathLayout.ts`: on a desktop, a wide layout with a
+ * flower gallery on the left, the wreath in the centre and tools on the right;
+ * on phones and tablets, a stacked full-screen layout (`CompactWreathWorkshop`)
+ * with the wreath fitted to the width, a flower strip, a bottom tool sheet and a
+ * sticky action bar. Both drive the same editor and the same creation below. Flowers are free-floating on the wreath ring — they can
  * overlap, be dragged to reposition, and zoomed to any size. The gallery
  * celebrates the hand-drawn artwork with large close-up previews.
  *
@@ -31,13 +34,15 @@ import { finishTinyWreathLesson } from '../../utils/tinyWreathLesson';
  *     `EditingToolPanel.tsx` / `FlowerSprites.tsx` — UI
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { decorationManager } from '../../utils/DecorationManager';
 import { EditingToolPanel } from './EditingToolPanel';
 import { FloatingFlower } from './FlowerSprites';
 import { FlowerGallery } from './FlowerGallery';
 import { WreathStage } from './WreathStage';
+import { CompactWreathWorkshop } from './CompactWreathWorkshop';
+import { useWreathLayout } from './wreathLayout';
 import { captureWreathImage } from './wreathCapture';
 import { getWreathQuality } from './wreathQuality';
 import { useWreathEditor } from './useWreathEditor';
@@ -55,19 +60,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const creatingRef = useRef(false);
   const [createError, setCreateError] = useState('');
-  /** Current viewport width — used to scale down the workshop on small screens. */
-  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
-  const [windowHeight, setWindowHeight] = useState(() => window.innerHeight);
-
-  // Track viewport width for responsive scaling
-  useEffect(() => {
-    const onResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+  const { compact, canvasScale } = useWreathLayout();
 
   // =========================================================================
   // Create the wreath
@@ -161,14 +154,22 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     onComplete(result);
   }, [placedItems, context.actions, context.storage, onComplete]);
 
-  // Scale the workshop down proportionally when the viewport is too narrow
-  const canvasScale = Math.min(
-    1,
-    Math.max(0.4, Math.min(windowWidth * 0.9 - 40, windowHeight * 0.9 - 100) / 480)
-  );
   const closeWorkshop = () => {
     if (!creatingRef.current) onClose();
   };
+
+  if (compact) {
+    return (
+      <CompactWreathWorkshop
+        editor={editor}
+        canvasScale={canvasScale}
+        isCreating={isCreating}
+        createError={createError}
+        onClose={closeWorkshop}
+        onCreate={handleCreate}
+      />
+    );
+  }
 
   // =========================================================================
   // Render
@@ -230,9 +231,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       </div>
 
       <p style={{ fontSize: 14, lineHeight: 1.5, margin: '0 0 12px', color: '#e0e8d0' }}>
-        Select a flower, then tap the ring to place it. Arrange at least four, then Create Wreath.
-        Only the materials you use are spent; no gold fee. Scroll down for the create button and
-        editing tools.
+        Select a flower, then click the ring to place it (or drag it there). Arrange at least four,
+        then Create Wreath. Only the materials you use are spent; no gold fee.
       </p>
       {createError && (
         <p role="alert" style={{ color: '#ffcda8' }}>
@@ -281,6 +281,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           onZoom={editor.handleZoom}
           onCropZoom={editor.handleCropZoom}
           onClose={closeWorkshop}
+          onClear={editor.handleClear}
           onCreate={handleCreate}
         />
 

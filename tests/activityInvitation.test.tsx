@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   season: 'winter',
   skis: 0,
   remembered: new Set<string>(),
+  touch: false,
   npcs: [] as Array<{ id: string; name: string; position: { x: number; y: number } }>,
 }));
 vi.mock('../NPCManager', () => ({
@@ -21,6 +22,7 @@ vi.mock('../utils/TimeManager', () => ({
 vi.mock('../utils/inventoryManager', () => ({
   inventoryManager: { getQuantity: () => state.skis },
 }));
+vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => state.touch }));
 vi.mock('../data/items', () => ({ getItem: () => ({ image: '/skis.png' }) }));
 vi.mock('../utils/activityLeadStorage', () => ({
   hasActivityLead: (id: string) => state.remembered.has(id),
@@ -39,6 +41,7 @@ beforeEach(() => {
   state.season = 'winter';
   state.skis = 0;
   state.remembered.clear();
+  state.touch = false;
   state.npcs = [];
 });
 
@@ -114,5 +117,23 @@ describe('activity invitations', () => {
     state.npcs = [];
     view.rerender(<ActivityInvitation {...p} mapId="home" />);
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+  it('starts as a small pill on touch and opens the full card on tap', () => {
+    // Issue #157: the full card covered a third of a phone screen whenever a host was near.
+    state.touch = true;
+    state.npcs = [{ id: 'child', name: 'Village Child', position: { x: 1, y: 0 } }];
+    state.season = 'autumn';
+    const onVisibilityChange = vi.fn();
+    render(
+      <ActivityInvitation {...props()} mapId="village" onVisibilityChange={onVisibilityChange} />
+    );
+    const pill = screen.getByRole('button', { expanded: false });
+    expect(screen.queryByRole('button', { name: 'Later' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ask Village Child' })).not.toBeInTheDocument();
+    // Still counts as showing, so the pinned quest keeps yielding to it.
+    expect(onVisibilityChange).toHaveBeenLastCalledWith(true);
+    fireEvent.click(pill);
+    expect(screen.getByRole('button', { name: 'Ask Village Child' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Later' })).toBeInTheDocument();
   });
 });

@@ -20,6 +20,11 @@ reach ~80% when every gardener is befriended to the maximum.
   like a shared plot. The loser of a photo-finish gets the existing "someone got
   there first" toast, and the gardener quietly replants the tile a couple of days
   later.
+- **…but only by the gardener's friends** (issue #157). Picking needs *your own*
+  friendship with that gardener at `NPC_GARDEN.PICK_MIN_TIER` (acquaintance — the
+  same bar as asking them to plant something). Below it, click, keyboard and touch
+  all get a kind "you'll need to be better friends before picking these" message
+  instead (`utils/npcGardenAccess.ts`). No quest is involved.
 - Talking to a gardener NPC offers *"Could you plant something for me?"* — pick a
   crop, and they plant **more of it** in their patch, for everyone.
 - **The garden is one shared world object built on the existing shared-farm state.**
@@ -116,6 +121,9 @@ survives sync. Two behavioural gates, both local and cheap:
   garden would rot into dead crops and death toasts.
 - **Modest yield:** harvesting an NPC plot yields `min(crop.harvestYield, 2)` and
   drops **no seeds** — the garden is ambience and snacks, not a seed farm.
+- **Friends only:** a READY NPC plot is pickable only at `NPC_GARDEN.PICK_MIN_TIER`
+  with that gardener (see `npcPlotPickRefusal`, checked by `handleFarmAction` and
+  the farming provider's herb/dual-harvest options).
 
 Rendering and the harvest interaction need **no changes at all** — TileLayer
 already renders plots with growth stages, and the farming provider already

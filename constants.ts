@@ -222,6 +222,10 @@ export const TIMING = {
 
   // Game systems
   MAP_TRANSITION_MS: 1000, // Map transition fade duration
+  // How long to wait for the browser to hand a lost WebGL context back before
+  // rebuilding the renderer on a fresh canvas anyway. iOS often never fires
+  // `webglcontextrestored`, and until the rebuild the world is simply gone.
+  WEBGL_RESTORE_WAIT_MS: 2000,
   WEATHER_CHECK_MS: 3000, // Interval for weather update checks
   WEATHER_TRANSITION_S: 3, // Weather/darkness fade duration in seconds
   AUTOSAVE_INTERVAL_MS: 60000, // Autosave frequency
@@ -297,6 +301,14 @@ export const NPC_GARDEN = {
   /** Harvest yield cap for NPC-tended crops, and seed drops are always zero.
    *  The garden is ambience and snacks, not a seed farm. */
   HARVEST_YIELD_CAP: 2,
+
+  /** Friendship tier the player needs with a gardener before they may pick
+   *  that gardener's ready crops (issue #157 — friendship only, no quest).
+   *  'acquaintance' is the same bar as asking the gardener to plant something
+   *  for you (the `garden_favour` dialogue node), so the two unlock together.
+   *  Below it the harvest is replaced with a kind "not yet" message. This is
+   *  the player's OWN friendship, not the shared gardenLevel. */
+  PICK_MIN_TIER: 'acquaintance',
 
   /** Share of a gardener's patch given over to the requested crop:
    *  ceil(patchSize * min(REQUEST_SHARE_MAX, REQUEST_SHARE_BASE + REQUEST_SHARE_PER_LEVEL * level)).
