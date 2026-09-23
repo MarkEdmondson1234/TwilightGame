@@ -5,10 +5,10 @@
  */
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Z_RADIAL_MENU } from '../zIndex';
+import { Z_RADIAL_MENU, Z_TOUCH_ACTION_MENU, Z_TOUCH_ACTION_MENU_BACKDROP } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
-import { useMenuViewport } from '../hooks/useMenuViewport';
 import GameIcon from './GameIcon';
+import TouchActionMenu from './TouchActionMenu';
 
 /** Keep the menu this far from every screen edge. */
 const VIEWPORT_MARGIN = 12;
@@ -48,15 +48,34 @@ interface RadialMenuProps {
   openedByTouch?: boolean;
 }
 
-const RadialMenu: React.FC<RadialMenuProps> = ({
+/**
+ * Touch devices get the compact icon cluster (TouchActionMenu); everything else
+ * gets the vertical column below. Both share the option model and the
+ * select-then-close behaviour.
+ */
+const RadialMenu: React.FC<RadialMenuProps> = (props) => {
+  const isTouchDevice = useTouchDevice();
+  if (isTouchDevice) {
+    return (
+      <TouchActionMenu
+        position={props.position}
+        options={props.options}
+        onClose={props.onClose}
+        backdropZIndex={props.zIndex ?? Z_TOUCH_ACTION_MENU_BACKDROP}
+        menuZIndex={props.zIndex !== undefined ? props.zIndex + 1 : Z_TOUCH_ACTION_MENU}
+      />
+    );
+  }
+  return <DesktopRadialMenu {...props} />;
+};
+
+const DesktopRadialMenu: React.FC<RadialMenuProps> = ({
   position,
   options,
   onClose,
   zIndex: zIndexOverride,
   openedByTouch = false,
 }) => {
-  const isTouchDevice = useTouchDevice();
-  const viewport = useMenuViewport();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -171,41 +190,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
           // Hidden for the measuring pass only — otherwise the menu visibly jumps from
           // its unclamped position to its clamped one.
           visibility: clamped ? 'visible' : 'hidden',
-          ...(isTouchDevice
-            ? ({
-                left: viewport.left + viewport.width / 2,
-                top: viewport.top + viewport.height / 2,
-                width: 'min(420px, calc(100% - 48px))',
-                maxWidth: viewport.width - 48,
-                maxHeight: viewport.height - 32,
-                overflowY: 'auto',
-                overscrollBehavior: 'contain',
-                padding: 8,
-                borderRadius: 16,
-                backgroundColor: '#eee2cd',
-                visibility: 'visible',
-              } as React.CSSProperties)
-            : {}),
         }}
       >
-        {isTouchDevice && (
-          <button
-            onClick={onClose}
-            style={{
-              minHeight: 48,
-              flexShrink: 0,
-              width: '100%',
-              position: 'sticky',
-              top: 0,
-              zIndex: 1,
-              background: '#eee2cd',
-              color: '#5c4a3d',
-              borderRadius: 8,
-            }}
-          >
-            Close actions
-          </button>
-        )}
         {options.map((option, index) => {
           const isHovered = hoveredIndex === index;
           const isSelected = selectedIndex === index;
@@ -242,8 +228,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({
                   ? '0 6px 20px rgba(92, 74, 61, 0.5), inset 0 1px 0 rgba(255,255,255,0.1)'
                   : '0 4px 12px rgba(92, 74, 61, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
                 transition: 'all 0.2s ease',
-                whiteSpace: isTouchDevice ? 'normal' : 'nowrap',
-                ...(isTouchDevice ? { width: '100%', minHeight: 48, flexShrink: 0 } : {}),
+                whiteSpace: 'nowrap',
                 // Parchment texture effect
                 backgroundImage: isSelected
                   ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)'

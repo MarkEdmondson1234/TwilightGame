@@ -1,6 +1,12 @@
 import React from 'react';
 import { Z_HUD, zClass } from '../zIndex';
 import { useLongPress } from '../hooks/useLongPress';
+import {
+  QUICK_BAR_LEFT_COMPACT_PX,
+  QUICK_BAR_LEFT_PX,
+  QUICK_BAR_RIGHT_PX,
+  TOUCH_BOTTOM_GAP_PX,
+} from '../utils/touchLayout';
 
 /** The bar always shows the first nine inventory slots. */
 export const QUICK_SLOT_COUNT = 9;
@@ -76,9 +82,9 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
         background: 'rgba(0, 0, 0, 0.3)',
         ...(isTouchDevice
           ? {
-              bottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-              left: `calc(${compact ? 176 : 208}px + env(safe-area-inset-left, 0px))`,
-              right: 'calc(80px + env(safe-area-inset-right, 0px))',
+              bottom: `calc(${TOUCH_BOTTOM_GAP_PX}px + env(safe-area-inset-bottom, 0px))`,
+              left: `calc(${compact ? QUICK_BAR_LEFT_COMPACT_PX : QUICK_BAR_LEFT_PX}px + env(safe-area-inset-left, 0px))`,
+              right: `calc(${QUICK_BAR_RIGHT_PX}px + env(safe-area-inset-right, 0px))`,
               transform: 'none',
             }
           : {}),

@@ -18,6 +18,7 @@
 import { MapDefinition, Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { getRoomTransform } from './backgroundRoomLayout';
+import { NO_OVERSCROLL, type CameraOverscroll } from './touchLayout';
 
 export interface CameraPosition {
   cameraX: number;
@@ -38,6 +39,14 @@ export interface CameraPosition {
  * enforces that as the pinch-zoom minimum. Given that, mapPixelWidth/Height
  * should never actually be smaller than the effective viewport below; the
  * "centre it" branches are a defensive fallback only (issue #26).
+ *
+ * `overscroll` (screen pixels) lets the camera run past the map's left, right
+ * and bottom edges. On a touch device the D-pad, quick bar and chat button sit
+ * over the bottom of the screen, so a camera clamped flush to the map put the
+ * bottom rows — and the exit icons on them — underneath the controls, where
+ * they could not be tapped (issue #157). The overscroll lets the player walk
+ * those rows up into view; the canvas shows the map's background colour
+ * beyond the edge, behind the controls. Zero everywhere else.
  */
 export function computeCameraPosition(
   playerPos: Position,
@@ -45,7 +54,8 @@ export function computeCameraPosition(
   mapHeight: number,
   viewportWidth: number,
   viewportHeight: number,
-  zoom: number
+  zoom: number,
+  overscroll: CameraOverscroll = NO_OVERSCROLL
 ): CameraPosition {
   const mapPixelWidth = mapWidth * TILE_SIZE;
   const mapPixelHeight = mapHeight * TILE_SIZE;
@@ -63,8 +73,9 @@ export function computeCameraPosition(
   } else {
     // Otherwise follow player
     cameraX = Math.min(
-      mapPixelWidth - effectiveWidth,
-      Math.max(0, playerPos.x * TILE_SIZE - effectiveWidth / 2)
+      mapPixelWidth - effectiveWidth + overscroll.right / zoom,
+      // 0 - x, not -x: no overscroll must give +0, exactly the old clamp.
+      Math.max(0 - overscroll.left / zoom, playerPos.x * TILE_SIZE - effectiveWidth / 2)
     );
   }
 
@@ -72,7 +83,7 @@ export function computeCameraPosition(
     cameraY = -(effectiveHeight - mapPixelHeight) / 2;
   } else {
     cameraY = Math.min(
-      mapPixelHeight - effectiveHeight,
+      mapPixelHeight - effectiveHeight + overscroll.bottom / zoom,
       Math.max(0, playerPos.y * TILE_SIZE - effectiveHeight / 2)
     );
   }
@@ -119,6 +130,12 @@ export interface ViewFrameInputs {
    * the whole viewport, so the artwork runs underneath. Zero otherwise.
    */
   bottomInset?: number;
+  /**
+   * Tiled maps: how far past the map's edges the camera may scroll, so edge
+   * rows can be brought out from under the touch controls. See
+   * computeCameraPosition. Omitted (zero) on desktop and in background rooms.
+   */
+  cameraOverscroll?: CameraOverscroll;
 }
 
 export function computeViewFrame(inputs: ViewFrameInputs, playerPos: Position): ViewFrame {
@@ -141,7 +158,8 @@ export function computeViewFrame(inputs: ViewFrameInputs, playerPos: Position): 
     mapHeight,
     viewport.width,
     viewport.height,
-    zoom
+    zoom,
+    inputs.cameraOverscroll
   );
   return {
     cameraX: camera.cameraX,

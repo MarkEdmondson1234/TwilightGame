@@ -665,7 +665,10 @@ Pure functions and game systems:
 **Camera System** (`App.tsx`):
 
 - Follows player with centered viewport
-- Clamped to current map boundaries (varies per map)
+- Clamped to current map boundaries (varies per map) — except on touch devices on tiled maps,
+  where it may scroll past the bottom and side edges by the touch controls' footprint
+  (`getCameraOverscroll` in `utils/touchLayout.ts`), so exits on the edge rows come up from
+  under the quick bar and D-pad (#157). Guarded by `tests/touchCameraOverscroll.test.ts`.
 - Viewport culling: Only renders visible tiles for performance
 
 ## EventBus System (`utils/EventBus.ts`)

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { uiAssets } from '../assets';
 import { EMOTES } from '../multiplayer/emotes';
 import { Z_HUD, zClass } from '../zIndex';
+import { SATCHEL_SIZE_PX, TOUCH_BOTTOM_GAP_PX } from '../utils/touchLayout';
 
 interface GameUIControlsProps {
   showHelpBrowser: boolean;
@@ -119,7 +120,9 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
         style={{
           // Reserve the lower-right corner for the satchel.
           // Add safe area inset for notched devices
-          bottom: isTouchDevice ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : '64px',
+          bottom: isTouchDevice
+            ? `calc(${TOUCH_BOTTOM_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+            : '64px',
           right: 'max(8px, env(safe-area-inset-right))',
           touchAction: 'manipulation',
         }}
@@ -140,8 +143,8 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
               // Responsive sizing:
               // - Touch: stable 60px target; no growth under a held finger.
               // - Desktop: 85px default (33% of 256), 256px expanded
-              width: isTouchDevice ? '60px' : satchelExpanded ? '256px' : '85px',
-              height: isTouchDevice ? '60px' : satchelExpanded ? '256px' : '85px',
+              width: isTouchDevice ? `${SATCHEL_SIZE_PX}px` : satchelExpanded ? '256px' : '85px',
+              height: isTouchDevice ? `${SATCHEL_SIZE_PX}px` : satchelExpanded ? '256px' : '85px',
             }}
           />
         </button>

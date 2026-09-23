@@ -1,3 +1,4 @@
+
 /**
  * ChatPanel — the composer. Just somewhere to type.
  *
@@ -15,6 +16,12 @@
  * nothing at all when chat is unavailable, so single-player is untouched.
  */
 
+import {
+  CHAT_BUTTON_BOTTOM_PX,
+  CHAT_BUTTON_HEIGHT_PX,
+  CHAT_BUTTON_RIGHT_PX,
+  CHAT_BUTTON_WIDTH_PX,
+} from '../utils/touchLayout';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import MobileMenuShell from './MobileMenuShell';
@@ -99,10 +106,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           onClick={onStartComposing}
           className={`fixed rounded-full border-2 border-amber-200/50 bg-stone-800/95 text-amber-100 ${zClass(Z_CHAT_PANEL)}`}
           style={{
-            right: 'calc(84px + env(safe-area-inset-right))',
-            bottom: 'calc(96px + env(safe-area-inset-bottom))',
-            minWidth: 64,
-            minHeight: 44,
+            right: `calc(${CHAT_BUTTON_RIGHT_PX}px + env(safe-area-inset-right))`,
+            bottom: `calc(${CHAT_BUTTON_BOTTOM_PX}px + env(safe-area-inset-bottom))`,
+            minWidth: CHAT_BUTTON_WIDTH_PX,
+            minHeight: CHAT_BUTTON_HEIGHT_PX,
           }}
         >
           Chat

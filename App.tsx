@@ -59,6 +59,7 @@ import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLayout';
 import { getMobileInteriorFraming, getRoomHeightFitZoom } from './utils/mobileInteriorFraming';
+import { getCameraOverscroll, isCompactTouchLayout } from './utils/touchLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -1762,7 +1763,7 @@ const App: React.FC = () => {
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
-    return viewportSize.height < 600;
+    return isCompactTouchLayout(viewportSize.height);
   }, [viewportSize.height]);
 
   // One pre-zoom transform for artwork, entities, labels, and pointer inversion,
@@ -1782,8 +1783,10 @@ const App: React.FC = () => {
         ? playerBodyHeight / (TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1)) / 2
         : 0,
       bottomInset: interiorFraming.anchorInset,
+      // Touch, tiled maps: let edge rows scroll out from under the controls (#157).
+      cameraOverscroll: getCameraOverscroll(isTouchDevice, currentMap?.renderMode, viewportSize.height),
     }),
-    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight, interiorFraming.anchorInset]
+    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight, interiorFraming.anchorInset, isTouchDevice]
   );
   const { viewFrameRef, worldLayerRef, syncViewFrame, view } = useViewFrame(
     viewFrameInputs,
