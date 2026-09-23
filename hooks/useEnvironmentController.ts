@@ -761,6 +761,17 @@ export function useEnvironmentController(
     });
   }, [onShowToast]);
 
+  // Mum hands over the recipe book mid-conversation; without this the tea
+  // lesson's "open your recipe book" refers to something the player never saw arrive.
+  useEffect(() => {
+    return eventBus.on(GameEvent.RECIPE_BOOK_UNLOCKED, () => {
+      onShowToast(
+        'Mum gave you her recipe book! Find it with your other books, or press B.',
+        'success'
+      );
+    });
+  }, [onShowToast]);
+
   useEffect(() => {
     const movementEffectInterval = setInterval(() => {
       if (gameState.isMovementEffectActive()) {

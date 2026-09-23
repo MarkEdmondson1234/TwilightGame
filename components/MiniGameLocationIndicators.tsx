@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
@@ -7,6 +7,9 @@ import { useTouchDevice } from '../hooks/useTouchDevice';
 import { getMiniGameLocationsForMap } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import GameIcon from './GameIcon';
+import { cookingManager } from '../utils/CookingManager';
+import { eventBus, GameEvent } from '../utils/EventBus';
+import { MUMS_KITCHEN_FIREPLACE } from '../utils/kitchenFireplace';
 
 interface MiniGameLocationIndicatorsProps {
   currentMapId: string;
@@ -133,6 +136,52 @@ const ParchmentTooltip: React.FC<{
 );
 
 /**
+ * While the first tea lesson is pending, a glowing kettle marks the fireplace
+ * in Mum's kitchen — the room is one background painting, so nothing else tells
+ * a new player that the fire is somewhere they can cook. Unlike the mini-game
+ * icons it is shown from anywhere in the room, and it pulses throughout.
+ */
+export const TeaLessonFireplaceIndicator: React.FC<{
+  playerPos: Position;
+  tileSize: number;
+  offsetX: number;
+  offsetY: number;
+  showKeyHint: boolean;
+}> = ({ playerPos, tileSize, offsetX, offsetY, showKeyHint }) => {
+  const [pending, setPending] = useState(() => cookingManager.isTeaLessonPending());
+  useEffect(() => {
+    const refresh = () => setPending(cookingManager.isTeaLessonPending());
+    const offMilestone = eventBus.on(GameEvent.PLAYER_MILESTONE, refresh);
+    const offBook = eventBus.on(GameEvent.RECIPE_BOOK_UNLOCKED, refresh);
+    return () => {
+      offMilestone();
+      offBook();
+    };
+  }, []);
+  if (!pending) return null;
+
+  const { x, y } = MUMS_KITCHEN_FIREPLACE;
+  const screenX = (x + 0.5) * tileSize + offsetX;
+  const screenY = y * tileSize + offsetY;
+  const isClose = Math.hypot(playerPos.x - x, playerPos.y - y) <= TOOLTIP_DISTANCE + 1;
+
+  return (
+    <>
+      <FloatingIcon icon="☕" colour="#92400e" screenX={screenX} screenY={screenY} isClose />
+      {isClose && (
+        <ParchmentTooltip
+          icon="☕"
+          label="Make your tea here"
+          screenX={screenX}
+          screenY={screenY}
+          showKeyHint={showKeyHint}
+        />
+      )}
+    </>
+  );
+};
+
+/**
  * Visual indicators for mini-games triggered by clicking a map location
  * (e.g. the Wizard Trials door) — the same bobbing icon + tooltip affordance
  * TransitionIndicators shows for real map transitions, since these don't
@@ -152,6 +201,15 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
 
   return (
     <>
+      {currentMapId === 'mums_kitchen' && (
+        <TeaLessonFireplaceIndicator
+          playerPos={playerPos}
+          tileSize={tileSize}
+          offsetX={offsetX}
+          offsetY={offsetY}
+          showKeyHint={!isTouchDevice}
+        />
+      )}
       {currentMapId === 'mums_kitchen' && (
         <div
           className="absolute pointer-events-none"

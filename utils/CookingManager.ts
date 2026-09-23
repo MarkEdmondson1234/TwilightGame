@@ -413,6 +413,19 @@ class CookingManagerClass {
 
     // Mum supplies missing ingredients for one successful practice cup.
     if (!practiceCup && !this.hasIngredients(recipeId)) {
+      // Before the lesson a missing-milk message sends the player off to buy milk that
+      // Mum would have supplied the moment they asked her — point them at Mum instead.
+      if (
+        recipeId === 'tea' &&
+        !this.isRecipeBookUnlocked() &&
+        (this.recipeProgress.get('tea')?.timesCooked ?? 0) === 0
+      ) {
+        return {
+          success: false,
+          message:
+            "Ask Mum to teach you to cook first — she'll help with the ingredients for your first cup of tea.",
+        };
+      }
       const missing = this.getMissingIngredients(recipeId);
       return {
         success: false,
@@ -583,6 +596,14 @@ class CookingManagerClass {
   }
 
   /**
+   * True between Mum giving the tea lesson and the first successful cup — the window
+   * in which the kitchen fireplace is highlighted so a new player can find it.
+   */
+  isTeaLessonPending(): boolean {
+    return this.recipeBookUnlocked && !this.fireplaceTutorialComplete;
+  }
+
+  /**
    * Check if Mum's full cooking course is complete (all 3 domains mastered)
    * When true, post-course recipes (courseRequired: true) become available
    */
@@ -608,6 +629,8 @@ class CookingManagerClass {
 
     // Save immediately
     this.save();
+    // Receiving the book is otherwise silent: nothing on screen says it exists.
+    eventBus.emit(GameEvent.RECIPE_BOOK_UNLOCKED, {});
   }
 
   /**
