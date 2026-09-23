@@ -54,7 +54,7 @@ export const FlowerGallery: React.FC<FlowerGalleryProps> = ({
           Your Flowers
           {selectedFlower ? (
             <span style={{ fontWeight: 'normal', marginLeft: 6, fontStyle: 'italic' }}>
-              — click wreath to place
+              — click the wreath to place
             </span>
           ) : (
             <span style={{ fontWeight: 'normal', marginLeft: 6, fontStyle: 'italic' }}>
