@@ -30,6 +30,8 @@ export type {
   ImageRoomLayer,
   NPCRoomLayer,
   RoomLayer,
+  RoomProp,
+  RoomPropPart,
   WindowView,
   MapDefinition,
   GridString,

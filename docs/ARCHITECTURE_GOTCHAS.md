@@ -398,6 +398,13 @@ Guarded by [`tests/backgroundRoomLayout.test.ts`](../tests/backgroundRoomLayout.
 7. **Trusting `referenceViewport` to describe a room's artwork** — it is an authoring hint that
    nothing validates, and most maps' copy of it is wrong by a couple of percent. Size from the
    centred layer's own `width × height × scale` (`getRoomArtworkSize`)
+8. **Drawing scenery as DOM in the world layer** — the DOM world layer sits above the whole
+   PixiJS canvas, so an `<img>` there covers the Pixi-drawn player whatever its z-index.
+   `zIndex: 99` ("just behind the player") on the kitchen easel painted it over the player
+   (issue #158). Anything the player can walk in front of goes in `MapDefinition.props`,
+   drawn by `utils/pixi/RoomPropsLayer.ts` in the depth-sorted container. The DOM layer is
+   for prompts and labels only, which float above everything on purpose.
+   `tests/roomProps.test.ts` guards it
 
 ---
 
