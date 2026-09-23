@@ -144,14 +144,16 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               {/* Item Icon */}
               {item && (
                 <>
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  {/* The icon fills the slot inside a thin inset, rather than a fixed
+                      32px box that left most of the slot empty on a phone. */}
+                  <div className="absolute inset-0 flex items-center justify-center p-[3px]">
                     {item.icon.startsWith('/') ||
                     item.icon.startsWith('http') ||
                     item.icon.startsWith('data:') ? (
                       <img
                         src={item.icon}
                         alt={item.name}
-                        className="w-8 h-8 object-contain"
+                        className="w-full h-full object-contain"
                         style={{ imageRendering: 'auto' }}
                       />
                     ) : (
