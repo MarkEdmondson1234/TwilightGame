@@ -4,6 +4,7 @@ const state = vi.hoisted(() => ({
   done: false,
   data: {} as Record<string, unknown>,
   items: {} as Record<string, number>,
+  placed: [] as Array<{ id: string; itemId: string; mapId: string; permanent?: boolean }>,
 }));
 vi.mock('../GameState', () => ({
   gameState: {
@@ -18,6 +19,10 @@ vi.mock('../GameState', () => ({
     getQuestData: (_q: string, key: string) => state.data[key],
     setQuestData: (_q: string, key: string, value: unknown) => {
       state.data[key] = value;
+    },
+    getAllPlacedItems: () => state.placed,
+    addPlacedItem: (item: (typeof state.placed)[number]) => {
+      state.placed.push(item);
     },
   },
 }));
@@ -35,6 +40,8 @@ import {
   startTinyWreathLesson,
   finishTinyWreathLesson,
   readTinyWreathNextStep,
+  ensureTinyWreathTable,
+  TINY_WREATH_TABLE_ID,
 } from '../utils/tinyWreathLesson';
 import { eventBus, GameEvent } from '../utils/EventBus';
 beforeEach(() => {
@@ -42,6 +49,7 @@ beforeEach(() => {
   state.done = false;
   state.data = {};
   state.items = {};
+  state.placed = [];
 });
 describe('tiny wreath starter lesson', () => {
   it('supplies exactly four valid materials once, including after save restoration', () => {
@@ -71,5 +79,30 @@ describe('tiny wreath starter lesson', () => {
   it('cannot complete a lesson that was never accepted', () => {
     finishTinyWreathLesson();
     expect(state.done).toBe(false);
+  });
+  it('points at the crafting table upstairs, not the kitchen easel', () => {
+    startTinyWreathLesson();
+    const step = readTinyWreathNextStep()!;
+    expect(step.where).toMatch(/upstairs/i);
+    expect(`${step.where} ${step.details.join(' ')}`).not.toMatch(/easel/i);
+  });
+  it('places one fixed crafting table upstairs, including for saves that started in the kitchen', () => {
+    startTinyWreathLesson();
+    startTinyWreathLesson();
+    expect(state.placed).toHaveLength(1);
+    expect(state.placed[0]).toMatchObject({
+      id: TINY_WREATH_TABLE_ID,
+      itemId: 'crafting_table',
+      mapId: 'home_upstairs',
+      permanent: true,
+    });
+    // A save that accepted the lesson at the easel has the quest but no table;
+    // the boot-time ensure gives it one without re-supplying flowers.
+    state.placed = [];
+    const items = { ...state.items };
+    expect(ensureTinyWreathTable()).toBe(true);
+    expect(ensureTinyWreathTable()).toBe(false);
+    expect(state.placed).toHaveLength(1);
+    expect(state.items).toEqual(items);
   });
 });

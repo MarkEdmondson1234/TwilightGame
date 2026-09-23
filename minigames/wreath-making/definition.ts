@@ -2,7 +2,9 @@
  * Wreath Making mini-game definition.
  *
  * Slot-based crafting where players arrange collected flowers into a wreath.
- * Triggered by talking to Mushra in the forest.
+ * Triggered by talking to Mushra in the forest, or by any placed crafting table —
+ * including the fixed one upstairs at home for Mushra's Tiny Wreath lesson
+ * (utils/tinyWreathLesson.ts). The kitchen easel is for drawing and crafting only.
  * Available all year round.
  */
 
@@ -21,7 +23,6 @@ export const wreathMakingDefinition: MiniGameDefinition = {
     // This previously read 'forest_mushra', which no map declares — so the NPC route was
     // silently dead and only the placed crafting table opened this game.
     npcId: 'mushra',
-    mapLocation: { mapId: 'mums_kitchen', x: 10, y: 5 },
     placedItemId: 'crafting_table',
   },
   customBackdrop: false,

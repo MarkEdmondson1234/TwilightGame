@@ -29,6 +29,8 @@ interface WreathStageProps {
   onZoom: (delta: number) => void;
   onCropZoom: (delta: number) => void;
   onClose: () => void;
+  /** Take every flower off the ring. Optional so older callers keep working. */
+  onClear?: () => void;
   onCreate: () => void;
 }
 
@@ -50,6 +52,7 @@ export const WreathStage: React.FC<WreathStageProps> = ({
   onZoom,
   onCropZoom,
   onClose,
+  onClear,
   onCreate,
 }) => {
   return (
@@ -153,6 +156,25 @@ export const WreathStage: React.FC<WreathStageProps> = ({
         >
           Cancel
         </button>
+        {onClear && (
+          <button
+            onClick={onClear}
+            disabled={filledCount === 0 || isCreating}
+            style={{
+              padding: '10px 20px',
+              minHeight: 44,
+              background: '#2a3a22',
+              border: '2px solid #3a5a2a',
+              borderRadius: 8,
+              color: filledCount > 0 ? '#8a9a7a' : '#5a6a4a',
+              cursor: filledCount > 0 ? 'pointer' : 'not-allowed',
+              fontSize: 14,
+              opacity: filledCount > 0 ? 1 : 0.6,
+            }}
+          >
+            Clear
+          </button>
+        )}
         <button
           onClick={onCreate}
           onTouchEnd={(e) => {

@@ -10,6 +10,8 @@ import GameIcon from './GameIcon';
 import { cookingManager } from '../utils/CookingManager';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { MUMS_KITCHEN_FIREPLACE } from '../utils/kitchenFireplace';
+import { mapManager } from '../maps/MapManager';
+import { roomPropTopAt } from '../utils/roomProps';
 
 interface MiniGameLocationIndicatorsProps {
   currentMapId: string;
@@ -198,6 +200,7 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
   const isTouchDevice = useTouchDevice();
 
   const locations = getMiniGameLocationsForMap(currentMapId);
+  const map = mapManager.getMap(currentMapId);
 
   return (
     <>
@@ -210,65 +213,12 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
           showKeyHint={!isTouchDevice}
         />
       )}
-      {currentMapId === 'mums_kitchen' && (
-        <div
-          className="absolute pointer-events-none"
-          role="img"
-          aria-label="Kitchen easel with a blank canvas"
-          style={{
-            left: 10.5 * tileSize + offsetX,
-            top: 6 * tileSize + offsetY,
-            width: tileSize * 2.4,
-            height: tileSize * 2.4,
-            transform: 'translate(-50%, -100%)',
-            zIndex: 99,
-          }}
-        >
-          <img
-            src="/TwilightGame/assets-optimized/items/mushras_shop/easel.png"
-            alt="Kitchen easel"
-            draggable={false}
-            style={{ width: '100%', height: '100%' }}
-          />
-          <img
-            src="/TwilightGame/assets-optimized/items/quest/picnic_basket.png"
-            alt="Mushra's flower basket"
-            draggable={false}
-            style={{ position: 'absolute', left: '4%', bottom: 0, width: '35%' }}
-          />
-          <img
-            src="/TwilightGame/assets-optimized/herbs/lavender_bunch.png"
-            alt=""
-            draggable={false}
-            style={{
-              position: 'absolute',
-              left: '10%',
-              bottom: '8%',
-              width: '23%',
-              transform: 'rotate(-20deg)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: '35%',
-              top: '21%',
-              width: '31%',
-              height: '34%',
-              background: '#fff8df',
-              border: '2px solid #c4a47b',
-              boxShadow: '1px 2px 2px #46322166',
-            }}
-          />
-        </div>
-      )}
       {locations.map(({ def, x, y }) => {
-        // Draw and Craft share one physical easel and one visual signpost.
-        if (
-          currentMapId === 'mums_kitchen' &&
-          (def.id === 'decoration-crafting' || def.id === 'wreath-making')
-        )
-          return null;
+        // Draw and Craft share one physical easel and one visual signpost. The
+        // easel itself is a room prop (mumsKitchen.ts) drawn by PixiJS so it
+        // depth-sorts with the player; this component only draws the prompts,
+        // which float above everything by design.
+        if (currentMapId === 'mums_kitchen' && def.id === 'decoration-crafting') return null;
         // Don't advertise a mini-game the player couldn't actually start
         // right now (season/time/friendship/item requirements not met).
         if (!miniGameManager.checkRequirements(def.id).canPlay) return null;
@@ -282,7 +232,9 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
         const isVeryClose = distance <= TOOLTIP_DISTANCE;
 
         const screenX = (x + 0.5) * tileSize + offsetX;
-        const screenY = y * tileSize + offsetY;
+        // Float above the scenery on this tile (the easel), not across it
+        const topY = Math.min(y, roomPropTopAt(map, x, y) ?? y);
+        const screenY = topY * tileSize + offsetY;
 
         return (
           <React.Fragment key={`minigame-location-${def.id}-${x}-${y}`}>

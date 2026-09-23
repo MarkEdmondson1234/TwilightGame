@@ -8,7 +8,7 @@ export const NEWS_MILESTONES: Record<
   'tiny-wreath': {
     title: 'A little wreath of their own',
     story:
-      'A neighbour has made a starter wreath. Ask Mum about Mushra’s flower basket, then try the kitchen easel’s wreath workshop.',
+      'A neighbour has made a starter wreath. Ask Mum about Mushra’s flower basket, then try the crafting table upstairs at home.',
     lead: 'tiny-wreath',
     itemId: 'crop_lavender',
   },

@@ -44,6 +44,7 @@ import { ForegroundParallaxLayer } from '../utils/pixi/ForegroundParallaxLayer';
 import { hasForegroundParallax } from '../data/foregroundParallax';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
+import { RoomPropsLayer } from '../utils/pixi/RoomPropsLayer';
 import { AnimationLayer } from '../utils/pixi/AnimationLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { HighlightLayer } from '../utils/pixi/HighlightLayer';
@@ -247,6 +248,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const npcLayerRef = useRef<NPCLayer | null>(null);
   const remotePlayerLayerRef = useRef<RemotePlayerLayer | null>(null);
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
+  const roomPropsLayerRef = useRef<RoomPropsLayer | null>(null);
   const animationLayerRef = useRef<AnimationLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
@@ -640,6 +642,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         gridOffset
       );
     }
+    if (offsetChanged && roomPropsLayerRef.current) {
+      roomPropsLayerRef.current.render(mapManager.getCurrentMap()?.props, tileSize, gridOffset);
+    }
     if (offsetChanged && animationLayerRef.current) {
       const map = mapManager.getCurrentMap();
       if (map) {
@@ -848,6 +853,12 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
 
+        // Static room scenery (the kitchen easel), depth-sorted with the player
+        const roomPropsLayer = new RoomPropsLayer();
+        roomPropsLayerRef.current = roomPropsLayer;
+        roomPropsLayer.setDepthContainer(depthSortedContainer);
+        app.stage.addChild(roomPropsLayer.getContainer());
+
         // Tile-triggered animations (petals, bees, hearth fire), depth-sorted
         // with everything else. A sheet's metadata arrives asynchronously;
         // re-render once so the animation appears when it does.
@@ -947,6 +958,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
             placedItems,
             visibleRange,
             initialMap.characterScale ?? 1.0,
+            viewFrameRef.current.tileSize,
+            viewFrameRef.current.gridOffset
+          );
+          roomPropsLayer.render(
+            initialMap.props,
             viewFrameRef.current.tileSize,
             viewFrameRef.current.gridOffset
           );
@@ -1292,6 +1308,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         viewFrameRef.current.gridOffset
       );
     }
+
+    // Static room scenery — same grid offset, same depth container
+    roomPropsLayerRef.current?.render(
+      map.props,
+      viewFrameRef.current.tileSize,
+      viewFrameRef.current.gridOffset
+    );
 
     // Tile-triggered animations, at this frame's grid offset
     if (animationLayerRef.current) {

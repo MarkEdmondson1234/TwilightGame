@@ -193,6 +193,46 @@ export interface WindowView {
   blur?: number; // Gaussian blur amount (0-10)
 }
 
+/**
+ * One piece of a room prop. Geometry is in fractions of the prop's box
+ * (0..1 from its top-left corner), so a prop can be resized as a whole.
+ */
+export type RoomPropPart =
+  | {
+      kind: 'image';
+      image: string; // Asset URL (assets-optimized)
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      rotationDeg?: number; // Rotated about the part's own centre
+    }
+  | {
+      /** A flat painted panel, e.g. the blank canvas resting on the easel */
+      kind: 'panel';
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      fill: number; // 0xRRGGBB
+      stroke: number; // 0xRRGGBB
+    };
+
+/**
+ * Static scenery drawn on top of a background-image room and depth-sorted with
+ * the player. Anything that must pass behind or in front of a walking character
+ * has to live in the PixiJS depth-sorted container: the DOM world layer sits
+ * above the whole canvas, so no CSS z-index can put DOM art behind the player.
+ */
+export interface RoomProp {
+  id: string;
+  /** Bottom-centre of the prop, in tiles. Its y is the depth line the player sorts against. */
+  anchor: Position;
+  width: number; // tiles
+  height: number; // tiles
+  parts: RoomPropPart[]; // Drawn in order, back to front
+}
+
 // Map definition
 export interface MapDefinition {
   id: string;
@@ -236,6 +276,14 @@ export interface MapDefinition {
     width: number; // Viewport width the room was designed for (e.g., 1920)
     height: number; // Viewport height the room was designed for (e.g., 1080)
   };
+
+  /**
+   * Fixed scenery placed on the walk grid (the kitchen easel). Rendered by PixiJS
+   * in the depth-sorted container, so it sorts against the player's feet like a
+   * placed item — see utils/pixi/RoomPropsLayer.ts. Not interactive and not part
+   * of the save: an interaction on the same tile comes from its own provider.
+   */
+  props?: RoomProp[];
 
   /** Force the player to render as a DOM element (z-index sorted) instead of via PixiJS.
    *  No map needs this any more: it existed for the hearth fire, which was a DOM GIF

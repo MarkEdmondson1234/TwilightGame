@@ -28,6 +28,7 @@ import { cutsceneManager } from './CutsceneManager';
 import { harvestFeastManager } from './HarvestFeastManager';
 import { yuleCelebrationManager } from './YuleCelebrationManager';
 import { debugLog } from './debugLog';
+import { ensureTinyWreathTable } from './tinyWreathLesson';
 import { setSlowMinuteContext } from './sessionDiagnostics';
 import { getSlowMinuteRuntimeContext } from './diagnosticsRuntimeContext';
 
@@ -301,6 +302,12 @@ export async function initializeGameAssets(
       gameState.markCutsceneCompleted('furniture_bed_seeded');
       debugLog('gameInitializer', 'Placed default bed in home_upstairs');
     }
+  }
+
+  // Mushra's crafting table upstairs (Tiny Wreath workshop). Idempotent rather than
+  // once-only, so saves from before it moved out of the kitchen gain it too.
+  if (ensureTinyWreathTable()) {
+    debugLog('gameInitializer', 'Placed Tiny Wreath crafting table in home_upstairs');
   }
 
   // Seed default furniture: place a garden bench in farm_area on first play only
