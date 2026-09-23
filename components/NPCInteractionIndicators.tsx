@@ -211,6 +211,9 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
                 screenY={screenY - 8}
                 inRange={isInRange}
                 onTalk={() => onTalk(npc.id)}
+                compact={isTouchDevice}
+                npcName={label}
+                icon={icon}
               />
             );
 

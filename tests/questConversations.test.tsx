@@ -95,8 +95,26 @@ describe('useful quest conversations', () => {
     view.rerender(
       <NPCInteractionIndicators npcs={[npc]} playerPos={{ x: 4, y: 5 }} onTalk={onTalk} />
     );
+    // Touch (issue #157): in range it is first a small name pill, not the full card.
+    expect(
+      screen.queryByRole('button', { name: 'Talk: Bring Elias 1 crop' })
+    ).not.toBeInTheDocument();
+    const pill = screen.getByRole('button', { name: 'Elias: Bring Elias 1 crop' });
+    expect(pill).toHaveAttribute('aria-expanded', 'false');
+    expect(pill).toHaveTextContent('Elias');
+    expect(pill).not.toHaveTextContent('Talk');
+    fireEvent.click(pill);
+    expect(onTalk).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Talk: Bring Elias 1 crop' }));
     expect(onTalk).toHaveBeenCalledWith('village_elder');
+    // Walking out of range and back starts discreet again.
+    view.rerender(
+      <NPCInteractionIndicators npcs={[npc]} playerPos={{ x: 3, y: 5 }} onTalk={onTalk} />
+    );
+    view.rerender(
+      <NPCInteractionIndicators npcs={[npc]} playerPos={{ x: 4, y: 5 }} onTalk={onTalk} />
+    );
+    expect(screen.getByRole('button', { name: 'Elias: Bring Elias 1 crop' })).toBeInTheDocument();
     act(() => {
       state.cue = undefined;
       eventBus.emit(GameEvent.QUEST_DATA_CHANGED, {
