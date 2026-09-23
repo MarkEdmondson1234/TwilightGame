@@ -160,3 +160,25 @@ describe('expanded history dismissal', () => {
     }
   });
 });
+
+describe('who you are talking to on a phone', () => {
+  it('shows the NPC name and a small portrait inside the full-screen panel', () => {
+    // Issue #157: on touch the panel covers the whole screen, so the large portrait
+    // behind it was hidden and the conversation had no face.
+    render(
+      <DialogueFrame
+        npcName="Mum"
+        npcSprite="/mum.png"
+        playerSprite="/player.png"
+        onClose={vi.fn()}
+      >
+        <p>Hello, love.</p>
+      </DialogueFrame>
+    );
+    const panel = document.querySelector<HTMLElement>('[data-dialogue-panel]')!;
+    const portrait = panel.querySelector<HTMLImageElement>('[data-dialogue-portrait]');
+    expect(portrait, 'no portrait inside the dialogue panel on touch').not.toBeNull();
+    expect(portrait!.getAttribute('src')).toBe('/mum.png');
+    expect(panel).toHaveTextContent('Mum');
+  });
+});
