@@ -192,6 +192,15 @@ export const Z_HUD = 1000;
 /** Inventory bag */
 export const Z_INVENTORY = 1000;
 
+/**
+ * Quest and activity guidance cards (pinned quest, activity invitation, village
+ * news). They are fixed to the screen alongside the HUD, so at Z_ACTION_PROMPTS
+ * (410) the wallet, clock and top-right buttons painted over them on a phone
+ * (issue #157). Above the HUD, but below the touch controls: the D-pad must stay
+ * usable while a card is open.
+ */
+export const Z_QUEST_GUIDANCE = 1040;
+
 /** Touch controls (mobile) */
 export const Z_TOUCH_CONTROLS = 1050;
 

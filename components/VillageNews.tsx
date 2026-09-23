@@ -4,7 +4,7 @@ import { rememberActivityLead } from '../utils/activityLeadStorage';
 import { ACTIVITY_LEADS, type ActivityLeadId } from '../utils/activityDiscovery';
 import { getItem } from '../data/items';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
-import { Z_ACTION_PROMPTS } from '../zIndex';
+import { Z_QUEST_GUIDANCE } from '../zIndex';
 import './ActivityInvitation.css';
 
 type Props = { news: ReturnType<typeof useVillageNews>; blocked: boolean; onJournal: () => void };
@@ -18,7 +18,7 @@ export default function VillageNews({ news, blocked, onJournal }: Props) {
       className="activity-invitation village-news"
       aria-label="Village news"
       style={{
-        zIndex: Z_ACTION_PROMPTS,
+        zIndex: Z_QUEST_GUIDANCE,
         background: colours.parchmentLight,
         color: colours.darkBrownText,
         borderColor: colours.warmBrownBorder,

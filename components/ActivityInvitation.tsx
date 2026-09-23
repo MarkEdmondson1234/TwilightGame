@@ -12,7 +12,7 @@ import {
 } from '../utils/activityDiscovery';
 import { hasActivityLead, rememberActivityLead } from '../utils/activityLeadStorage';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
-import { Z_ACTION_PROMPTS } from '../zIndex';
+import { Z_QUEST_GUIDANCE } from '../zIndex';
 import './ActivityInvitation.css';
 
 interface Props {
@@ -104,7 +104,7 @@ export default function ActivityInvitation({
       className="activity-invitation"
       aria-label={lead.title}
       style={{
-        zIndex: Z_ACTION_PROMPTS,
+        zIndex: Z_QUEST_GUIDANCE,
         background: colours.parchmentLight,
         color: colours.darkBrownText,
         borderColor: colours.warmBrownBorder,

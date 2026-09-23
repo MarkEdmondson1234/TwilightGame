@@ -53,9 +53,11 @@
   font-size: 12px;
 }
 @media (max-height: 500px) {
+  /* Below the top-right buttons (8px + 44px) and above the satchel (8px + 60px),
+     rather than on top of either: the card sits over the HUD layer (issue #157). */
   .activity-invitation {
-    top: 12px;
-    max-height: calc(100dvh - 100px);
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
     width: min(340px, calc(100vw - 110px));
   }
 }

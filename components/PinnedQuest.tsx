@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuestGuideRefresh } from '../hooks/useQuestGuideRefresh';
 import { pinQuest, readPinnedQuest } from '../utils/pinnedQuest';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
-import { Z_ACTION_PROMPTS } from '../zIndex';
+import { Z_QUEST_GUIDANCE } from '../zIndex';
 import './PinnedQuest.css';
 
 export default function PinnedQuest({
@@ -23,7 +23,7 @@ export default function PinnedQuest({
       className="pinned-quest"
       aria-label="Pinned quest"
       style={{
-        zIndex: Z_ACTION_PROMPTS,
+        zIndex: Z_QUEST_GUIDANCE,
         background: colours.parchmentLight,
         color: colours.darkBrownText,
         borderColor: colours.warmBrownBorder,
