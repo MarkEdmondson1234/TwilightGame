@@ -410,7 +410,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'chores_no_tea',
-        text: '*She peers at your hands hopefully, then shakes her head.* No tea yet, dear? Your mum has a kettle in her kitchen. Open your recipe book there and make Tea, then come back and tell me you brought it for my chores.',
+        text: '*She peers at your hands hopefully, then shakes her head.* No tea yet, dear? Your mum has a kettle over her kitchen fire. Open your recipe book beside it and make Tea, then come back and tell me you brought it for my chores.',
       },
       {
         id: 'chores_tea_done',

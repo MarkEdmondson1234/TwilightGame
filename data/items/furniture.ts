@@ -138,6 +138,25 @@ export const FURNITURE_ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 500,
   },
 
+  furniture_campfire: {
+    id: 'furniture_campfire',
+    name: 'furniture_campfire',
+    displayName: 'Campfire',
+    category: ItemCategory.FURNITURE,
+    description:
+      'A little campfire you can set down anywhere outdoors. Stand beside it and cook from your recipe book.',
+    stackable: false,
+    image: furnitureAssets.campfire,
+    placedImage: furnitureAssets.campfire,
+    placedScale: 1.5,
+    placesBelowCharacters: true,
+    outdoorOnly: true,
+    cookingStation: true,
+    buyPrice: 100,
+    sellPrice: 60,
+    confirmPickup: true, // clicking a campfire means "cook here" far more often than "pick up"
+  },
+
   furniture_catalogue: {
     id: 'furniture_catalogue',
     name: 'furniture_catalogue',

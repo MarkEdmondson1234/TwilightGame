@@ -61,6 +61,7 @@ export interface ItemDefinition {
   placesBelowCharacters?: boolean; // If true, renders at background z-level (above tiles, below player/NPCs)
   foregroundPlacedImage?: string; // Second image rendered above the player when placed (for furniture like beds)
   furnitureEffect?: 'sleep' | 'rest'; // Utility effect when player stands on this furniture
+  cookingStation?: boolean; // true = once placed, the player can cook beside it (see utils/cookingStations.ts)
   outdoorOnly?: boolean; // If true, placement is restricted to outdoor (non-indoor) maps
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)

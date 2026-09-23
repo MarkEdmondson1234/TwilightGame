@@ -11,6 +11,7 @@
 import type { Position, SizeTier } from '../../types';
 import type { MiniGameTriggerData } from '../../minigames/types';
 import type { CookingResult } from '../CookingManager';
+import type { CookingStation } from '../cookingStations';
 import type { ForageResult } from '../forageHandlers';
 import type { getTileData } from '../mapUtils';
 import type { gameState } from '../../GameState';
@@ -134,7 +135,8 @@ export interface GetInteractionsConfig {
   onNPC?: (npcId: string) => void;
   onGiveGift?: (npcId: string) => void;
   onTransition?: (result: TransitionResult) => void;
-  onCooking?: (locationType: 'stove' | 'campfire', position?: Position) => void;
+  /** Open cooking (the recipe book) at a station the player is standing beside. */
+  onCooking?: (station: CookingStation) => void;
   onFireplaceTea?: (result: CookingResult) => void;
   onBrewing?: (position?: Position) => void;
   onFarmAction?: (result: FarmActionResult) => void;

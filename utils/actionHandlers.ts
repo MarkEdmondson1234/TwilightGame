@@ -21,6 +21,11 @@ import { staminaManager } from './StaminaManager';
 import { getTierName } from './MagicEffects';
 
 import { cookingManager, CookingResult } from './CookingManager';
+import {
+  getNearbyCookingStation,
+  NO_COOKING_STATION_MESSAGE,
+  type CookingStation,
+} from './cookingStations';
 import { debugLog } from './debugLog';
 import { transitionBlockedReason } from './transitionRequirements';
 
@@ -108,19 +113,44 @@ export function checkDeskInteraction(playerPos: Position, mapId: string): DeskIn
 }
 
 /**
- * Check for and handle stove interaction (opens cooking interface)
- * Checks adjacent tiles for stove
+ * The cooking station the player can use from here (stove, campfire tile, placed campfire
+ * or Mum's fireplace), or null. Thin wrapper so the keyboard E key and the touch action
+ * button share one call; the rule itself lives in ./cookingStations.
  */
-export function checkStoveInteraction(playerPos: Position): boolean {
-  for (const tile of getAdjacentTiles(playerPos)) {
-    const tileData = getTileData(tile.x, tile.y);
-    if (tileData && tileData.type === TileType.STOVE) {
-      debugLog('Action', `Found stove at (${tile.x}, ${tile.y})`);
-      return true;
-    }
-  }
+export function checkCookingStationInteraction(
+  playerPos: Position,
+  mapId: string | null
+): CookingStation | null {
+  const station = getNearbyCookingStation(playerPos, mapId);
+  if (station) debugLog('Action', `Beside cooking station ${station.id}`);
+  return station;
+}
 
-  return false;
+/**
+ * Open cooking — the recipe book — if the player may cook here.
+ *
+ * Shared by the E/C keys, the touch action button, the "Cook here" button and the
+ * "Cook here" click interaction. Explains itself with a toast when it refuses, so a
+ * press never silently does nothing.
+ */
+export function handleOpenCooking(
+  playerPos: Position,
+  mapId: string | null,
+  handlers: {
+    onOpenRecipeBook: () => void;
+    onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
+  }
+): boolean {
+  if (!cookingManager.isRecipeBookUnlocked()) {
+    handlers.onShowToast?.('Talk to Mum if you want to learn how to cook!', 'info');
+    return false;
+  }
+  if (!getNearbyCookingStation(playerPos, mapId)) {
+    handlers.onShowToast?.(NO_COOKING_STATION_MESSAGE, 'info');
+    return false;
+  }
+  handlers.onOpenRecipeBook();
+  return true;
 }
 
 /**
@@ -695,8 +725,11 @@ export function handleCollectWater(): { success: boolean; message: string } {
 }
 
 /**
- * Check for cooking locations (stove or campfire) near the player
- * Returns the type and position of the cooking location if found
+ * Check for a stove, campfire or cauldron tile beside a position.
+ *
+ * Only brewing reads this now (the cauldron result). Whether the player may *cook* is
+ * decided by getNearbyCookingStation in ./cookingStations, which also knows about Mum's
+ * fireplace and placed campfires — use that for cooking, never this.
  */
 export function checkCookingLocation(playerPos: Position): CookingLocationResult {
   const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);

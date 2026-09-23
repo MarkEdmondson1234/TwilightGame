@@ -38,8 +38,10 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   shopCounterProvider,
 
   // World objects the player clicks directly.
-  // furnitureProvider runs before placedItemProvider so "Sleep" is offered above "Pick Up".
+  // furnitureProvider and cookingProvider run before placedItemProvider so "Sleep" and
+  // "Cook here" are offered above "Pick Up" on a placed bed or campfire.
   furnitureProvider,
+  cookingProvider,
   placedItemProvider,
   mirrorProvider,
   chestProvider,
@@ -49,8 +51,7 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   transitionProvider,
   mapLocationProvider,
 
-  // Stations and resources.
-  cookingProvider,
+  // Resources.
   waterProvider,
 
   // Gathering.

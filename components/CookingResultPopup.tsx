@@ -6,7 +6,7 @@
  * as the medallion icon and an ingredient checklist on failure so the player
  * can see at a glance what they still need.
  *
- * Used by: RecipeContent (cooking), PotionContent (magic), CookingInterface (stove)
+ * Used by: RecipeContent (cooking), PotionContent (magic), BrewingInterface (cauldron)
  */
 
 import React, { useEffect, useState } from 'react';
@@ -36,7 +36,7 @@ interface CookingResultPopupProps {
   portraitSrc?: string;
   /** Portrait zoom config: scale and vertical focal point (defaults tuned for Mum) */
   portraitZoom?: { scale: number; originY: string };
-  /** Book theme for consistent styling (optional — uses defaults for CookingInterface) */
+  /** Book theme for consistent styling (optional — uses defaults when omitted) */
   theme?: BookThemeConfig;
   /** Called when the popup is dismissed */
   onDismiss: () => void;

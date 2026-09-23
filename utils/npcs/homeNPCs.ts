@@ -380,7 +380,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
       },
       {
         id: 'fireplace_intro',
-        text: "*Mum points to the kettle beside the crackling fire.* Let's make a cup of tea! Open your recipe book, choose Tea, then Cook — anywhere in this kitchen. You can also choose Make Tea at the Fireplace. I'll supply anything you're missing for your first practice cup. It will go into your bag. Come back and ask me to teach you to cook again, and we'll choose your next lesson!",
+        text: "*Mum points to the kettle beside the crackling fire.* Let's make a cup of tea! Stand by the fire — see it glowing? — then press Cook here, choose Tea and Cook. You can also choose Make Tea at the Fireplace. I'll supply anything you're missing for your first practice cup. It will go into your bag. Come back and ask me to teach you to cook again, and we'll choose your next lesson!",
         expression: 'happy',
         responses: [],
       },

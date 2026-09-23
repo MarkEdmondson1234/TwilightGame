@@ -84,6 +84,15 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
 
+  // ===== COOKING =====
+  // Cooking needs a fire (#157) — a campfire lets the player cook away from Mum's kitchen.
+  {
+    itemId: 'furniture_campfire',
+    buyPrice: 100,
+    sellPrice: 60,
+    stock: 'unlimited',
+  },
+
   // ===== MATERIALS =====
   {
     itemId: 'fertiliser',

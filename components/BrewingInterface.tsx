@@ -26,7 +26,7 @@ interface BrewingInterfaceProps {
  * over the same MagicManager — recipe knowledge, ingredient checks, mastery
  * and apprentice level progression all live there (single source of truth).
  *
- * Mirrors CookingInterface (stove) in structure; the result popup is the shared
+ * A modal station UI; the result popup is the shared
  * CookingResultPopup with the witch-wolf portrait, as in PotionContent.
  */
 const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) => {

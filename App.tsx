@@ -61,7 +61,7 @@ import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLay
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
-import { checkCookingLocation } from './utils/actionHandlers';
+import { handleOpenCooking } from './utils/actionHandlers';
 import { getLavaLakeAnchor } from './utils/mapUtils';
 import { chooseLavaEntranceTile, openLavaEntranceAt } from './utils/lavaEntrance';
 import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRest';
@@ -92,6 +92,7 @@ import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
 import { activateTransitionIndicator } from './utils/activateTransitionIndicator';
 import MiniGameLocationIndicators from './components/MiniGameLocationIndicators';
+import CookingStationIndicators from './components/CookingStationIndicators';
 import NPCInteractionIndicators from './components/NPCInteractionIndicators';
 import TileRenderer from './components/TileRenderer';
 // BackgroundSprites and ForegroundSprites removed - now rendered by PixiJS SpriteLayer
@@ -117,7 +118,6 @@ import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
 import { recordSessionFrame } from './utils/sessionDiagnostics';
 import { performanceMonitor } from './utils/PerformanceMonitor';
 import AmbientClouds from './components/AmbientClouds';
-import CookingInterface from './components/CookingInterface';
 import BrewingInterface from './components/BrewingInterface';
 import MiniGameHost from './components/MiniGameHost';
 import ConfirmMiniGameModal from './components/ConfirmMiniGameModal';
@@ -1328,13 +1328,21 @@ const App: React.FC = () => {
     }
   }, [activeNPC, openUI]);
 
+  // Cooking needs a fire (#151/#157): E/C keys, the touch action button and the
+  // "Cook here" button all open the recipe book through this one gate.
+  const openCooking = useCallback(() => {
+    handleOpenCooking(playerPosRef.current, mapManager.getCurrentMapId(), {
+      onOpenRecipeBook: () => openUI('recipeBook'),
+      onShowToast: showToast,
+    });
+  }, [playerPosRef, openUI, showToast]);
+
   // Setup keyboard controls
   useKeyboardControls({
     playerPosRef,
     activeNPC,
     isTitleScreenActive: showSplashScreen || needsLandscape,
     showHelpBrowser: ui.helpBrowser,
-    showCookingUI: ui.cookingUI,
     showRecipeBook: ui.recipeBook,
     showJournal: ui.journal,
     showInventory: ui.inventory,
@@ -1363,21 +1371,7 @@ const App: React.FC = () => {
       show ? openUI('vfxTestPanel') : closeUI('vfxTestPanel'),
     onSetShowHelpBrowser: (show: boolean) =>
       show ? openUI('helpBrowser') : closeUI('helpBrowser'),
-    onSetShowCookingUI: (show: boolean) => {
-      if (show) {
-        const cookingLocation = checkCookingLocation(playerPosRef.current);
-        // Only open cooking UI for stove/campfire, not cauldron (which uses brewing UI)
-        if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
-          openUI('cookingUI', {
-            cookingLocationType:
-              (cookingLocation.locationType as 'stove' | 'campfire') || undefined,
-            cookingPosition: cookingLocation.position || undefined,
-          });
-        }
-      } else {
-        closeUI('cookingUI');
-      }
-    },
+    onOpenCooking: openCooking,
     onSetShowRecipeBook: (show: boolean) => (show ? openUI('recipeBook') : closeUI('recipeBook')),
     onSetShowJournal: (show: boolean) => (show ? openUI('journal') : closeUI('journal')),
     onSetShowInventory: (show: boolean) => (show ? openUI('inventory') : closeUI('inventory')),
@@ -1462,7 +1456,7 @@ const App: React.FC = () => {
     inventoryItems,
     keysPressed,
     onShowCharacterCreator: () => openUI('characterCreator'),
-    onSetShowCookingUI: (show: boolean) => (show ? openUI('cookingUI') : closeUI('cookingUI')),
+    onOpenCooking: openCooking,
     onSetActiveNPC: setActiveNPC,
     onSetPlayerPos: setPlayerPos,
     onMapTransition: handleMapTransition,
@@ -2280,6 +2274,14 @@ const App: React.FC = () => {
 
   const villageNews = useVillageNews(isInWorld);
   const [activityInvitationVisible, setActivityInvitationVisible] = useState(false);
+  /** In-world prompts (quest cues, "Cook here") hide while anything else wants attention. */
+  const worldPromptsBlocked =
+    !isInWorld ||
+    isUIActive ||
+    !!activeChainPopup ||
+    radialMenuVisible ||
+    activityInvitationVisible ||
+    (!villageNews.dismissed && !!villageNews.batch?.stories.length);
 
   const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
 
@@ -2569,9 +2571,19 @@ const App: React.FC = () => {
           tileSize={effectiveTileSize}
         />
 
+        {/* Cooking stations glow; beside one, a big "Cook here" button (#151/#157) */}
+        <CookingStationIndicators
+          currentMapId={currentMap.id}
+          playerPos={playerPos}
+          gridOffset={effectiveGridOffset}
+          tileSize={effectiveTileSize}
+          blocked={worldPromptsBlocked}
+          onCook={openCooking}
+        />
+
         {/* NPC interaction indicators (shows when player is near interactable NPCs) */}
         <NPCInteractionIndicators
-          blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || activityInvitationVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
+          blocked={worldPromptsBlocked}
           onTalk={setActiveNPC}
           npcs={allNPCs}
           playerPos={playerPos}
@@ -2917,18 +2929,6 @@ const App: React.FC = () => {
           onItemContextMenu={openItemActionMenu}
         />
       )}
-      {ui.cookingUI && (
-        <CookingInterface
-          isOpen={ui.cookingUI}
-          onClose={() => closeUI('cookingUI')}
-          locationType={ui.context.cookingLocationType || 'stove'}
-          cookingPosition={ui.context.cookingPosition}
-          currentMapId={currentMap.id}
-          onItemPlaced={() => {
-            // GameState emits PLACED_ITEMS_CHANGED event when items are placed
-          }}
-        />
-      )}
       {ui.miniGame && ui.context.activeMiniGameId && (
         <MiniGameHost
           key={ui.context.miniGameTriggerData?.extra?.skiingRunKey as string | undefined}
@@ -3246,7 +3246,6 @@ const App: React.FC = () => {
           theme="cooking"
           playerPosition={playerPos}
           currentMapId={currentMap.id}
-          cookingPosition={ui.context.cookingPosition}
           nearbyNPCs={(() => {
             // Get NPCs within 2 tiles of player
             const range = 2;

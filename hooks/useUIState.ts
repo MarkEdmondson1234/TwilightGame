@@ -9,7 +9,6 @@ import type { MiniGameTriggerData } from '../minigames/types';
 export type UIOverlayName =
   | 'bookshelf'
   | 'inventory'
-  | 'cookingUI'
   | 'brewingUI'
   | 'recipeBook'
   | 'magicBook'
@@ -34,9 +33,6 @@ export type UIOverlayName =
  * Some overlays need additional state beyond just "visible/hidden".
  */
 export interface UIContext {
-  // Cooking context
-  cookingLocationType: 'stove' | 'campfire' | null;
-  cookingPosition: Position | null;
   // Brewing context
   brewingPosition: Position | null;
   // Gift modal context
@@ -62,7 +58,6 @@ export interface UIState {
   // Overlay visibility flags
   bookshelf: boolean;
   inventory: boolean;
-  cookingUI: boolean;
   brewingUI: boolean;
   recipeBook: boolean;
   magicBook: boolean;
@@ -90,9 +85,6 @@ export interface UIState {
  * Some overlays require additional context.
  */
 export interface OpenUIOptions {
-  // For cooking UI
-  cookingLocationType?: 'stove' | 'campfire';
-  cookingPosition?: Position;
   // For brewing UI
   brewingPosition?: Position;
   // For gift modal
@@ -127,8 +119,6 @@ export interface UseUIStateReturn {
 }
 
 const initialContext: UIContext = {
-  cookingLocationType: null,
-  cookingPosition: null,
   brewingPosition: null,
   giftTargetNpcId: null,
   giftTargetPlayerUid: null,
@@ -144,7 +134,6 @@ const initialContext: UIContext = {
 const initialState: UIState = {
   bookshelf: false,
   inventory: false,
-  cookingUI: false,
   brewingUI: false,
   recipeBook: false,
   magicBook: false,
@@ -178,8 +167,8 @@ const initialState: UIState = {
  * // Open inventory
  * openUI('inventory');
  *
- * // Open cooking with context
- * openUI('cookingUI', { cookingLocationType: 'stove', cookingPosition: { x: 5, y: 3 } });
+ * // Open brewing with context
+ * openUI('brewingUI', { brewingPosition: { x: 5, y: 3 } });
  *
  * // Toggle help browser
  * toggleUI('helpBrowser');
@@ -207,12 +196,6 @@ export function useUIState() {
       // Set context data if provided
       if (options) {
         newState.context = { ...prev.context };
-        if (options.cookingLocationType !== undefined) {
-          newState.context.cookingLocationType = options.cookingLocationType;
-        }
-        if (options.cookingPosition !== undefined) {
-          newState.context.cookingPosition = options.cookingPosition;
-        }
         if (options.brewingPosition !== undefined) {
           newState.context.brewingPosition = options.brewingPosition;
         }
@@ -257,13 +240,7 @@ export function useUIState() {
       const newState = { ...prev, [name]: false };
 
       // Clear context data when closing specific overlays
-      if (name === 'cookingUI') {
-        newState.context = {
-          ...prev.context,
-          cookingLocationType: null,
-          cookingPosition: null,
-        };
-      } else if (name === 'brewingUI') {
+      if (name === 'brewingUI') {
         newState.context = {
           ...prev.context,
           brewingPosition: null,
@@ -308,13 +285,7 @@ export function useUIState() {
       if (isOpen) {
         // Closing - clear context
         const newState = { ...prev, [name]: false };
-        if (name === 'cookingUI') {
-          newState.context = {
-            ...prev.context,
-            cookingLocationType: null,
-            cookingPosition: null,
-          };
-        } else if (name === 'brewingUI') {
+        if (name === 'brewingUI') {
           newState.context = {
             ...prev.context,
             brewingPosition: null,
@@ -354,7 +325,6 @@ export function useUIState() {
     return (
       state.bookshelf ||
       state.inventory ||
-      state.cookingUI ||
       state.brewingUI ||
       state.recipeBook ||
       state.magicBook ||

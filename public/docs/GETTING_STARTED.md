@@ -12,6 +12,8 @@ Welcome to your new farming adventure! This guide will help you get started with
 - **E** or **Enter** - Interact with objects, NPCs, transitions, and farm tiles
 - **ESC** - Close dialogues and menus
 - **R** - Reset to spawn point if stuck
+- **B** - Open your recipe book
+- **C** - Cook (beside a fire)
 
 ### Tools & Farming
 - **1** - Hand (harvest crops, clear dead plants)
@@ -59,6 +61,21 @@ Walk around and explore! The village is your hub with paths leading to different
 - The plant will show a mature sprite when ready
 - Press **1** for hand tool, then **E** on ready crops to harvest
 - You'll automatically collect crops and earn gold!
+
+## Cooking
+
+Ask **Mum** to teach you to cook and she will give you a **recipe book**. You can open it
+and read your recipes anywhere (**B**, or the book on the bookshelf), but you can only
+**cook beside a fire**:
+
+- **Mum's fireplace** in the kitchen at home. It glows gently while you are in the room.
+- **A campfire** of your own. Buy one at the general store, then select it in your bag and
+  tap a clear spot outdoors to set it down. Right-click (or long-press) it and choose
+  **Pick Up** to take it with you again.
+
+Walk up to a fire and a big **Cook here** button appears — tap it, or press **E** or **C**.
+Away from a fire, the Cook button in the book is greyed out and tells you where to go.
+Tea is special: it needs Mum's kettle, so make it at her fireplace.
 
 ## Understanding the HUD
 
