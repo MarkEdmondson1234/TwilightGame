@@ -58,6 +58,7 @@ import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLayout';
+import { getMobileInteriorFraming, getRoomHeightFitZoom } from './utils/mobileInteriorFraming';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -376,8 +377,10 @@ const App: React.FC = () => {
   }, []);
 
   const currentMap = mapManager.getCurrentMap();
-  const isMobileInteriorCamera = isTouchDevice && ['mums_kitchen', 'shop'].includes(currentMapId);
-  const interiorControlInset = isMobileInteriorCamera ? Math.min(88, viewportSize.height * 0.25) : 0;
+  // Room framing policy on touch devices lives in utils/mobileInteriorFraming.ts.
+  const interiorFraming = getMobileInteriorFraming(currentMapId, isTouchDevice, viewportSize.height);
+  const isMobileInteriorCamera = interiorFraming.enabled;
+  const interiorControlInset = interiorFraming.reservedInset;
   const roomViewport = useMemo(() => ({
     width: viewportSize.width,
     height: viewportSize.height - interiorControlInset,
@@ -450,7 +453,7 @@ const App: React.FC = () => {
     if (isBackgroundImageRoom) {
       const artwork = getRoomArtworkSize(currentMap);
       return artwork
-        ? getRoomCoverScale(
+        ? (interiorFraming.fitWholeHeight ? getRoomHeightFitZoom : getRoomCoverScale)(
             artwork.width * viewportScale,
             artwork.height * viewportScale,
             viewportSize.width,
@@ -466,7 +469,7 @@ const App: React.FC = () => {
       viewportSize.width,
       viewportSize.height
     );
-  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, roomViewport, viewportScale]);
+  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, roomViewport, viewportScale, interiorFraming.fitWholeHeight]);
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
 
@@ -836,7 +839,7 @@ const App: React.FC = () => {
     !isAnyOverlayOpen && !showSplashScreen && !needsLandscape && !isMobileCommunicationOpen
   );
   const maxCameraZoom = isMobileInteriorCamera
-    ? Math.max(zoomLimits.minZoom, Math.min(zoomLimits.maxZoom, (roomViewport.height - 24) / playerBodyHeight))
+    ? Math.max(zoomLimits.minZoom, Math.min(zoomLimits.maxZoom, (roomViewport.height - interiorFraming.anchorInset - 24) / playerBodyHeight))
     : zoomLimits.maxZoom;
   const { zoom, setZoomLevel } = usePinchZoom({
     minZoom: zoomLimits.minZoom,
@@ -1784,8 +1787,9 @@ const App: React.FC = () => {
       cameraAnchorLiftTiles: isMobileInteriorCamera
         ? playerBodyHeight / (TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1)) / 2
         : 0,
+      bottomInset: interiorFraming.anchorInset,
     }),
-    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight]
+    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight, interiorFraming.anchorInset]
   );
   const { viewFrameRef, worldLayerRef, syncViewFrame, view } = useViewFrame(
     viewFrameInputs,
@@ -2412,11 +2416,11 @@ const App: React.FC = () => {
         <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`}
           style={{
             touchAction: isTouchDevice && zoomLimits.enabled ? 'none' : undefined,
-            clipPath: isMobileInteriorCamera ? `inset(0 0 ${interiorControlInset}px 0)` : undefined,
+            clipPath: interiorControlInset > 0 ? `inset(0 0 ${interiorControlInset}px 0)` : undefined,
           }} />
       )}
 
-      {isMobileInteriorCamera && (
+      {interiorControlInset > 0 && (
         <div data-game-ui aria-hidden="true" className="absolute bottom-0 left-0 right-0"
           style={{ height: interiorControlInset, zIndex: 1 }} />
       )}

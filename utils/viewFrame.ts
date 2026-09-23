@@ -113,6 +113,12 @@ export interface ViewFrameInputs {
    * otherwise.
    */
   cameraAnchorLiftTiles: number;
+  /**
+   * Pixels at the bottom of `roomViewport` covered by the lower controls. The
+   * room camera centres the player in the space above them; clamping still uses
+   * the whole viewport, so the artwork runs underneath. Zero otherwise.
+   */
+  bottomInset?: number;
 }
 
 export function computeViewFrame(inputs: ViewFrameInputs, playerPos: Position): ViewFrame {
@@ -121,7 +127,14 @@ export function computeViewFrame(inputs: ViewFrameInputs, playerPos: Position): 
     inputs.cameraAnchorLiftTiles !== 0
       ? { x: playerPos.x, y: playerPos.y - inputs.cameraAnchorLiftTiles }
       : playerPos;
-  const room = getRoomTransform(map, anchor, roomViewport, viewportScale, zoom);
+  const room = getRoomTransform(
+    map,
+    anchor,
+    roomViewport,
+    viewportScale,
+    zoom,
+    inputs.bottomInset ?? 0
+  );
   const camera = computeCameraPosition(
     playerPos,
     mapWidth,

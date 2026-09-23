@@ -70,3 +70,12 @@ The corrected captures expose a separate blocking layout problem: the centre-anc
 - The shop also needs a mobile-only floor constraint: the original coarse walkmesh extends onto the painted counter front and baskets. `shopFloorY` describes the visible floor silhouette in authored 1200×675 artwork coordinates. Collision checks constrain mobile feet without changing image transforms or shared tile/save coordinates. Existing desktop positions outside this floor are moved to its adjacent boundary on mobile. The desktop walkmesh and NPC anchor positions remain unchanged.
 - Browser checks confirmed the valid shop spawn, walking, Fit/pinch/short landscape, opening Fox’s shop from the allowed floor, and exiting to village `(12, 14)`. Updated images supersede the earlier floating/clipped examples. The final suite passes 1,339 tests in 164 files; lint has zero errors and seven existing warnings; production build passes.
 - Ready for review of this mobile-only pilot. Actual iPhone Firefox play and a full multiplayer device trial remain required; this does not resolve the independent village reload investigation.
+
+## Mum's Kitchen: whole-height fit (issue #157)
+
+Reported on a phone: the kitchen sat too high — its top was never visible — with a dark bar under the controls. Covering the viewport above the reserved strip cropped over a third of the 16:9 painting's height on a ~2.2:1 landscape phone, and with the player on the floor the camera stayed at the bottom of that crop.
+
+- The policy now lives in `utils/mobileInteriorFraming.ts`. Mum's Kitchen (`FULL_HEIGHT_ROOMS`) reserves no strip: the room uses the whole screen and the controls overlay its bottom (the bottom grid row is wall). The strip still steers the follow anchor through `getRoomTransform`'s `bottomInset`, and the maximum zoom still accounts for it.
+- Fit is `getRoomHeightFitZoom`: the full painted height, never smaller than needed. On a tablet this equals cover (sides cropped and panned as before); on a wide phone it leaves narrow side margins in the room background colour rather than cropping the top.
+- The shop keeps the reserved strip until its framing gets its own device review.
+- Guarded by `tests/mobileInteriorFraming.test.ts`. Still needs an on-device check (browser automation was not used).
