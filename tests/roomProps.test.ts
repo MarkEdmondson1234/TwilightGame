@@ -2,7 +2,7 @@
 /**
  * Room props (MapDefinition.props) — static scenery that depth-sorts with the player.
  *
- * Issue #158: the kitchen easel (Draw / Craft Workshop / Make a Wreath) was drawn
+ * Issue #158: the kitchen easel (Draw / Craft Workshop) was drawn
  * as DOM inside MiniGameLocationIndicators with `zIndex: 99`, meaning "just behind
  * the player". But the player is drawn by PixiJS on the canvas, and the whole DOM
  * world layer sits above that canvas — so no CSS z-index could put the easel behind

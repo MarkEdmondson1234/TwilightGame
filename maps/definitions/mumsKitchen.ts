@@ -1,5 +1,5 @@
 import { MapDefinition, TileType, RoomLayer, RoomProp } from '../../types';
-import { herbAssets, itemAssets } from '../../assets';
+import { itemAssets } from '../../assets';
 import { parseGrid } from '../gridParser';
 import { createMumNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
@@ -72,9 +72,10 @@ const kitchenLayers: RoomLayer[] = [
 ];
 
 /**
- * The communal easel (Draw / Craft Workshop / Make a Wreath all start here, at
- * tile 10,5). Mushra's flower basket and a lavender bunch lean against its legs,
- * and a blank canvas rests on the ledge.
+ * The communal easel (Draw / Craft Workshop start here, at tile 10,5), with a
+ * blank canvas resting on the ledge. Mushra's Tiny Wreath workshop used to share
+ * it, with a basket and lavender bunch composited against its legs; it is now her
+ * hand-drawn crafting table upstairs (utils/tinyWreathLesson.ts, issue #157).
  *
  * A room prop rather than DOM art so it depth-sorts with the player: standing
  * below its base (y = 6) the player is in front of it (issue #158).
@@ -86,23 +87,6 @@ const kitchenEasel: RoomProp = {
   height: 2.4,
   parts: [
     { kind: 'image', image: itemAssets.easel, left: 0, top: 0, width: 1, height: 1 },
-    {
-      kind: 'image',
-      image: itemAssets.picnic_basket,
-      left: 0.04,
-      top: 0.65,
-      width: 0.35,
-      height: 0.35,
-    },
-    {
-      kind: 'image',
-      image: herbAssets.lavender_crop,
-      left: 0.1,
-      top: 0.69,
-      width: 0.23,
-      height: 0.23,
-      rotationDeg: -20,
-    },
     // The blank canvas
     {
       kind: 'panel',
