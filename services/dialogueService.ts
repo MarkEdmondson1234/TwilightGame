@@ -313,7 +313,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'Savoury recipes: Spaghetti with meat sauce, Pizza with potatoes, Roast dinner',
       'Dessert recipes: Crepes with Strawberry jam, Marzipan chocolates, Vanilla ice cream',
       'Baking recipes: Bread, Cookies, Chocolate cake',
-      'Tea can always be made here - you keep the ingredients stocked',
+      "Tea is made here in the kitchen, from the recipe book or at the fireplace. You supply the ingredients for your child's first practice cup; after that a cup needs tea leaves, water and milk from the shop",
       'Many ingredients need to be bought from the shop or grown in the garden',
       'Village gossip (you know everyone in the village)',
       'Food preferences: Shopkeeper likes savoury, little Celia likes desserts, Althea and Jebediah like baked goods',
@@ -323,7 +323,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     background: `A devoted mother in her element - the kitchen. This is where you teach
       your child to cook, starting with French Toast, then guiding them to specialise in
       savoury food, desserts, or baking. Your husband is an explorer, often away for long
-      stretches. You always keep tea ingredients ready. The kitchen is warm and welcoming,
+      stretches. The kitchen is warm and welcoming,
       filled with the aroma of whatever you're preparing.`,
 
     quirks: [

@@ -103,6 +103,7 @@ export enum GameEvent {
 
   // Cooking events
   COOKING_COURSE_COMPLETE = 'cooking:course_complete',
+  RECIPE_BOOK_UNLOCKED = 'cooking:recipe_book_unlocked',
 
   // Save events
   LOCAL_SAVE_FLUSHED = 'save:local_flushed',
@@ -300,6 +301,7 @@ export interface EventPayloads {
     newLevel: 'novice' | 'journeyman' | 'master';
   };
   [GameEvent.COOKING_COURSE_COMPLETE]: Record<string, never>;
+  [GameEvent.RECIPE_BOOK_UNLOCKED]: Record<string, never>;
   [GameEvent.LOCAL_SAVE_FLUSHED]: {
     timestamp: number;
   };

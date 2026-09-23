@@ -59,7 +59,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     name: 'tea',
     displayName: 'Tea',
     category: 'starter',
-    description: 'A warm, comforting cup of tea. Mother keeps the ingredients stocked.',
+    description: 'A warm, comforting cup of tea. Mum helps with the ingredients for your first practice cup.',
     ingredients: [
       { itemId: 'tea_leaves', quantity: 1 },
       { itemId: 'water', quantity: 1 },
