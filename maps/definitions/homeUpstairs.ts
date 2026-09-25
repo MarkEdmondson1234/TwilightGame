@@ -1,7 +1,8 @@
-import { MapDefinition, TileType, RoomLayer } from '../../types';
+import { MapDefinition, TileType, RoomLayer, RoomProp } from '../../types';
+import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';
-import { furnitureAssets } from '../../assets';
+import { furnitureAssets, itemAssets } from '../../assets';
 
 /**
  * Home Upstairs - Bedroom area (background-image interior)
@@ -70,6 +71,33 @@ const homeUpstairsLayers: RoomLayer[] = [
   },
 ];
 
+/**
+ * The communal easel (Draw / Craft Workshop), with a blank canvas resting on the
+ * ledge, beside Mushra's crafting table. A room prop rather than DOM art so it
+ * depth-sorts with the player: standing below its base the player is in front
+ * of it (issue #158).
+ */
+const bedroomEasel: RoomProp = {
+  id: 'bedroom_easel',
+  // Centred on the easel's tile, standing on the row below it.
+  anchor: { x: COMMUNAL_EASEL.x + 0.5, y: COMMUNAL_EASEL.y + 1 },
+  width: 2.4,
+  height: 2.4,
+  parts: [
+    { kind: 'image', image: itemAssets.easel, left: 0, top: 0, width: 1, height: 1 },
+    // The blank canvas
+    {
+      kind: 'panel',
+      left: 0.35,
+      top: 0.21,
+      width: 0.31,
+      height: 0.34,
+      fill: 0xfff8df,
+      stroke: 0xc4a47b,
+    },
+  ],
+};
+
 export const homeUpstairs: MapDefinition = {
   id: 'home_upstairs',
   name: 'Home Upstairs',
@@ -83,6 +111,7 @@ export const homeUpstairs: MapDefinition = {
   characterScale: 1.8,
   referenceViewport: { width: 1280, height: 720 },
   layers: homeUpstairsLayers,
+  props: [bedroomEasel],
   transitions: [
     {
       fromPosition: { x: 3, y: 7 }, // Stairs down

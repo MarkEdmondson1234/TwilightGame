@@ -80,7 +80,7 @@ export function readPaintingNextStep(): QuestNextStep | undefined {
     };
   return {
     action: 'Draw and save a kitchen picture',
-    where: "The easel beside the stairs in Mum's kitchen",
+    where: 'The easel upstairs in your room',
     details: [
       'Tap the easel and choose Draw. Pick a colour, draw something you like, give it a name and Save. Frame paints are optional.',
       inventoryManager.hasItem('blank_canvas', 1)

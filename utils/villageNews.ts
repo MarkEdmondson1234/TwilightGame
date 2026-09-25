@@ -21,7 +21,7 @@ export const NEWS_MILESTONES: Record<
   painting: {
     title: 'A new picture at home',
     story:
-      'A neighbour has made and displayed a kitchen picture. Mum has an easel and a starter canvas if you would like to try.',
+      'A neighbour has made and displayed a kitchen picture. Mum has a starter canvas and an easel for you, upstairs at home.',
     lead: 'painting',
     itemId: 'easel',
   },

@@ -2,7 +2,8 @@ import { mapLocationProvider } from '../utils/interactions/providers/mapLocation
 /** @vitest-environment node */
 import { TILE_LEGEND } from '../constants';
 import { CollisionType } from '../types';
-import { mumsKitchen } from '../maps/definitions/mumsKitchen';
+import { homeUpstairs } from '../maps/definitions/homeUpstairs';
+import { getMiniGameLocationsForMap } from '../minigames/registry';
 import { COMMUNAL_EASEL } from '../data/communalEasel';
 import { describe, it, expect, vi } from 'vitest';
 import { placedItemProvider } from '../utils/interactions/providers/placedItems';
@@ -78,20 +79,26 @@ describe('placed easel', () => {
   });
 });
 
-describe('communal kitchen easel', () => {
+describe('communal easel upstairs', () => {
   it('stands on an open floor tile, not on an exit, and the artwork is drawn there', () => {
-    expect(COMMUNAL_EASEL.mapId).toBe(mumsKitchen.id);
-    expect(TILE_LEGEND[mumsKitchen.grid[COMMUNAL_EASEL.y][COMMUNAL_EASEL.x]].collisionType).toBe(
+    expect(COMMUNAL_EASEL.mapId).toBe(homeUpstairs.id);
+    expect(TILE_LEGEND[homeUpstairs.grid[COMMUNAL_EASEL.y][COMMUNAL_EASEL.x]].collisionType).toBe(
       CollisionType.WALKABLE
     );
     expect(
-      mumsKitchen.transitions.some(
+      homeUpstairs.transitions.some(
         (exit) =>
           exit.fromPosition.x === COMMUNAL_EASEL.x && exit.fromPosition.y === COMMUNAL_EASEL.y
       )
     ).toBe(false);
-    const prop = mumsKitchen.props?.find((p) => p.id === 'kitchen_easel');
+    const prop = homeUpstairs.props?.find((p) => p.id === 'bedroom_easel');
     expect(prop?.anchor).toEqual({ x: COMMUNAL_EASEL.x + 0.5, y: COMMUNAL_EASEL.y + 1 });
+  });
+
+  it('has left Mum’s kitchen, which is for cooking', () => {
+    const kitchen = getMiniGameLocationsForMap('mums_kitchen').map((l) => l.def.id);
+    expect(kitchen).not.toContain('painting-easel');
+    expect(kitchen).not.toContain('decoration-crafting');
   });
 
   it('opens drawing and crafting without owning an easel; cannot be picked up', () => {

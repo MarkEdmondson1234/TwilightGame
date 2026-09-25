@@ -2,7 +2,7 @@
 /**
  * Room props (MapDefinition.props) — static scenery that depth-sorts with the player.
  *
- * Issue #158: the kitchen easel (Draw / Craft Workshop) was drawn
+ * Issue #158: the communal easel (Draw / Craft Workshop), then in Mum's kitchen, was drawn
  * as DOM inside MiniGameLocationIndicators with `zIndex: 99`, meaning "just behind
  * the player". But the player is drawn by PixiJS on the canvas, and the whole DOM
  * world layer sits above that canvas — so no CSS z-index could put the easel behind
@@ -15,7 +15,8 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { mumsKitchen } from '../maps/definitions/mumsKitchen';
+import { homeUpstairs } from '../maps/definitions/homeUpstairs';
+import { COMMUNAL_EASEL } from '../data/communalEasel';
 import { paintingEaselDefinition } from '../minigames/painting-easel/definition';
 import {
   getRoomPropImageUrls,
@@ -30,18 +31,18 @@ const ROOT = join(__dirname, '..');
 /** PlayerSprite's depth rule for a player whose feet are at `feetY`. */
 const playerZ = (feetY: number) => Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10);
 
-const easel = mumsKitchen.props?.find((p) => p.id === 'kitchen_easel');
+const easel = homeUpstairs.props?.find((p) => p.id === 'bedroom_easel');
 
-describe('kitchen easel room prop', () => {
-  it('exists as a room prop on mums_kitchen', () => {
-    expect(easel, 'mumsKitchen.props must contain the kitchen easel').toBeDefined();
+describe('bedroom easel room prop', () => {
+  it('exists as a room prop in the player’s room', () => {
+    expect(easel, 'homeUpstairs.props must contain the studio easel').toBeDefined();
   });
 
   it('stands on the tile the painting mini-game is opened from', () => {
     const loc = paintingEaselDefinition.triggers.mapLocation;
-    expect(loc?.mapId).toBe('mums_kitchen');
+    expect(loc?.mapId).toBe(homeUpstairs.id);
     expect(
-      roomPropTopAt(mumsKitchen, loc!.x, loc!.y),
+      roomPropTopAt(homeUpstairs, loc!.x, loc!.y),
       'The easel prop no longer covers the Draw mini-game tile — move one or the other'
     ).toBeDefined();
   });
@@ -63,15 +64,15 @@ describe('kitchen easel room prop', () => {
   });
 
   it('lifts the floating prompt above the easel instead of across it', () => {
-    const top = roomPropTopAt(mumsKitchen, 10, 5);
+    const top = roomPropTopAt(homeUpstairs, COMMUNAL_EASEL.x, COMMUNAL_EASEL.y);
     expect(top).toBeCloseTo(easel!.anchor.y - easel!.height);
-    expect(roomPropTopAt(mumsKitchen, 2, 7)).toBeUndefined();
+    expect(roomPropTopAt(homeUpstairs, 12, 7)).toBeUndefined();
   });
 });
 
 describe('room prop artwork', () => {
   it('every prop image exists under public/', () => {
-    const missing = getRoomPropImageUrls(mumsKitchen).filter(
+    const missing = getRoomPropImageUrls(homeUpstairs).filter(
       (url) => !existsSync(join(ROOT, 'public', url.replace(/^\/TwilightGame\//, '')))
     );
     expect(
