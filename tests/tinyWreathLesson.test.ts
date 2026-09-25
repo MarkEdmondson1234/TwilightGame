@@ -80,7 +80,7 @@ describe('tiny wreath starter lesson', () => {
     finishTinyWreathLesson();
     expect(state.done).toBe(false);
   });
-  it('points at the crafting table upstairs, not the kitchen easel', () => {
+  it('points at the crafting table upstairs, not the communal easel', () => {
     startTinyWreathLesson();
     const step = readTinyWreathNextStep()!;
     expect(step.where).toMatch(/upstairs/i);

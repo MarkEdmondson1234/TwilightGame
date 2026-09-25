@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { COMMUNAL_EASEL } from '../data/communalEasel';
 import { describe, it, expect, vi } from 'vitest';
 import { homeUpstairs } from '../maps/definitions/homeUpstairs';
 import { mumsKitchen } from '../maps/definitions/mumsKitchen';
@@ -20,7 +21,7 @@ import {
 
 /**
  * Mushra's Tiny Wreath lives upstairs (issue #157), on her existing hand-drawn
- * crafting table, not the kitchen easel. These pin down where the table sits and
+ * crafting table, not the communal easel. These pin down where the table sits and
  * that it is the only route the lesson points at.
  */
 
@@ -92,11 +93,13 @@ describe('Tiny Wreath workshop upstairs', () => {
     expect(getMiniGamesForPlacedItem('crafting_table').map((m) => m.id)).toContain('wreath-making');
   });
 
-  it('no longer hangs the wreath workshop on the kitchen easel', () => {
-    expect(getMiniGamesForMapLocation('mums_kitchen', 10, 5).map((m) => m.id)).not.toContain(
-      'wreath-making'
-    );
-    expect(getMiniGameLocationsForMap('mums_kitchen').map((l) => l.def.id)).not.toContain(
+  it('does not hang the wreath workshop on the communal easel', () => {
+    expect(
+      getMiniGamesForMapLocation(COMMUNAL_EASEL.mapId, COMMUNAL_EASEL.x, COMMUNAL_EASEL.y).map(
+        (m) => m.id
+      )
+    ).not.toContain('wreath-making');
+    expect(getMiniGameLocationsForMap(COMMUNAL_EASEL.mapId).map((l) => l.def.id)).not.toContain(
       'wreath-making'
     );
   });

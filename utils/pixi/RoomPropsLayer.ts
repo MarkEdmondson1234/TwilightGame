@@ -1,5 +1,5 @@
 /**
- * RoomPropsLayer - static scenery from MapDefinition.props (the kitchen easel)
+ * RoomPropsLayer - static scenery from MapDefinition.props (the easel in the player’s room)
  *
  * Each prop is one PIXI.Container in the shared depth-sorted container, at
  * roomPropZIndex(prop), so the player walks in front of it when standing below

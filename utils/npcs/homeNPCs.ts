@@ -74,7 +74,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
       {
         id: 'picture_offer',
         expression: 'smile',
-        text: 'Mum glances at the easel beside the stairs. “This kitchen could use a picture of somewhere you love. A forest? A dragon’s garden? I have a canvas for your first try. You can paint whenever you like, even while we’re learning to cook.”',
+        text: 'Mum glances up at the ceiling. “I’ve set up an easel in your room, next to Mushra’s crafting table. This kitchen could use a picture of somewhere you love. A forest? A dragon’s garden? I have a canvas for your first try. You can paint whenever you like, even while we’re learning to cook.”',
         responses: [
           { text: 'I’d like to paint!', nextId: 'picture_accept' },
           { text: 'Maybe later.' },
@@ -83,7 +83,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
       {
         id: 'picture_accept',
         expression: 'happy',
-        text: '“Your starter canvas is in your bag, love. Tap the easel beside the stairs and choose Draw. Pick a colour and draw, then give your picture a name and Save. You don’t need paint for a fancy frame. Saving uses a canvas and puts a Framed Painting in your bag.”',
+        text: '“Your starter canvas is in your bag, love. Pop upstairs, tap the easel in your room and choose Draw. Pick a colour and draw, then give your picture a name and Save. You don’t need paint for a fancy frame. Saving uses a canvas and puts a Framed Painting in your bag.”',
         responses: [
           { text: 'How do I display it?', nextId: 'picture_display' },
           { text: 'I’ll try!' },
@@ -91,7 +91,7 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
       },
       {
         id: 'picture_check',
-        text: '“The easel is beside the stairs, love. Draw something, give it a name and Save. Your journal has the next step whenever you need it.”',
+        text: '“The easel is upstairs in your room, love. Draw something, give it a name and Save. Your journal has the next step whenever you need it.”',
         responses: [
           { text: 'How do I display it?', nextId: 'picture_display' },
           { text: 'Back to my picture!' },

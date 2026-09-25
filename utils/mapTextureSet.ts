@@ -216,7 +216,7 @@ export function getTexturesForMap(mapId: string, season: SeasonKey = 'spring'): 
   spriteImages(seen, season, out);
 
   npcImages(map.npcs, out);
-  // Static scenery (the kitchen easel), drawn by RoomPropsLayer
+  // Static scenery (the easel in the player’s room), drawn by RoomPropsLayer
   collect(out, getRoomPropImageUrls(map));
   collect(out, map.backgroundTexture?.image);
   // The parallax crowns framing outdoor maps: seven trees, resident for the map.

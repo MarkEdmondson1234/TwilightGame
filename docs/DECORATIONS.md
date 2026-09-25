@@ -6,7 +6,9 @@ The decoration system lets you personalise your home with handmade crafts. Paint
 
 ## Getting Started
 
-To begin crafting decorations, you need an **easel**. Befriend **Mushra**, the forest artist who lives in the mushroom house. Once you become acquaintances, she'll gift you an easel to get started.
+You can start straight away at the **easel upstairs in your room**, beside Mushra's crafting table. It is there all year round, and Mum has a starter canvas for your first picture.
+
+To have an easel of your own at home, befriend **Mushra**, the forest artist who lives in the mushroom house. Once you become acquaintances, she'll gift you one.
 
 Place the easel in your home, then click on it. You'll see two options:
 

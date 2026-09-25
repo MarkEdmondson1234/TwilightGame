@@ -278,7 +278,7 @@ export interface MapDefinition {
   };
 
   /**
-   * Fixed scenery placed on the walk grid (the kitchen easel). Rendered by PixiJS
+   * Fixed scenery placed on the walk grid (the easel in the player’s room). Rendered by PixiJS
    * in the depth-sorted container, so it sorts against the player's feet like a
    * placed item — see utils/pixi/RoomPropsLayer.ts. Not interactive and not part
    * of the save: an interaction on the same tile comes from its own provider.

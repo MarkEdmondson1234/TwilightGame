@@ -4,7 +4,7 @@
  * Slot-based crafting where players arrange collected flowers into a wreath.
  * Triggered by talking to Mushra in the forest, or by any placed crafting table —
  * including the fixed one upstairs at home for Mushra's Tiny Wreath lesson
- * (utils/tinyWreathLesson.ts). The kitchen easel is for drawing and crafting only.
+ * (utils/tinyWreathLesson.ts). The communal easel beside it is for drawing and crafting only.
  * Available all year round.
  */
 

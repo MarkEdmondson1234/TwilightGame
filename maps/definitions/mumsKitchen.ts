@@ -1,6 +1,4 @@
-import { COMMUNAL_EASEL } from '../../data/communalEasel';
-import { MapDefinition, TileType, RoomLayer, RoomProp } from '../../types';
-import { itemAssets } from '../../assets';
+import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createMumNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
@@ -72,36 +70,6 @@ const kitchenLayers: RoomLayer[] = [
   // Player is implicitly at Z_PLAYER (100)
 ];
 
-/**
- * The communal easel (Draw / Craft Workshop start here, at tile 10,5), with a
- * blank canvas resting on the ledge. Mushra's Tiny Wreath workshop used to share
- * it, with a basket and lavender bunch composited against its legs; it is now her
- * hand-drawn crafting table upstairs (utils/tinyWreathLesson.ts, issue #157).
- *
- * A room prop rather than DOM art so it depth-sorts with the player: standing
- * below its base (y = 6) the player is in front of it (issue #158).
- */
-const kitchenEasel: RoomProp = {
-  id: 'kitchen_easel',
-  // Centred on the easel's tile, standing on the row below it.
-  anchor: { x: COMMUNAL_EASEL.x + 0.5, y: COMMUNAL_EASEL.y + 1 },
-  width: 2.4,
-  height: 2.4,
-  parts: [
-    { kind: 'image', image: itemAssets.easel, left: 0, top: 0, width: 1, height: 1 },
-    // The blank canvas
-    {
-      kind: 'panel',
-      left: 0.35,
-      top: 0.21,
-      width: 0.31,
-      height: 0.34,
-      fill: 0xfff8df,
-      stroke: 0xc4a47b,
-    },
-  ],
-};
-
 export const mumsKitchen: MapDefinition = {
   id: 'mums_kitchen',
   name: "Mum's Kitchen",
@@ -121,7 +89,6 @@ export const mumsKitchen: MapDefinition = {
 
   // Unified layer system - all visual elements in z-order
   layers: kitchenLayers,
-  props: [kitchenEasel],
 
   // Transitions
   transitions: [

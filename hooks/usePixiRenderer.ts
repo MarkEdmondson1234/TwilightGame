@@ -863,7 +863,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
 
-        // Static room scenery (the kitchen easel), depth-sorted with the player
+        // Static room scenery (the easel in the player’s room), depth-sorted with the player
         const roomPropsLayer = new RoomPropsLayer();
         roomPropsLayerRef.current = roomPropsLayer;
         roomPropsLayer.setDepthContainer(depthSortedContainer);
