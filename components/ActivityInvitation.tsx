@@ -12,7 +12,8 @@ import {
 } from '../utils/activityDiscovery';
 import { hasActivityLead, rememberActivityLead } from '../utils/activityLeadStorage';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
-import { Z_QUEST_GUIDANCE } from '../zIndex';
+import { Z_QUEST_GUIDANCE, Z_QUEST_GUIDANCE_RAISED } from '../zIndex';
+import { useIsTinyTouchScreen } from '../hooks/useIsTinyTouchScreen';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import './ActivityInvitation.css';
 
@@ -45,6 +46,7 @@ export default function ActivityInvitation({
   // full card it covered a third of a phone screen whenever a host was near
   // (issue #157). Desktop keeps the full card.
   const isTouchDevice = useTouchDevice();
+  const isTinyScreen = useIsTinyTouchScreen();
   const [opened, setOpened] = useState(false);
   const [ownsSkis, setOwnsSkis] = useState(false);
 
@@ -133,7 +135,8 @@ export default function ActivityInvitation({
     <aside
       className="activity-invitation"
       aria-label={lead.title}
-      style={surface}
+      // Open on a tiny screen: over the controls, or it has no room to be read.
+      style={isTinyScreen ? { ...surface, zIndex: Z_QUEST_GUIDANCE_RAISED } : surface}
     >
       <div className="activity-invitation-heading">
         {illustration && <img src={illustration} alt="" />}

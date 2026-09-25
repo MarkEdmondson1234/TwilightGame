@@ -72,6 +72,20 @@
   }
 }
 
+/* Tiny touch screens (under TOUCH_TINY_MAX_HEIGHT_PX, e.g. 568x260): clearing the
+   controls left 52px of card. An open card rises above them instead
+   (Z_QUEST_GUIDANCE_RAISED, set by the component) and takes the full height. */
+@media (max-height: 339px) and (pointer: coarse) {
+  .activity-invitation {
+    --guidance-bottom-clearance: 8px;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    max-height: calc(
+      100dvh - 56px - var(--guidance-bottom-clearance) - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+
 /* Touch: the discreet form. Only as wide as the title, and one tap opens the card. */
 .activity-invitation.activity-invitation-pill {
   width: auto;

@@ -669,6 +669,12 @@ Pure functions and game systems:
   where it may scroll past the bottom and side edges by the touch controls' footprint
   (`getCameraOverscroll` in `utils/touchLayout.ts`), so exits on the edge rows come up from
   under the quick bar and D-pad (#157). Guarded by `tests/touchCameraOverscroll.test.ts`.
+- **Touch zoom floor follows the screen height** (`getWorldMinZoom` in `utils/touchLayout.ts`): a
+  touch screen too short to show ~12 tiles at 50% may zoom out further (down to 0.3), so a small
+  iPhone in Chrome (568×260) sees what an ordinary phone does. Touch controls size by height tier
+  (`getTouchLayoutTier`: regular / compact < 600 / tiny < 340) and the D-pad can be tucked away
+  (`utils/dpadPreference.ts`) — every footprint comes from `touchLayout.ts`; never place a touch
+  control with numbers of its own. Plan: `design_docs/planned/MOBILE_UX_SMALL_SCREENS.md`.
 - Viewport culling: Only renders visible tiles for performance
 
 ## EventBus System (`utils/EventBus.ts`)

@@ -56,10 +56,12 @@ export function getCoverZoom(
   mapPixelWidth: number,
   mapPixelHeight: number,
   viewportWidth: number,
-  viewportHeight: number
+  viewportHeight: number,
+  /** The world's zoom floor — lower than 0.5 on a very short touch screen (getWorldMinZoom). */
+  floor: number = DEFAULT_MIN_ZOOM
 ): number {
   if (mapPixelWidth <= 0 || mapPixelHeight <= 0) return 1;
-  return Math.max(DEFAULT_MIN_ZOOM, viewportWidth / mapPixelWidth, viewportHeight / mapPixelHeight);
+  return Math.max(floor, viewportWidth / mapPixelWidth, viewportHeight / mapPixelHeight);
 }
 
 /**
@@ -74,12 +76,13 @@ export function getZoomLimitsForRoom(
   isBackgroundImageRoom: boolean,
   isAnyOverlayOpen: boolean,
   coverZoom: number = DEFAULT_MIN_ZOOM,
-  allowInteriorZoom = false
+  allowInteriorZoom = false,
+  worldMinZoom: number = DEFAULT_MIN_ZOOM
 ): ZoomLimits {
   if (isBackgroundImageRoom && !allowInteriorZoom) {
     return { minZoom: 1.0, maxZoom: 1.0, enabled: false };
   }
-  const minZoom = Math.max(isBackgroundImageRoom ? 0.1 : DEFAULT_MIN_ZOOM, coverZoom);
+  const minZoom = Math.max(isBackgroundImageRoom ? 0.1 : worldMinZoom, coverZoom);
   return {
     minZoom,
     // A very small map could need more zoom to cover than the default max

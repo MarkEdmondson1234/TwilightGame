@@ -18,7 +18,8 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import GameIcon from './GameIcon';
 import { useMenuViewport } from '../hooks/useMenuViewport';
 import { placeTouchMenu, TOUCH_MENU_MARGIN_PX } from '../utils/touchMenuPlacement';
-import { getTouchControlRects, isCompactTouchLayout } from '../utils/touchLayout';
+import { getTouchControlRects, getTouchLayout } from '../utils/touchLayout';
+import { useDpadHidden } from '../utils/dpadPreference';
 import type { RadialMenuOption } from './RadialMenu';
 
 /** Round button: Apple's minimum comfortable tap target. */
@@ -57,20 +58,21 @@ const TouchActionMenu: React.FC<TouchActionMenuProps> = ({
   menuZIndex,
 }) => {
   const viewport = useMenuViewport();
+  const dpadHidden = useDpadHidden();
   // The D-pad, quick bar, chat, emote and satchel buttons: the menu opens clear
   // of them rather than under or over them, so neither hides the other.
   const avoid = useMemo(
     () =>
       getTouchControlRects(
         { width: viewport.width, height: viewport.height },
-        isCompactTouchLayout(viewport.height)
+        getTouchLayout(viewport.height, dpadHidden)
       ).map((r) => ({
         left: r.left + viewport.left,
         right: r.right + viewport.left,
         top: r.top + viewport.top,
         bottom: r.bottom + viewport.top,
       })),
-    [viewport]
+    [viewport, dpadHidden]
   );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -92,9 +94,7 @@ const TouchActionMenu: React.FC<TouchActionMenuProps> = ({
     const { width, height } = el.getBoundingClientRect();
     const next = placeTouchMenu(position, { width, height }, viewport, avoid);
     // Callers may pass fresh arrays each render; only commit a real move.
-    setPlaced((prev) =>
-      prev && prev.left === next.left && prev.top === next.top ? prev : next
-    );
+    setPlaced((prev) => (prev && prev.left === next.left && prev.top === next.top ? prev : next));
   }, [position, options, viewport, avoid]);
 
   const select = (option: RadialMenuOption, index: number) => {

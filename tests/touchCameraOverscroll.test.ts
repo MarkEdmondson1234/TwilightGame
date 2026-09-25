@@ -18,7 +18,7 @@ import { computeViewFrame, type ViewFrameInputs } from '../utils/viewFrame';
 import {
   getCameraOverscroll,
   getTouchControlRects,
-  isCompactTouchLayout,
+  getTouchLayout,
   NO_OVERSCROLL,
 } from '../utils/touchLayout';
 import type { Rect } from '../utils/touchMenuPlacement';
@@ -49,7 +49,7 @@ function inputs(
     viewportScale: 1,
     zoom,
     cameraAnchorLiftTiles: 0,
-    cameraOverscroll: getCameraOverscroll(isTouch, map.renderMode, viewport.height),
+    cameraOverscroll: getCameraOverscroll(isTouch, map.renderMode, getTouchLayout(viewport.height)),
   };
 }
 
@@ -83,7 +83,7 @@ describe('touch camera overscroll', () => {
   ] as const) {
     for (const zoom of [1, 1.5]) {
       it(`keeps every edge exit clear of the touch controls (${name}, zoom ${zoom})`, () => {
-        const controls = getTouchControlRects(viewport, isCompactTouchLayout(viewport.height));
+        const controls = getTouchControlRects(viewport, getTouchLayout(viewport.height));
         const hidden: string[] = [];
         for (const { exit, player } of edgeExits()) {
           const frame = computeViewFrame(inputs(viewport, zoom, true), player);
@@ -100,7 +100,7 @@ describe('touch camera overscroll', () => {
   }
 
   it('was needed: without it a bottom-edge exit sits under the quick bar', () => {
-    const controls = getTouchControlRects(PHONE, true);
+    const controls = getTouchControlRects(PHONE, getTouchLayout(PHONE.height));
     const noOverscroll = { ...inputs(PHONE, 1, true), cameraOverscroll: NO_OVERSCROLL };
     const frame = computeViewFrame(noOverscroll, { x: 20, y: MAP_H - 1.5 });
     const icon = iconRect({ x: 20, y: MAP_H - 1 }, frame, 1);
@@ -111,11 +111,11 @@ describe('touch camera overscroll', () => {
     const frame = computeViewFrame(inputs(PHONE, 1, false), { x: 0, y: MAP_H - 0.5 });
     expect(frame.cameraX).toBe(0);
     expect(frame.cameraY).toBe(MAP_H * TILE_SIZE - PHONE.height);
-    expect(getCameraOverscroll(false, undefined, PHONE.height)).toEqual(NO_OVERSCROLL);
+    expect(getCameraOverscroll(false, undefined, getTouchLayout(PHONE.height))).toEqual(NO_OVERSCROLL);
   });
 
   it('leaves background-image rooms alone', () => {
-    expect(getCameraOverscroll(true, 'background-image', PHONE.height)).toEqual(NO_OVERSCROLL);
+    expect(getCameraOverscroll(true, 'background-image', getTouchLayout(PHONE.height))).toEqual(NO_OVERSCROLL);
   });
 
   it('still follows the player normally away from the edges', () => {

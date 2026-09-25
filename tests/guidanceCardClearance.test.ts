@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { rightClusterFootprint } from '../utils/touchLayout';
+import { TOUCH_TINY_MAX_HEIGHT_PX, rightClusterFootprint } from '../utils/touchLayout';
 
 const css = readFileSync(resolve(__dirname, '../components/ActivityInvitation.css'), 'utf8');
 
@@ -25,6 +25,22 @@ describe('guidance card clearance', () => {
       `--guidance-bottom-clearance (${clearance}px) must be at least the chat/emote/satchel ` +
         `column's height (${rightClusterFootprint().height}px) — raise it in ActivityInvitation.css`
     ).toBeGreaterThanOrEqual(rightClusterFootprint().height);
+  });
+
+  it('drops below the controls only on tiny screens, where the open card rises over them', () => {
+    const tinyStart = css.indexOf('@media (max-height: 339px) and (pointer: coarse)');
+    expect(tinyStart, 'the tiny-screen block is missing').toBeGreaterThanOrEqual(0);
+    // 339 is TOUCH_TINY_MAX_HEIGHT_PX - 1: the tier where Z_QUEST_GUIDANCE_RAISED applies.
+    expect(TOUCH_TINY_MAX_HEIGHT_PX - 1).toBe(339);
+    const low = [...css.matchAll(/--guidance-bottom-clearance:\s*(\d+)px/g)].filter(
+      (m) => Number(m[1]) < rightClusterFootprint().height
+    );
+    for (const m of low) {
+      expect(
+        m.index!,
+        'a small clearance outside the tiny block hides the card under the chat button'
+      ).toBeGreaterThan(tinyStart);
+    }
   });
 
   it('uses the clearance in every max-height the card is given', () => {

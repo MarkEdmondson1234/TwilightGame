@@ -4,13 +4,16 @@ import { rememberActivityLead } from '../utils/activityLeadStorage';
 import { ACTIVITY_LEADS, type ActivityLeadId } from '../utils/activityDiscovery';
 import { getItem } from '../data/items';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
-import { Z_QUEST_GUIDANCE } from '../zIndex';
+import { Z_QUEST_GUIDANCE, Z_QUEST_GUIDANCE_RAISED } from '../zIndex';
+import { useIsTinyTouchScreen } from '../hooks/useIsTinyTouchScreen';
 import './ActivityInvitation.css';
 
 type Props = { news: ReturnType<typeof useVillageNews>; blocked: boolean; onJournal: () => void };
 export default function VillageNews({ news, blocked, onJournal }: Props) {
   const [all, setAll] = useState(false);
   const [saved, setSaved] = useState<ActivityLeadId[]>([]);
+  // On a tiny screen the card sits over the controls while it is open (see Z_QUEST_GUIDANCE_RAISED).
+  const isTinyScreen = useIsTinyTouchScreen();
   if (blocked || news.dismissed || !news.batch?.stories.length) return null;
   const { stories, returning, truncated } = news.batch;
   return (
@@ -18,7 +21,7 @@ export default function VillageNews({ news, blocked, onJournal }: Props) {
       className="activity-invitation village-news"
       aria-label="Village news"
       style={{
-        zIndex: Z_QUEST_GUIDANCE,
+        zIndex: isTinyScreen ? Z_QUEST_GUIDANCE_RAISED : Z_QUEST_GUIDANCE,
         background: colours.parchmentLight,
         color: colours.darkBrownText,
         borderColor: colours.warmBrownBorder,

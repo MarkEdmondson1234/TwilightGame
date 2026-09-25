@@ -74,6 +74,9 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `touchMenuPlacement.test.ts` | The touch action menu opening under the finger or off-screen | Touching `utils/touchMenuPlacement.ts` |
 | `touchActionMenuLayering.test.tsx` | The touch action menu drawn behind the chat button / quick bar, or opened on top of the controls (#157) | Changing `Z_TOUCH_ACTION_MENU*`, HUD-level z-indexes, or `utils/touchLayout.ts` |
 | `touchCameraOverscroll.test.ts` | An exit on the bottom or side edge of a map stuck under the quick bar / D-pad on a phone (#157) | Touching `computeCameraPosition` or the touch-control footprint |
+| `smallTouchScreen.test.ts` | A short phone screen (568×260) stuck at the 50% zoom floor with the D-pad filling half the height; the tucked-away D-pad not being remembered; the Home Screen tip shown to the wrong devices | `getWorldMinZoom`, the touch layout tiers in `utils/touchLayout.ts`, `utils/dpadPreference.ts` |
+| `guidanceCardClearance.test.ts` | The chat button painted over the news / quest cards (#157), or a card shrunk to nothing on a tiny screen | `components/ActivityInvitation.css` or the touch-control footprint |
+| `touchSelectionDisabled.test.ts` | iOS's Copy / Look Up callout and text loupe appearing while holding the D-pad | The `@media (pointer: coarse)` block in `src/styles/global.css` |
 | `touchActionTransition.test.ts` | The touch action handler no longer taking the exit the player stands at | Touching `useTouchControls.handleActionPress` |
 | `quickSlotContextMenu.test.tsx` | The quick slot bar offering fewer actions than the same slot in the inventory | Touching `QuickSlotBar` |
 | `remotePlayerInteractions.test.ts` | Player options leaking onto plain clicks, or naming the wrong person | Touching `providers/remotePlayers.ts` |

@@ -59,3 +59,25 @@
     max-height: calc(100dvh - 250px);
   }
 }
+@media (max-height: 339px) and (pointer: coarse) {
+  /* Tiny touch screens: one line — the next step — which opens the journal.
+     The full card would be clipped to a sliver between the HUD and the controls. */
+  .pinned-quest {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    width: min(240px, calc(100vw - 180px));
+  }
+  .pinned-quest-open {
+    max-height: none;
+    padding: 4px 4px 4px 10px;
+  }
+  .pinned-quest-title,
+  .pinned-quest-open span:last-child {
+    display: none;
+  }
+  .pinned-quest-open strong {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
