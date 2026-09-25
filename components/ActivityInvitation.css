@@ -4,7 +4,14 @@
   top: max(76px, env(safe-area-inset-top));
   right: max(12px, env(safe-area-inset-right));
   width: min(370px, calc(100vw - 24px));
-  max-height: calc(100dvh - 180px);
+  /* End above the chat, emote and satchel column in the bottom-right corner,
+     which paints over this card (issue #157: "the chat button on top obscuring
+     the news"). Must stay >= rightClusterFootprint() in utils/touchLayout.ts —
+     tests/guidanceCardClearance.test.ts checks it. */
+  --guidance-bottom-clearance: 148px;
+  max-height: calc(
+    100dvh - 76px - var(--guidance-bottom-clearance) - env(safe-area-inset-bottom, 0px)
+  );
   overflow-y: auto;
   border: 2px solid;
   border-radius: 18px 18px 4px 18px;
@@ -53,11 +60,14 @@
   font-size: 12px;
 }
 @media (max-height: 500px) {
-  /* Below the top-right buttons (8px + 44px) and above the satchel (8px + 60px),
+  /* Below the top-right buttons (8px + 44px) and above the bottom-right controls,
      rather than on top of either: the card sits over the HUD layer (issue #157). */
   .activity-invitation {
     top: calc(60px + env(safe-area-inset-top, 0px));
-    max-height: calc(100dvh - 140px - env(safe-area-inset-top, 0px));
+    max-height: calc(
+      100dvh - 60px - var(--guidance-bottom-clearance) - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px)
+    );
     width: min(340px, calc(100vw - 110px));
   }
 }
