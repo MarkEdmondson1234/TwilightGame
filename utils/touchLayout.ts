@@ -231,3 +231,16 @@ export function getWorldMinZoom(
     Math.max(TOUCH_ABSOLUTE_MIN_ZOOM, viewportHeight / TOUCH_MIN_VISIBLE_WORLD_HEIGHT_PX)
   );
 }
+
+/**
+ * The smallest on-screen scale for in-world prompts. Phones have always drawn them
+ * at the 0.5 camera zoom; below that (tiny screens, getWorldMinZoom) they are
+ * scaled back up to that size rather than shrinking with the world.
+ */
+export const WORLD_UI_MIN_SCALE = 0.5;
+
+/** Counter-scale for `.world-ui` elements inside the zoomed DOM world layer. */
+export function getWorldUiScale(zoom: number): number {
+  if (!(zoom > 0)) return 1;
+  return Math.max(1, WORLD_UI_MIN_SCALE / zoom);
+}

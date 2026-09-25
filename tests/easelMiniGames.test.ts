@@ -1,5 +1,9 @@
 import { mapLocationProvider } from '../utils/interactions/providers/mapLocation';
 /** @vitest-environment node */
+import { TILE_LEGEND } from '../constants';
+import { CollisionType } from '../types';
+import { mumsKitchen } from '../maps/definitions/mumsKitchen';
+import { COMMUNAL_EASEL } from '../data/communalEasel';
 import { describe, it, expect, vi } from 'vitest';
 import { placedItemProvider } from '../utils/interactions/providers/placedItems';
 import { getMiniGamesForPlacedItem } from '../minigames/registry';
@@ -75,11 +79,26 @@ describe('placed easel', () => {
 });
 
 describe('communal kitchen easel', () => {
+  it('stands on an open floor tile, not on an exit, and the artwork is drawn there', () => {
+    expect(COMMUNAL_EASEL.mapId).toBe(mumsKitchen.id);
+    expect(TILE_LEGEND[mumsKitchen.grid[COMMUNAL_EASEL.y][COMMUNAL_EASEL.x]].collisionType).toBe(
+      CollisionType.WALKABLE
+    );
+    expect(
+      mumsKitchen.transitions.some(
+        (exit) =>
+          exit.fromPosition.x === COMMUNAL_EASEL.x && exit.fromPosition.y === COMMUNAL_EASEL.y
+      )
+    ).toBe(false);
+    const prop = mumsKitchen.props?.find((p) => p.id === 'kitchen_easel');
+    expect(prop?.anchor).toEqual({ x: COMMUNAL_EASEL.x + 0.5, y: COMMUNAL_EASEL.y + 1 });
+  });
+
   it('opens drawing and crafting without owning an easel; cannot be picked up', () => {
     const open = vi.fn();
     const options = mapLocationProvider({
-      currentMapId: 'mums_kitchen',
-      position: { x: 10, y: 5 },
+      currentMapId: COMMUNAL_EASEL.mapId,
+      position: { x: COMMUNAL_EASEL.x, y: COMMUNAL_EASEL.y },
       onOpenMiniGame: open,
     } as unknown as InteractionContext);
     expect(options.map((o) => o.label).sort()).toEqual(['Craft Workshop', 'Draw']);

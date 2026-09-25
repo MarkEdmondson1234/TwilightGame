@@ -1,3 +1,4 @@
+import { COMMUNAL_EASEL } from '../data/communalEasel';
 import React from 'react';
 import { Position } from '../types';
 import { TILE_SIZE } from '../constants';
@@ -32,7 +33,7 @@ const FloatingIcon: React.FC<{
   isClose: boolean;
 }> = ({ icon, colour, screenX, screenY, isClose }) => (
   <div
-    className="absolute pointer-events-none animate-float-gentle"
+    className="world-ui absolute pointer-events-none animate-float-gentle"
     style={{
       left: screenX,
       top: screenY - 20,
@@ -69,7 +70,7 @@ const ParchmentTooltip: React.FC<{
   showKeyHint: boolean;
 }> = ({ icon, label, screenX, screenY, showKeyHint }) => (
   <div
-    className="absolute pointer-events-none animate-tooltip-appear"
+    className="world-ui absolute pointer-events-none animate-tooltip-appear"
     style={{
       left: screenX,
       top: screenY - 65,
@@ -160,7 +161,7 @@ const MiniGameLocationIndicators: React.FC<MiniGameLocationIndicatorsProps> = ({
         // easel itself is a room prop (mumsKitchen.ts) drawn by PixiJS so it
         // depth-sorts with the player; this component only draws the prompts,
         // which float above everything by design.
-        if (currentMapId === 'mums_kitchen' && def.id === 'decoration-crafting') return null;
+        if (currentMapId === COMMUNAL_EASEL.mapId && def.id === 'decoration-crafting') return null;
         // Don't advertise a mini-game the player couldn't actually start
         // right now (season/time/friendship/item requirements not met).
         if (!miniGameManager.checkRequirements(def.id).canPlay) return null;

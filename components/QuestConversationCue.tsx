@@ -66,7 +66,7 @@ export default function QuestConversationCue({
   return (
     <div
       ref={element}
-      className="quest-conversation-cue"
+      className="world-ui quest-conversation-cue"
       data-game-ui
       style={{
         left: screenX,

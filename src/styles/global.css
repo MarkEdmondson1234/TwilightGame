@@ -270,6 +270,16 @@ input[type="checkbox"], input[type="radio"],
   user-select: none;
 }
 
+/* In-world prompts (NPC tags, exits, "Cook here", quest cues) live in the DOM world
+   layer, which is scaled by the camera zoom. --world-ui-scale (set with that transform,
+   getWorldUiScale in utils/touchLayout.ts) counters it below 50%, so a phone zoomed out
+   to see more world does not also shrink every prompt to an untappable speck. The
+   origin keeps each prompt's anchor point where it was. */
+.world-ui {
+  scale: var(--world-ui-scale, 1);
+  transform-origin: 0 0;
+}
+
 /* Touch screens: no text selection or callout anywhere in the game. Opting in
    element by element (.no-touch-callout) kept missing one — a thumb holding a
    D-pad arrow drifts onto the quick bar's numbers or the HUD, and iOS answers

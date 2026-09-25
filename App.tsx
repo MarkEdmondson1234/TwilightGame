@@ -727,6 +727,8 @@ const App: React.FC = () => {
     radialMenuPosition,
     radialMenuOptions,
     radialMenuOpenedByTouch,
+    nearbyNpcId,
+    openNearbyNpcMenu,
     setRadialMenuVisible,
     farmActionAnimation,
     farmActionKey,
@@ -2607,6 +2609,8 @@ const App: React.FC = () => {
         <NPCInteractionIndicators
           blocked={worldPromptsBlocked}
           onTalk={setActiveNPC}
+          tappableNpcId={nearbyNpcId}
+          onOpenActions={openNearbyNpcMenu}
           npcs={allNPCs}
           playerPos={playerPos}
           gridOffset={effectiveGridOffset}

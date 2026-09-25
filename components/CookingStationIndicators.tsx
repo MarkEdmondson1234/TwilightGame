@@ -114,7 +114,7 @@ const CookingStationIndicators: React.FC<CookingStationIndicatorsProps> = ({
             />
             {!blocked && !isNearby && (
               <div
-                className="absolute pointer-events-none animate-float-gentle"
+                className="world-ui absolute pointer-events-none animate-float-gentle"
                 style={{
                   left: screenX,
                   top: screenY - tileSize,
@@ -143,7 +143,7 @@ const CookingStationIndicators: React.FC<CookingStationIndicatorsProps> = ({
             )}
             {isNearby && (
               <div
-                className="cooking-station-cue"
+                className="world-ui cooking-station-cue"
                 data-game-ui
                 style={{ left: screenX, top: screenY - tileSize, zIndex: Z_ACTION_PROMPTS + 1 }}
               >

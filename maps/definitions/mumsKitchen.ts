@@ -1,3 +1,4 @@
+import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import { MapDefinition, TileType, RoomLayer, RoomProp } from '../../types';
 import { itemAssets } from '../../assets';
 import { parseGrid } from '../gridParser';
@@ -82,7 +83,8 @@ const kitchenLayers: RoomLayer[] = [
  */
 const kitchenEasel: RoomProp = {
   id: 'kitchen_easel',
-  anchor: { x: 10.5, y: 6 },
+  // Centred on the easel's tile, standing on the row below it.
+  anchor: { x: COMMUNAL_EASEL.x + 0.5, y: COMMUNAL_EASEL.y + 1 },
   width: 2.4,
   height: 2.4,
   parts: [

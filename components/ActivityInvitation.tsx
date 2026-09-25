@@ -176,6 +176,17 @@ export default function ActivityInvitation({
           Save &amp; read in journal
         </button>
         <button onClick={remember}>Later</button>
+        {isTouchDevice && (
+          // Back to the pill without deciding: Later files the lead away for good.
+          <button
+            onClick={() => {
+              setOpened(false);
+              setExpanded(false);
+            }}
+          >
+            Collapse
+          </button>
+        )}
       </div>
       <small>Kept in your journal under Things to try, even if you choose Later.</small>
     </aside>
