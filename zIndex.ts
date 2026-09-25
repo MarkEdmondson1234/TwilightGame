@@ -204,6 +204,15 @@ export const Z_QUEST_GUIDANCE = 1040;
 /** Touch controls (mobile) */
 export const Z_TOUCH_CONTROLS = 1050;
 
+/**
+ * An open guidance card (village news, an expanded activity invitation) on a
+ * tiny touch screen (under TOUCH_TINY_MAX_HEIGHT_PX tall). Kept below the
+ * controls there, it was 52px tall at 568x260 — unreadable — so while the
+ * player is reading it rises over the D-pad and chat button, and "Later"
+ * puts them back. Below the emote wheel, spectator panel and action menu.
+ */
+export const Z_QUEST_GUIDANCE_RAISED = 1057;
+
 /** Multiplayer presence indicator ("2 friends here") — sits with the HUD */
 export const Z_PRESENCE_INDICATOR = 1000;
 

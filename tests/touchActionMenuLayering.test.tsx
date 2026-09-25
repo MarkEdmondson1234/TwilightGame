@@ -29,6 +29,7 @@ import {
 import {
   dpadFootprint,
   getTouchControlRects,
+  getTouchLayout,
   QUICK_BAR_HEIGHT_PX,
   TOUCH_BOTTOM_GAP_PX,
 } from '../utils/touchLayout';
@@ -109,7 +110,7 @@ describe('touch action menu stays clear of the controls', () => {
   });
 
   it('never opens over the D-pad, quick bar, chat or satchel, wherever the tap', () => {
-    const controls = getTouchControlRects(PHONE, true);
+    const controls = getTouchControlRects(PHONE, getTouchLayout(PHONE.height));
     const menu = { width: 250, height: 70 };
     const bad: string[] = [];
     for (let x = 0; x <= PHONE.width; x += 20) {
@@ -142,7 +143,7 @@ describe('touch action menu stays clear of the controls', () => {
     );
     const menu = screen.getByRole('dialog', { name: 'Actions' });
     const bottom = parseFloat(menu.style.top) + 70;
-    const dpadTop = PHONE.height - dpadFootprint(true).height;
+    const dpadTop = PHONE.height - dpadFootprint(getTouchLayout(PHONE.height)).height;
     expect(bottom).toBeLessThanOrEqual(dpadTop);
     expect(bottom).toBeLessThanOrEqual(PHONE.height - TOUCH_BOTTOM_GAP_PX - QUICK_BAR_HEIGHT_PX);
   });

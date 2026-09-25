@@ -3,12 +3,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
 import { DpadPointerTracker, type DpadDirection } from '../utils/dpadPointers';
 import {
+  DPAD_TOGGLE_OVERHANG_PX,
+  DPAD_TOGGLE_SIZE_PX,
   EMOTE_BUTTON_BOTTOM_PX,
   EMOTE_BUTTON_RIGHT_PX,
   EMOTE_BUTTON_SIZE_PX,
   TOUCH_BOTTOM_GAP_PX,
   TOUCH_SIDE_PADDING_PX,
+  type TouchLayoutTier,
 } from '../utils/touchLayout';
+import { setDpadHidden, useDpadHidden } from '../utils/dpadPreference';
 
 type Direction = DpadDirection;
 
@@ -33,8 +37,16 @@ interface TouchControlsProps {
   onDirectionPress: (direction: Direction) => void;
   onDirectionRelease: (direction: Direction) => void;
   onEmotePress?: () => void;
-  compact?: boolean;
+  /** Control size for the screen height — see getTouchLayoutTier in utils/touchLayout.ts. */
+  tier?: TouchLayoutTier;
 }
+
+/** w-28 / w-36 / w-44 must stay literal for Tailwind; they are DPAD_TINY/COMPACT/_SIZE_PX. */
+const DPAD_SIZE_CLASS: Record<TouchLayoutTier, string> = {
+  tiny: 'w-28 h-28',
+  compact: 'w-36 h-36',
+  regular: 'w-44 h-44',
+};
 
 /**
  * Existing D-pad, with one owning pointer per direction and explicit cancellation.
@@ -50,8 +62,9 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
   onEmotePress,
-  compact = false,
+  tier = 'regular',
 }) => {
+  const hidden = useDpadHidden();
   const tracker = useRef(new DpadPointerTracker()).current;
   const releaseCallback = useRef(onDirectionRelease);
   releaseCallback.current = onDirectionRelease;
@@ -108,50 +121,77 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         paddingRight: `max(${TOUCH_SIDE_PADDING_PX}px, env(safe-area-inset-right))`,
       }}
     >
-      <div
-        aria-label="Movement"
-        // w-36 / w-44 must stay literal for Tailwind; they are DPAD_COMPACT_SIZE_PX / DPAD_SIZE_PX.
-        className={`no-touch-callout relative select-none ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}
+      {!hidden && (
+        <div
+          aria-label="Movement"
+          className={`no-touch-callout relative select-none ${DPAD_SIZE_CLASS[tier]}`}
+        >
+          {DPAD_FRAME_STATES.map((state) => (
+            <img
+              key={state}
+              data-testid={`dpad-frame-${state}`}
+              src={dpadFrameSrc(state)}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute inset-0 w-full h-full select-none"
+              style={{ visibility: state === (lit ?? 'idle') ? 'visible' : 'hidden' }}
+            />
+          ))}
+          {(Object.keys(HIT_ZONES) as Direction[]).map((direction) => (
+            <button
+              key={direction}
+              aria-label={`Move ${direction}`}
+              aria-pressed={pressed.includes(direction)}
+              onPointerDown={(e) => {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {
+                  // Pointer already gone — the window-level listeners still release it.
+                }
+                // A new finger on a held arm takes it over, so a stuck arrow is
+                // unstuck by pressing it again. Pressing is idempotent on keysPressed.
+                tracker.press(direction, e.pointerId);
+                onDirectionPress(direction);
+                setPressed(tracker.held());
+              }}
+              onPointerUp={(e) => release(direction, e.pointerId)}
+              onPointerCancel={(e) => release(direction, e.pointerId)}
+              onLostPointerCapture={(e) => release(direction, e.pointerId)}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ touchAction: 'none', ...HIT_ZONES[direction] }}
+              className="pointer-events-auto absolute"
+            />
+          ))}
+        </div>
+      )}
+      {/* Tuck the pad away (tapping the ground still walks there) or bring it back.
+          It sits in the cross's empty top-left corner — dpadFootprint() reserves the overhang. */}
+      <button
+        type="button"
+        aria-label={hidden ? 'Show the arrows' : 'Hide the arrows'}
+        aria-pressed={!hidden}
+        onClick={() => {
+          for (const direction of tracker.releaseAll()) releaseCallback.current(direction);
+          setPressed([]);
+          setDpadHidden(!hidden);
+        }}
+        className="no-touch-callout pointer-events-auto absolute z-10 flex items-center justify-center rounded-full border-2 border-amber-400/70 bg-amber-700/80 text-white shadow-md select-none"
+        style={{
+          width: DPAD_TOGGLE_SIZE_PX,
+          height: DPAD_TOGGLE_SIZE_PX,
+          left: `max(${TOUCH_SIDE_PADDING_PX - DPAD_TOGGLE_OVERHANG_PX}px, calc(env(safe-area-inset-left) - ${DPAD_TOGGLE_OVERHANG_PX}px))`,
+          ...(hidden
+            ? { bottom: 0 }
+            : { bottom: `calc(100% - ${DPAD_TOGGLE_SIZE_PX - DPAD_TOGGLE_OVERHANG_PX}px)` }),
+          fontSize: 16,
+          lineHeight: 1,
+          touchAction: 'manipulation',
+        }}
       >
-        {DPAD_FRAME_STATES.map((state) => (
-          <img
-            key={state}
-            data-testid={`dpad-frame-${state}`}
-            src={dpadFrameSrc(state)}
-            alt=""
-            draggable={false}
-            className="pointer-events-none absolute inset-0 w-full h-full select-none"
-            style={{ visibility: state === (lit ?? 'idle') ? 'visible' : 'hidden' }}
-          />
-        ))}
-        {(Object.keys(HIT_ZONES) as Direction[]).map((direction) => (
-          <button
-            key={direction}
-            aria-label={`Move ${direction}`}
-            aria-pressed={pressed.includes(direction)}
-            onPointerDown={(e) => {
-              if (e.button !== 0) return;
-              e.preventDefault();
-              try {
-                e.currentTarget.setPointerCapture(e.pointerId);
-              } catch {
-                // Pointer already gone — the window-level listeners still release it.
-              }
-              // A new finger on a held arm takes it over, so a stuck arrow is
-              // unstuck by pressing it again. Pressing is idempotent on keysPressed.
-              tracker.press(direction, e.pointerId);
-              onDirectionPress(direction);
-              setPressed(tracker.held());
-            }}
-            onPointerUp={(e) => release(direction, e.pointerId)}
-            onPointerCancel={(e) => release(direction, e.pointerId)}
-            onLostPointerCapture={(e) => release(direction, e.pointerId)}
-            onContextMenu={(e) => e.preventDefault()}
-            style={{ touchAction: 'none', ...HIT_ZONES[direction] }}
-            className="pointer-events-auto absolute"
-          />
-        ))}
-      </div>
+        {hidden ? '✥' : '×'}
+      </button>
       {onEmotePress && (
         <button
           onClick={onEmotePress}

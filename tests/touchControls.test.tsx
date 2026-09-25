@@ -6,7 +6,7 @@ function setup() {
   const press = vi.fn(),
     release = vi.fn();
   const view = render(
-    <TouchControls onDirectionPress={press} onDirectionRelease={release} compact />
+    <TouchControls onDirectionPress={press} onDirectionRelease={release} tier="compact" />
   );
   for (const button of screen.getAllByRole('button')) button.setPointerCapture = vi.fn();
   return {

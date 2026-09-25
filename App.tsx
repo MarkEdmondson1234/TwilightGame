@@ -49,7 +49,7 @@ import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useViewFrame } from './hooks/useViewFrame';
-import { usePinchZoom, getZoomLimitsForRoom, getCoverZoom } from './hooks/usePinchZoom';
+import { usePinchZoom, getZoomLimitsForRoom, getCoverZoom, DEFAULT_MIN_ZOOM } from './hooks/usePinchZoom';
 import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
 import { useBrowserZoom } from './hooks/useBrowserZoom';
 import { useViewportCulling } from './hooks/useViewportCulling';
@@ -59,7 +59,9 @@ import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { getRoomArtworkSize, getRoomCoverScale } from './utils/backgroundRoomLayout';
 import { getMobileInteriorFraming, getRoomHeightFitZoom } from './utils/mobileInteriorFraming';
-import { getCameraOverscroll, isCompactTouchLayout } from './utils/touchLayout';
+import { getCameraOverscroll, getTouchLayout, getWorldMinZoom, isCompactTouchLayout } from './utils/touchLayout';
+import { useDpadHidden } from './utils/dpadPreference';
+import { useHomeScreenTip } from './hooks/useHomeScreenTip';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -449,6 +451,9 @@ const App: React.FC = () => {
   // The saved room can render before map registration finishes on mobile startup.
   // Derive this from the loaded map so its policy updates when artwork becomes available.
   const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
+  // A very short touch screen may zoom out past 50% so it still shows ~12 tiles
+  // top to bottom (568x260 on a small iPhone in Chrome showed eight, half under the controls).
+  const worldMinZoom = getWorldMinZoom(isTouchDevice, viewportSize.height, DEFAULT_MIN_ZOOM);
   // Coverage is measured after base fitting, before user zoom is applied.
   const coverZoom = useMemo(() => {
     if (isBackgroundImageRoom) {
@@ -468,9 +473,10 @@ const App: React.FC = () => {
       map.width * TILE_SIZE,
       map.height * TILE_SIZE,
       viewportSize.width,
-      viewportSize.height
+      viewportSize.height,
+      worldMinZoom
     );
-  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, roomViewport, viewportScale, interiorFraming.fitWholeHeight]);
+  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, roomViewport, viewportScale, interiorFraming.fitWholeHeight, worldMinZoom]);
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
 
@@ -831,9 +837,10 @@ const App: React.FC = () => {
         isBackgroundImageRoom,
         isAnyOverlayOpen || needsLandscape || showSplashScreen || isMobileCommunicationOpen,
         coverZoom,
-        isMobileInteriorCamera
+        isMobileInteriorCamera,
+        worldMinZoom
       ),
-    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom, isMobileInteriorCamera]
+    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom, isMobileInteriorCamera, worldMinZoom]
   );
   // Menus retain native browser magnification.
   useBrowserZoomLock(
@@ -847,7 +854,7 @@ const App: React.FC = () => {
     maxZoom: maxCameraZoom,
     enabled: zoomLimits.enabled,
     preferenceKey: isMobileInteriorCamera ? 'interior' : 'world',
-    defaultZoom: isTouchDevice ? (isMobileInteriorCamera ? zoomLimits.minZoom : 0.5) : 1,
+    defaultZoom: isTouchDevice ? (isMobileInteriorCamera ? zoomLimits.minZoom : worldMinZoom) : 1,
   });
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
@@ -1765,6 +1772,11 @@ const App: React.FC = () => {
   const isCompactMode = useMemo(() => {
     return isCompactTouchLayout(viewportSize.height);
   }, [viewportSize.height]);
+  const dpadHidden = useDpadHidden();
+  const touchLayout = useMemo(
+    () => getTouchLayout(viewportSize.height, dpadHidden),
+    [viewportSize.height, dpadHidden]
+  );
 
   // One pre-zoom transform for artwork, entities, labels, and pointer inversion,
   // computed at two rates: the loop writes viewFrameRef every frame from the
@@ -1784,9 +1796,9 @@ const App: React.FC = () => {
         : 0,
       bottomInset: interiorFraming.anchorInset,
       // Touch, tiled maps: let edge rows scroll out from under the controls (#157).
-      cameraOverscroll: getCameraOverscroll(isTouchDevice, currentMap?.renderMode, viewportSize.height),
+      cameraOverscroll: getCameraOverscroll(isTouchDevice, currentMap?.renderMode, touchLayout),
     }),
-    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight, interiorFraming.anchorInset, isTouchDevice]
+    [currentMap, mapWidth, mapHeight, viewportSize, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight, interiorFraming.anchorInset, isTouchDevice, touchLayout]
   );
   const { viewFrameRef, worldLayerRef, syncViewFrame, view } = useViewFrame(
     viewFrameInputs,
@@ -2281,6 +2293,7 @@ const App: React.FC = () => {
     !showSplashScreen && !isLoadingCutscene && !isCutscenePlaying && isMapInitialized;
 
   const villageNews = useVillageNews(isInWorld);
+  useHomeScreenTip(isInWorld, showToast);
   const [activityInvitationVisible, setActivityInvitationVisible] = useState(false);
   /** In-world prompts (quest cues, "Cook here") hide while anything else wants attention. */
   const worldPromptsBlocked =
@@ -2693,7 +2706,7 @@ const App: React.FC = () => {
 
           {/* Quick Slot Bar - Always visible at bottom center */}
           <QuickSlotBar
-            compact={isCompactMode}
+            touchLayout={touchLayout}
             isTouchDevice={isTouchDevice}
             items={quickSlotItems}
             selectedSlot={selectedItemSlot}
@@ -2766,7 +2779,7 @@ const App: React.FC = () => {
         <TouchControls
           onDirectionPress={touchControls.handleDirectionPress}
           onDirectionRelease={touchControls.handleDirectionRelease}
-          compact={isCompactMode}
+          tier={touchLayout.tier}
         />
       )}
       <VillageNews key={villageNews.uid ?? 'offline'} news={villageNews} blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible} onJournal={() => openUI('journal')} />

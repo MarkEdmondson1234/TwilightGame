@@ -12,7 +12,7 @@
  * tests/zIndexSafelist.test.ts fails if a Z_* constant is missing from this
  * list, so adding a new constant means adding its value below too.
  */
-@source inline("z-[{-100,-50,-10,-1,0,0.5,0.75,1,5,10,25,50,65,75,80,100,150,200,240,250,280,295,300,350,400,410,420,450,500,510,520,620,640,650,1000,1040,1050,1055,1058,1060,1070,1071,1100,2000,2005,2010,2020,2030,2040,2042,2045,2048,2050,2052,2055,2060,2065,2070,2080,2090,2095,3000,3100,3500,4000,4500,9998}]");
+@source inline("z-[{-100,-50,-10,-1,0,0.5,0.75,1,5,10,25,50,65,75,80,100,150,200,240,250,280,295,300,350,400,410,420,450,500,510,520,620,640,650,1000,1040,1050,1055,1057,1058,1060,1070,1071,1100,2000,2005,2010,2020,2030,2040,2042,2045,2048,2050,2052,2055,2060,2065,2070,2080,2090,2095,3000,3100,3500,4000,4500,9998}]");
 
 /* Ensure html > body > #root chain fills the viewport exactly.
  * Uses percentage-based sizing instead of viewport units (100vw includes
@@ -268,4 +268,27 @@ input[type="checkbox"], input[type="radio"],
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* Touch screens: no text selection or callout anywhere in the game. Opting in
+   element by element (.no-touch-callout) kept missing one — a thumb holding a
+   D-pad arrow drifts onto the quick bar's numbers or the HUD, and iOS answers
+   the hold with the loupe and a Copy / Look Up menu (#157, and again after it).
+   Text fields opt back in: Safari will not let you type into an input whose
+   ancestors forbid selection. Guarded by tests/touchSelectionDisabled.test.ts. */
+@media (pointer: coarse) {
+  html,
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  input,
+  textarea,
+  [contenteditable='true'] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
