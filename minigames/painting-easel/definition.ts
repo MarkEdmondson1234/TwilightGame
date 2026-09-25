@@ -5,6 +5,7 @@
  * Triggered by interacting with a placed easel.
  */
 
+import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import type { MiniGameDefinition } from '../types';
 import PaintingEaselGame from './PaintingEaselGame';
 
@@ -17,7 +18,7 @@ export const paintingEaselDefinition: MiniGameDefinition = {
   component: PaintingEaselGame,
   triggers: {
     placedItemId: 'easel',
-    mapLocation: { mapId: 'mums_kitchen', x: 10, y: 5 },
+    mapLocation: COMMUNAL_EASEL,
   },
   // Canvas requirement is checked inside the component's save flow
   // rather than at entry, since you can draw without saving

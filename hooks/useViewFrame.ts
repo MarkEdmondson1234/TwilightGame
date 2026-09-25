@@ -16,6 +16,7 @@
  * before it, scrolling the world meant re-rendering App on every moving frame.
  */
 
+import { getWorldUiScale } from '../utils/touchLayout';
 import { useCallback, useMemo, useRef, MutableRefObject } from 'react';
 import { Position } from '../types';
 import { computeViewFrame, isSameViewFrame, ViewFrame, ViewFrameInputs } from '../utils/viewFrame';
@@ -72,6 +73,7 @@ export function useViewFrame(
       applied.el = el;
       applied.transform = transform;
       el.style.transform = transform;
+      el.style.setProperty('--world-ui-scale', String(getWorldUiScale(zoom)));
     }
     return frame;
   }, [playerPosRef]);

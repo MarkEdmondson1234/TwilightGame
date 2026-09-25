@@ -40,7 +40,7 @@ const FloatingIcon: React.FC<{
       event.stopPropagation();
       onActivate();
     }}
-    className="absolute pointer-events-auto animate-float-gentle"
+    className="world-ui absolute pointer-events-auto animate-float-gentle"
     style={{
       // The float animation already centers with translateX(-50%).
       left: screenX,
@@ -93,7 +93,7 @@ const ParchmentTooltip: React.FC<{
       event.stopPropagation();
       onActivate();
     }}
-    className="absolute pointer-events-auto animate-tooltip-appear"
+    className="world-ui absolute pointer-events-auto animate-tooltip-appear"
     style={{
       left: screenX,
       top: screenY - 65,

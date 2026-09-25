@@ -11,6 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
+import { useTouchDevice } from './useTouchDevice';
 import { Position, NPC } from '../types';
 import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
@@ -158,6 +159,13 @@ export interface UseInteractionControllerReturn {
   radialMenuOptions: RadialMenuOption[];
   /** True when a long press opened the menu, so it can be drawn clear of the finger. */
   radialMenuOpenedByTouch: boolean;
+  /**
+   * Touch: the NPC in range whose actions are ready but not yet shown. Walking up
+   * to someone no longer opens their menu unasked (issue #157); the name tag above
+   * them becomes a button that calls openNearbyNpcMenu.
+   */
+  nearbyNpcId: string | null;
+  openNearbyNpcMenu: (at: { x: number; y: number }) => void;
   setRadialMenuVisible: (visible: boolean) => void;
 
   // === Farm Action Animation State ===
@@ -241,6 +249,17 @@ export function useInteractionController(
   const [radialMenuOptions, setRadialMenuOptions] = useState<RadialMenuOption[]>([]);
   /** Lifts the menu clear of the finger that opened it. See RadialMenu's TOUCH_LIFT_PX. */
   const [radialMenuOpenedByTouch, setRadialMenuOpenedByTouch] = useState(false);
+  const isTouchDevice = useTouchDevice();
+  const [nearbyNpcId, setNearbyNpcId] = useState<string | null>(null);
+  const nearbyNpcOptionsRef = useRef<RadialMenuOption[] | null>(null);
+  const openNearbyNpcMenu = useCallback((at: { x: number; y: number }) => {
+    const options = nearbyNpcOptionsRef.current;
+    if (!options) return;
+    setRadialMenuOptions(options);
+    setRadialMenuPosition(at);
+    setRadialMenuOpenedByTouch(true);
+    setRadialMenuVisible(true);
+  }, []);
   const radialMenuNpcIdRef = useRef<string | null>(null);
 
   // -------------------------------------------------------------------------
@@ -901,6 +920,8 @@ export function useInteractionController(
     if (!nearestNPC) {
       if (radialMenuNpcIdRef.current) {
         radialMenuNpcIdRef.current = null;
+        nearbyNpcOptionsRef.current = null;
+        setNearbyNpcId(null);
         setRadialMenuVisible(false);
       }
       return;
@@ -945,7 +966,6 @@ export function useInteractionController(
     const screenX = viewportCenterX + npcOffsetX;
     const screenY = viewportCenterY + npcOffsetY - 50; // Offset up a bit
 
-    // Show radial menu
     radialMenuNpcIdRef.current = nearestNPC.id;
     const menuOptions: RadialMenuOption[] = npcInteractions.map((interaction, index) => ({
       id: `${interaction.type}_${index}`,
@@ -954,6 +974,14 @@ export function useInteractionController(
       color: interaction.color,
       onSelect: interaction.execute,
     }));
+    if (isTouchDevice) {
+      // Offer, don't open: on a phone the menu covered the screen every time the
+      // player walked past someone. The tag above the NPC opens it on a tap.
+      nearbyNpcOptionsRef.current = menuOptions;
+      setNearbyNpcId(nearestNPC.id);
+      return;
+    }
+    // Desktop: show the radial menu, as before.
     setRadialMenuOptions(menuOptions);
     setRadialMenuPosition({ x: screenX, y: screenY });
     setRadialMenuVisible(true);
@@ -969,6 +997,7 @@ export function useInteractionController(
     selectedItemSlot,
     inventoryItems,
     buildInteractionCallbacks,
+    isTouchDevice,
   ]);
 
   // -------------------------------------------------------------------------
@@ -984,6 +1013,8 @@ export function useInteractionController(
     radialMenuPosition,
     radialMenuOptions,
     radialMenuOpenedByTouch,
+    nearbyNpcId,
+    openNearbyNpcMenu,
     setRadialMenuVisible,
 
     // Farm animations

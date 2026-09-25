@@ -5,6 +5,7 @@
  * Triggered by interacting with a placed easel.
  */
 
+import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import type { MiniGameDefinition } from '../types';
 import DecorationCraftingGame from './DecorationCraftingGame';
 
@@ -17,7 +18,7 @@ export const decorationCraftingDefinition: MiniGameDefinition = {
   component: DecorationCraftingGame,
   triggers: {
     placedItemId: 'easel',
-    mapLocation: { mapId: 'mums_kitchen', x: 10, y: 5 },
+    mapLocation: COMMUNAL_EASEL,
   },
   customBackdrop: true,
 };

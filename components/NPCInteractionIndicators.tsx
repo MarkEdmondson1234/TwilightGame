@@ -17,6 +17,10 @@ interface NPCInteractionIndicatorsProps {
   playerPos: Position;
   gridOffset?: Position; // Offset for background-image rooms with centered layers
   tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
+  /** Touch: the NPC in range whose actions wait for a tap (useInteractionController). */
+  tappableNpcId?: string | null;
+  /** Opens that NPC's action menu at the tapped tag. */
+  onOpenActions?: (at: { x: number; y: number }) => void;
 }
 
 // NPCs that should show the interaction indicator (special UI interactions)
@@ -35,7 +39,7 @@ const FloatingIcon: React.FC<{
   isClose: boolean;
 }> = ({ icon, screenX, screenY, isClose }) => (
   <div
-    className="absolute pointer-events-none animate-float-gentle"
+    className="world-ui absolute pointer-events-none animate-float-gentle"
     style={{
       left: screenX,
       top: screenY,
@@ -71,9 +75,22 @@ const ParchmentTooltip: React.FC<{
   screenX: number;
   screenY: number;
   showKeyHint: boolean;
-}> = ({ icon, label, screenX, screenY, showKeyHint }) => (
+  /** Touch: the tag is the way in to the NPC's actions, which no longer open unasked. */
+  onActivate?: (at: { x: number; y: number }) => void;
+}> = ({ icon, label, screenX, screenY, showKeyHint, onActivate }) => (
   <div
-    className="absolute pointer-events-none animate-tooltip-appear"
+    {...(onActivate && {
+      role: 'button',
+      tabIndex: 0,
+      'aria-label': `What can I do with ${label}?`,
+      'data-game-ui': 'true',
+      onClick: (event: React.MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        const rect = event.currentTarget.getBoundingClientRect();
+        onActivate({ x: rect.left + rect.width / 2, y: rect.top });
+      },
+    })}
+    className={`world-ui absolute ${onActivate ? 'pointer-events-auto' : 'pointer-events-none'} animate-tooltip-appear`}
     style={{
       left: screenX,
       top: screenY - 50,
@@ -154,6 +171,8 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
   playerPos,
   gridOffset,
   tileSize = TILE_SIZE,
+  tappableNpcId = null,
+  onOpenActions,
 }) => {
   const offsetX = gridOffset?.x ?? 0;
   const offsetY = gridOffset?.y ?? 0;
@@ -172,7 +191,9 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
         .filter(
           (npc) =>
             npcManager.isNPCVisible(npc) &&
-            (NPCS_WITH_INDICATORS.includes(npc.id) || (onTalk && conversations.has(npc.id)))
+            (NPCS_WITH_INDICATORS.includes(npc.id) ||
+              (onTalk && conversations.has(npc.id)) ||
+              npc.id === tappableNpcId)
         )
         .map((npc) => {
           // Calculate distance to NPC
@@ -217,6 +238,21 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
               />
             );
 
+          const tappable = isTouchDevice && npc.id === tappableNpcId && !!onOpenActions;
+          if (tappable && !NPCS_WITH_INDICATORS.includes(npc.id))
+            // An ordinary villager: just the tappable name tag, only while in range.
+            return isInRange ? (
+              <ParchmentTooltip
+                key={`npc-tag-${npc.id}`}
+                icon={icon}
+                label={label}
+                screenX={screenX}
+                screenY={screenY}
+                showKeyHint={false}
+                onActivate={onOpenActions}
+              />
+            ) : null;
+
           return (
             <React.Fragment key={`npc-indicator-${npc.id}`}>
               {/* Floating icon above the NPC */}
@@ -230,6 +266,7 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
                   screenX={screenX}
                   screenY={screenY}
                   showKeyHint={!isTouchDevice}
+                  onActivate={tappable ? onOpenActions : undefined}
                 />
               )}
             </React.Fragment>

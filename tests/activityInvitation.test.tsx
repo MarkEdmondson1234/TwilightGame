@@ -136,4 +136,23 @@ describe('activity invitations', () => {
     expect(screen.getByRole('button', { name: 'Ask Village Child' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Later' })).toBeInTheDocument();
   });
+
+  it('collapses back to the pill on touch without filing the lead away', () => {
+    state.touch = true;
+    state.npcs = [{ id: 'child', name: 'Village Child', position: { x: 1, y: 0 } }];
+    state.season = 'autumn';
+    render(<ActivityInvitation {...props()} mapId="village" />);
+    fireEvent.click(screen.getByRole('button', { expanded: false }));
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse' }));
+    expect(screen.getByRole('button', { expanded: false })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Later' })).not.toBeInTheDocument();
+    expect(state.remembered.size).toBe(0);
+  });
+
+  it('offers no Collapse on desktop, where there is no pill to return to', () => {
+    state.npcs = [{ id: 'child', name: 'Village Child', position: { x: 1, y: 0 } }];
+    state.season = 'autumn';
+    render(<ActivityInvitation {...props()} mapId="village" />);
+    expect(screen.queryByRole('button', { name: 'Collapse' })).not.toBeInTheDocument();
+  });
 });
