@@ -1179,7 +1179,7 @@ The script optimizes different asset types with appropriate settings:
 | **Decorative flowers**                       | 768×768       | Showcase (97%)  | Level 4     | Multi-tile plants (iris, roses)                                   |
 | **Large furniture**                          | 768×768       | High (95%)      | Level 6     | Beds, sofas, tables                                               |
 | **Shop buildings / bear cave**               | 1024×1024     | Very High (98%) | Level 4     | Large multi-tile buildings                                        |
-| **Room backgrounds** (`rooms/`)              | 1920×1080     | Very High (98%) | Level 3     | Fill the viewport — downscaling these is upscaling on any desktop |
+| **Room backgrounds** (`rooms/`)              | 1920×1080     | JPEG q92 if opaque, else PNG 98% | Level 3 | Fill the viewport — downscaling these is upscaling on any desktop. Opaque art ships as `.jpg` (~1 MB, not ~4.5 MB); `tests/roomBackgroundFormat.test.ts` |
 | **Farming sprites**                          | 512×512       | High (95%)      | Level 6     | Crop plants (key gameplay)                                        |
 | **Dialogue frames / stream**                 | 512×512       | High (95%)      | Level 6     | UI and animation frames                                           |
 | **Regular tiles**                            | 256×256       | Standard (85%)  | Level 6     | Grass, rocks, paths                                               |

@@ -56,7 +56,7 @@ const strengthTrialLayers: RoomLayer[] = [
   // Background image (stone chamber with door on the back wall)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/strengthTrial/strength_trial.png',
+    image: '/TwilightGame/assets-optimized/rooms/strengthTrial/strength_trial.jpg',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

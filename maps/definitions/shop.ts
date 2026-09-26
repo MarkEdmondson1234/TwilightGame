@@ -67,7 +67,7 @@ const shopLayers: RoomLayer[] = [
   // Layer 1: Background image (back wall and shelves)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/grocery_shop/grocery_shop_back.png',
+    image: '/TwilightGame/assets-optimized/rooms/grocery_shop/grocery_shop_back.jpg',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
