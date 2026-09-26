@@ -50,7 +50,7 @@ const kitchenLayers: RoomLayer[] = [
   // Layer 1: Background image (kitchen scene)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.png',
+    image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.jpg',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

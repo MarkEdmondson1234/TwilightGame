@@ -38,7 +38,7 @@ const shedLayers: RoomLayer[] = [
   // Background image (seed shed interior)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior.png',
+    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior.jpg',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

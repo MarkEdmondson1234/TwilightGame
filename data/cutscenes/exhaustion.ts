@@ -44,7 +44,7 @@ export const exhaustionCutscene: CutsceneDefinition = {
       letterboxReveal: true,
       backgroundLayers: [
         {
-          image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.png',
+          image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.jpg',
           zIndex: 0,
           animation: {
             type: 'zoom',
@@ -66,7 +66,7 @@ export const exhaustionCutscene: CutsceneDefinition = {
       id: 'exhaustion_mum',
       backgroundLayers: [
         {
-          image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.png',
+          image: '/TwilightGame/assets-optimized/rooms/home/mums_kitchen.jpg',
           zIndex: 0,
           animation: {
             type: 'zoom',
