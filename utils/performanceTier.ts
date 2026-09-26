@@ -41,9 +41,10 @@ interface PerformanceSettings {
   /** Multiplier on weather particle counts and emit rates (1 = as authored). */
   particleScale: number;
   /**
-   * Load the half-resolution siblings of player and NPC sprites (see
-   * utils/textureVariants.ts). Memory policy, so keyed on isMobile like the
-   * rest of the texture policy: a phone draws them at ~150 px whatever its tier.
+   * Load the half-resolution siblings of player and NPC sprites and room
+   * backgrounds (see utils/textureVariants.ts). Memory policy, so keyed on
+   * isMobile like the rest of the texture policy: a phone draws a sprite at
+   * ~150 px, and a room on a screen a third of 1920 wide, whatever its tier.
    */
   halfResolutionSprites: boolean;
 
