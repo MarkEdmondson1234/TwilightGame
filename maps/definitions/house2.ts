@@ -40,7 +40,7 @@ const house2Layers: RoomLayer[] = [
   // Layer 1: Background (walls, furniture, room decor — behind everything)
   {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/little_girls_house/celias_room_background.png',
+    image: '/TwilightGame/assets-optimized/rooms/little_girls_house/celias_room_background.jpg',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

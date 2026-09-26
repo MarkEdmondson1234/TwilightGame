@@ -1450,20 +1450,45 @@ const HALF_SUFFIX = '@half';
  * fit:'inside' for the same reasons as the full-size pass.
  */
 async function writeHalfVariant(outputPath, { quality, compressionLevel = 4 }) {
-  if (!/\.png$/i.test(outputPath)) return null;
-  const halfPath = outputPath.replace(/\.png$/i, `${HALF_SUFFIX}.png`);
+  const ext = path.extname(outputPath);
+  if (!/^\.(png|jpe?g)$/i.test(ext)) return null;
+  const halfPath = outputPath.slice(0, -ext.length) + HALF_SUFFIX + ext;
   const meta = await sharp(outputPath).metadata();
   const w = Math.max(1, Math.round((meta.width || 2) / 2));
   const h = Math.max(1, Math.round((meta.height || 2) / 2));
   deleteIfExists(halfPath);
-  await sharp(outputPath)
-    .resize(w, h, { fit: 'inside', withoutEnlargement: true, background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .png({ palette: false, quality, compressionLevel })
-    .toFile(halfPath);
+  const pipeline = sharp(outputPath).resize(w, h, {
+    fit: 'inside',
+    withoutEnlargement: true,
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  });
+  await (/\.png$/i.test(ext)
+    ? pipeline.png({ palette: false, quality, compressionLevel })
+    : pipeline.jpeg(jpegOptions(quality))
+  ).toFile(halfPath);
   return halfPath;
 }
 
-async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, label, halfVariant = false }) {
+/**
+ * Room art is hand-drawn line work: keep full-resolution chroma (4:4:4) so
+ * coloured outlines do not smear, at the cost of a larger file than 4:2:0.
+ */
+function jpegOptions(quality) {
+  return { quality, mozjpeg: true, chromaSubsampling: '4:4:4' };
+}
+
+/**
+ * Quality for opaque room backgrounds re-encoded as JPEG. The kitchen at
+ * 1920x1080: PNG 4.85MB, JPEG q92 4:4:4 ~1MB. GPU cost is identical either way
+ * (width x height x 4), so this is purely download — ~4MB less per room entered
+ * on a phone.
+ */
+const ROOM_JPEG_QUALITY = 92;
+
+async function optimizeImageDir(
+  dirName,
+  { size, quality, compressionLevel = 4, label, halfVariant = false, opaqueAsJpeg = false }
+) {
   console.log(`${label}`);
 
   const srcDir = path.join(ASSETS_DIR, dirName);
@@ -1484,7 +1509,20 @@ async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, 
     // GPU saving, since decoded texture cost is width x height x 4 either way.
     const isJpeg = /\.jpe?g$/i.test(file);
     const relativePath = path.relative(srcDir, inputPath);
-    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, dirName, relativePath));
+    const pngOutputPath = normalizePathCase(path.join(OPTIMIZED_DIR, dirName, relativePath));
+
+    // An opaque PNG gains nothing from PNG's alpha channel and pays for it in
+    // download: a 1920x1080 room is ~4-5MB as PNG and ~1MB as JPEG. Artists
+    // still drop PNGs into public/assets; only the optimised copy changes type,
+    // so a map references `name.jpg`. Transparent layers stay PNG.
+    const toJpeg = opaqueAsJpeg && !isJpeg && (await sharp(inputPath).stats()).isOpaque;
+    const outputPath = toJpeg ? pngOutputPath.replace(/\.png$/i, '.jpg') : pngOutputPath;
+    const staleSibling = toJpeg ? pngOutputPath : pngOutputPath.replace(/\.png$/i, '.jpg');
+    if (opaqueAsJpeg && !isJpeg && staleSibling !== outputPath) {
+      // The art changed opacity since the last run: drop the other format's copy.
+      deleteIfExists(staleSibling);
+      deleteIfExists(staleSibling.replace(/(\.[^.]+)$/, `${HALF_SUFFIX}$1`));
+    }
 
     const outputDir = path.dirname(outputPath);
     if (!fs.existsSync(outputDir)) {
@@ -1500,21 +1538,24 @@ async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, 
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     });
 
-    await (isJpeg
-      ? pipeline.jpeg({ quality, mozjpeg: true })
-      : pipeline.png({ palette: false, quality, compressionLevel })
+    await (toJpeg
+      ? pipeline.jpeg(jpegOptions(ROOM_JPEG_QUALITY))
+      : isJpeg
+        ? pipeline.jpeg({ quality, mozjpeg: true })
+        : pipeline.png({ palette: false, quality, compressionLevel })
     ).toFile(outputPath);
 
     // If the source was already small enough that re-encoding gained nothing,
     // keep the original bytes. Re-encoding an already-compressed image costs
     // download size without reducing the decoded texture, which is the thing
-    // this whole pass exists to shrink.
-    if (fs.statSync(outputPath).size >= originalSize) {
+    // this whole pass exists to shrink. (Not across a format change — the
+    // original bytes would be a PNG behind a .jpg name.)
+    if (!toJpeg && fs.statSync(outputPath).size >= originalSize) {
       fs.copyFileSync(inputPath, outputPath);
     }
 
-    if (halfVariant && !isJpeg) {
-      await writeHalfVariant(outputPath, { quality, compressionLevel });
+    if (halfVariant) {
+      await writeHalfVariant(outputPath, { quality: toJpeg ? ROOM_JPEG_QUALITY : quality, compressionLevel });
     }
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -1601,6 +1642,7 @@ async function main() {
       quality: SHOP_QUALITY,
       compressionLevel: 3,
       label: '🏠 Optimising room background images...',
+      opaqueAsJpeg: true,
     });
 
     // Final validation - check and fix any 8-bit colormap PNGs
