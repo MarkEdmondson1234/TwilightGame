@@ -17,6 +17,7 @@ import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import {
   isWeatherAllowedOnMap,
+  weatherLayerTransition,
   WeatherType,
   getCurrentGlobalWeather,
   getEffectiveWeather,
@@ -180,11 +181,11 @@ export function useEnvironmentController(
   useEffect(() => {
     const unsubscribe = gameState.subscribe((state) => {
       // Sync weather layer with gameState
-      if (weatherLayerRef.current && state.weather !== weatherLayerRef.current.getWeather()) {
-        weatherLayerRef.current.setWeather(state.weather);
-
-        const showWeather = isWeatherAllowedOnMap(state.weather, currentMapId);
-        weatherLayerRef.current.setVisible(showWeather);
+      const layer = weatherLayerRef.current;
+      if (layer && state.weather !== layer.getWeather()) {
+        const { immediate, visible } = weatherLayerTransition(layer.getWeather(), state.weather, currentMapId);
+        layer.setWeather(state.weather, immediate);
+        layer.setVisible(visible);
       }
       // Update React state (the weather drives ambient audio and the Pixi tint)
       setCurrentWeather(state.weather);
@@ -221,10 +222,12 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    if (weatherLayerRef.current && currentWeather !== weatherLayerRef.current.getWeather()) {
-      weatherLayerRef.current.setWeather(currentWeather);
+    const layer = weatherLayerRef.current;
+    if (layer && currentWeather !== layer.getWeather()) {
+      const { immediate } = weatherLayerTransition(layer.getWeather(), currentWeather, currentMapId);
+      layer.setWeather(currentWeather, immediate);
     }
-  }, [currentWeather, weatherLayerRef]);
+  }, [currentWeather, currentMapId, weatherLayerRef]);
 
   // -------------------------------------------------------------------------
   // Weather Ambient Audio
