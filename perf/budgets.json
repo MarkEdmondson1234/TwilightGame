@@ -59,7 +59,7 @@
         "spritesDrawn": 8,
         "nodes": 52,
         "textures": 5,
-        "textureMB": 14,
+        "textureMB": 20,
         "filteredNodes": 0,
         "maskedNodes": 0,
         "appRendersPerFrame": 0.09,

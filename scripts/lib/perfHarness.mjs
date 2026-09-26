@@ -498,6 +498,39 @@ export async function pinWorld(page, { hour = 10, weather = 'clear' } = {}) {
   }
 }
 
+/**
+ * What the stage is drawing, grouped by parent container and texture file,
+ * largest group first. A ceiling breach says "33 sprites where 8 was"; this
+ * says which 30 — without it a CI-only overrun cannot be diagnosed at all.
+ */
+export async function describeScene(page, limit = 8) {
+  return await page.evaluate((limit) => {
+    const stage = window.__PERF_MONITOR__?._stage;
+    if (!stage) return [];
+    const groups = new Map();
+    const walk = (node, visible, parentName) => {
+      const drawn =
+        visible && node.visible !== false && node.renderable !== false && (node.alpha === undefined || node.alpha > 0);
+      const source = node.texture?.source;
+      if (source && drawn) {
+        const file = String(source.resource?.src || source.label || `${source.width}x${source.height}`)
+          .split('/')
+          .slice(-2)
+          .join('/');
+        const key = `${parentName} :: ${file}`;
+        groups.set(key, (groups.get(key) || 0) + 1);
+      }
+      const name = node.label || node.constructor?.name || '?';
+      for (const child of node.children || []) walk(child, drawn, name);
+    };
+    walk(stage, true, 'stage');
+    return [...groups.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([key, count]) => `${count} × ${key}`);
+  }, limit);
+}
+
 export async function getMetrics(page) {
   return await page.evaluate(() => {
     const monitor = window.__PERF_MONITOR__;
