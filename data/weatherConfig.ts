@@ -173,6 +173,29 @@ export function isWeatherAllowedOnMap(weather: WeatherType, mapId: string): bool
   return allowed.includes(weather);
 }
 
+/**
+ * How the weather layer should move from the weather it is drawing to the
+ * next one while standing on `mapId`.
+ *
+ * A normal change crossfades: the old particles keep falling (and emitting)
+ * for WEATHER_TRANSITION_S while they fade out, and visibility follows the NEW
+ * weather. Rain stopping just before the player steps into Mum's kitchen
+ * therefore kept raining in the kitchen — "clear" is allowed indoors, so the
+ * layer was visible over the fading rain (80+ drops, reproduced headless).
+ * When the weather being drawn is one this map does not allow, switch
+ * instantly instead, so its particles are never drawn here.
+ */
+export function weatherLayerTransition(
+  drawnWeather: WeatherType,
+  nextWeather: WeatherType,
+  mapId: string
+): { immediate: boolean; visible: boolean } {
+  return {
+    immediate: !isWeatherAllowedOnMap(drawnWeather, mapId),
+    visible: isWeatherAllowedOnMap(nextWeather, mapId),
+  };
+}
+
 
 /**
  * Particle effect configuration

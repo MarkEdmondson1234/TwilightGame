@@ -46,6 +46,7 @@ import {
   setupTestCharacter,
   pinWorld,
   getMetrics,
+  describeScene,
   startWalker,
   stopWalker,
 } from './lib/perfHarness.mjs';
@@ -144,6 +145,10 @@ async function measureMap(page, mapId, spec, isFirst) {
   if (!settled) throw new Error(`${mapId}: the performance monitor returned nothing`);
   const scene = settled.scene;
   log(`  settled after ${settled.frameCount} frames`, 'dim');
+  // Printed for every map, not only on a breach: the runner is the only place
+  // some overruns happen, and a passing run is the baseline to diff against.
+  const sceneBreakdown = await describeScene(page);
+  for (const line of sceneBreakdown) log(`    ${line}`, 'dim');
 
   // Then the work rates over a walking window.
   await resetMonitor(page);
@@ -183,6 +188,7 @@ async function measureMap(page, mapId, spec, isFirst) {
     seconds: Number(seconds.toFixed(1)),
     fps: last.fps, // recorded, never gated: CI draws in software
     worstFrameMs: last.maxFrameTime,
+    sceneBreakdown,
     darknessUploadsPerSec: round(perSec(last.work.darknessUploads), 0.01), // too noisy to gate (boot-time lerp)
   };
   log(
@@ -266,6 +272,11 @@ function renderReport(results, renderer, budgetsPath) {
             ? '✅'
             : `⚪ ${row.status}`;
       lines.push(`| ${row.metric.label} | ${fmt(row.metric, row.value)} | ${fmt(row.metric, row.ceiling)} | ${mark} |`);
+    }
+    if (r.breached && r.context.sceneBreakdown?.length) {
+      lines.push('', '<details><summary>Drawn at rest (parent :: texture)</summary>', '');
+      for (const line of r.context.sceneBreakdown) lines.push(`- \`${line}\``);
+      lines.push('', '</details>');
     }
   }
   lines.push('', `_Budgets: \`${budgetsPath}\`. Harness: \`scripts/perf-ci.mjs\`._`);
