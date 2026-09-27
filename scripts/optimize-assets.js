@@ -1643,6 +1643,7 @@ async function main() {
       compressionLevel: 3,
       label: '🏠 Optimising room background images...',
       opaqueAsJpeg: true,
+      halfVariant: true,
     });
 
     // Final validation - check and fix any 8-bit colormap PNGs

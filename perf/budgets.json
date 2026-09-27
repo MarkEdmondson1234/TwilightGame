@@ -57,7 +57,7 @@
       "walk": true,
       "ceilings": {
         "spritesDrawn": 8,
-        "nodes": 52,
+        "nodes": 58,
         "textures": 5,
         "textureMB": 20,
         "filteredNodes": 0,

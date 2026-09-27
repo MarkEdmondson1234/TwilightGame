@@ -58,9 +58,19 @@ class TextureManager {
    * extra ~33% is the difference between fitting in the memory budget and
    * having the tab killed.
    */
-  /** Whether this device loads the @half siblings of player/NPC sprites. */
+  /** Whether this device loads the @half siblings of player/NPC sprites and room backgrounds. */
   private halfResolutionSprites(): boolean {
     return getCachedPerformanceSettings().halfResolutionSprites;
+  }
+
+  /**
+   * How many logical pixels each texture pixel stands for: 2 when this device
+   * fetched the @half sibling of `url`, else 1. Anything that sizes a sprite
+   * from `texture.width`/`height` must multiply by this, or a phone draws it
+   * at half size.
+   */
+  getVariantScale(url: string): number {
+    return resolveTextureUrl(url, this.halfResolutionSprites()) === url ? 1 : 2;
   }
 
   private applyPolicy(texture: Texture): Texture {

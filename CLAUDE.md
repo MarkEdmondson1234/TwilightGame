@@ -996,8 +996,12 @@ Three things that are easy to get wrong here:
    frames are drawn at ~150–200 CSS px, so a 1024² frame (4 MB) was memory
    spent on detail a phone cannot show: the village's NPCs were 86 MB, the
    player's pinned frames 64 MB. Desktop keeps the full file, which also serves
-   as the dialogue portrait. `tests/textureVariants.test.ts` fails if a sprite
-   lands without its sibling — run `npm run optimize-assets`.
+   as the dialogue portrait. Room backgrounds under `rooms/` get the same
+   treatment (1920×1080 → 960×540, 7.9 MB → 2 MB each). Code that sizes a
+   sprite from `texture.width` must multiply by
+   `textureManager.getVariantScale(url)`, or a phone draws it at half size.
+   `tests/textureVariants.test.ts` fails if a sprite or room lands without its
+   sibling — run `npm run optimize-assets`.
 5. **Music and ambience are decoded on first play, not at boot.** `AudioManager`
    registers the whole catalogue but `loadBatch(audioAssets, ['sfx'])` fetches
    only effects; `playMusic`/`playAmbient` fetch their track on demand and start

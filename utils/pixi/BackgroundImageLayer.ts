@@ -534,8 +534,11 @@ export class BackgroundImageLayer {
       targetWidth = layer.width;
       targetHeight = layer.height;
     } else if (layer.useNativeSize) {
-      targetWidth = texture.width;
-      targetHeight = texture.height;
+      // Native size of the full-resolution art, not of the @half variant a
+      // phone may have loaded in its place.
+      const variantScale = textureManager.getVariantScale(layer.image);
+      targetWidth = texture.width * variantScale;
+      targetHeight = texture.height * variantScale;
     } else {
       const mapWidthPx = map.width * TILE_SIZE;
       const mapHeightPx = map.height * TILE_SIZE;
