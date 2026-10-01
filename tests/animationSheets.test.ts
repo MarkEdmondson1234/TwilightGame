@@ -72,4 +72,22 @@ describe('tile animation sprite sheets', () => {
     }
     expect(problems, 'Rebuild with `npm run optimize-assets`:\n  ' + problems.join('\n  ')).toEqual([]);
   });
+
+  // The optimiser's colormap clean-up shells out to `find`, which does nothing
+  // on Windows. A sheet written without `palette: false` therefore came out as
+  // RGBA on a Mac and as a colormap PNG on Windows, and every run on one
+  // platform rewrote what the other had committed.
+  it('are RGBA, not 8-bit colormap PNGs', () => {
+    const PNG_COLOUR_TYPE_OFFSET = 25;
+    const PNG_COLOUR_TYPE_RGBA = 6;
+    const problems = sheets
+      .map(onDisk)
+      .filter((png) => existsSync(png))
+      .filter((png) => readFileSync(png)[PNG_COLOUR_TYPE_OFFSET] !== PNG_COLOUR_TYPE_RGBA);
+    expect(
+      problems,
+      'Sheets must be written with `palette: false` in buildAnimationSheet() (scripts/optimize-assets.js):\n  ' +
+        problems.join('\n  ')
+    ).toEqual([]);
+  });
 });

@@ -640,7 +640,11 @@ async function buildAnimationSheet(inputPath, outputBase) {
     },
   })
     .composite(composites)
-    .png({ quality: HIGH_QUALITY, compressionLevel: 6 })
+    // palette: false like every other output. Without it the sheet is written as
+    // an 8-bit colormap PNG and relies on validateAndFixColormapPNGs() to convert
+    // it back — which shells out to `find` and does nothing on Windows, so every
+    // run there rewrote the sheets with different bytes.
+    .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
     .toFile(`${outputBase}.sheet.png`);
 
   const delays = (meta.delay ?? []).slice(0, frameCount);
