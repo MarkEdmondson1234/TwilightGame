@@ -49,7 +49,8 @@ describe('DOM effect layers stay off the canvas', () => {
       ...SCAN_FILES.map((f) => join(REPO_ROOT, f)),
     ];
     for (const file of files) {
-      const rel = relative(REPO_ROOT, file);
+      // ALLOWED uses forward slashes; `relative` returns backslashes on Windows.
+      const rel = relative(REPO_ROOT, file).replace(/\\/g, '/');
       if (ALLOWED.has(rel)) continue;
       const lines = readFileSync(file, 'utf-8').split('\n');
       lines.forEach((line, i) => {
