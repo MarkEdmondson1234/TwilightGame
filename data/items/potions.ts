@@ -312,6 +312,7 @@ export const POTION_ITEMS: Record<string, ItemDefinition> = {
     description: 'A shimmering potion that defies gravity. Fly over all obstacles for 2 hours.',
     stackable: true,
     sellPrice: 150,
+    image: potionAssets.elixir_of_flight,
   },
 
   // ===== QUEST POTIONS =====

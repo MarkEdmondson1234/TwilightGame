@@ -527,6 +527,7 @@ export const potionAssets = {
   homeward: '/TwilightGame/assets-optimized/items/magical/potions/homeward.png',
   quality_blessing: '/TwilightGame/assets-optimized/items/magical/potions/quality_blessing.png',
   time_skip: '/TwilightGame/assets-optimized/items/magical/potions/time_skip.png',
+  elixir_of_flight: '/TwilightGame/assets-optimized/items/magical/potions/elixir_of_flight.png',
   // Quest potions (received as gifts, not brewed)
   fairy_form_potion: '/TwilightGame/assets-optimized/items/magical/quest/fairy_form_potion.png',
 };

@@ -1113,6 +1113,13 @@
     "source": "assets-optimized/items/magical/potions/homeward.png"
   },
   {
+    "id": "item:potion_flying",
+    "label": "Elixir of Flight",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_flying.png",
+    "source": "assets-optimized/items/magical/potions/elixir_of_flight.png"
+  },
+  {
     "id": "item:potion_fairy_form",
     "label": "Fairy Form Potion",
     "category": "potion",
@@ -1232,6 +1239,13 @@
     "source": "assets-optimized/items/grocery/terracotta_pot.png"
   },
   {
+    "id": "item:clothing_polka_dress",
+    "label": "Polka-Dot Dress",
+    "category": "clothing",
+    "image": "assets/emotes/items/clothing_polka_dress.png",
+    "source": "assets-optimized/items/clothing/polka_dress.png"
+  },
+  {
     "id": "item:easel",
     "label": "Easel",
     "category": "decoration",
@@ -1300,6 +1314,13 @@
     "category": "furniture",
     "image": "assets/emotes/items/furniture_cozy_rug_green.png",
     "source": "assets-optimized/items/furniture/cosy_rug_green.png"
+  },
+  {
+    "id": "item:furniture_campfire",
+    "label": "Campfire",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_campfire.png",
+    "source": "assets-optimized/items/furniture/campfire.png"
   },
   {
     "id": "item:furniture_catalogue",
