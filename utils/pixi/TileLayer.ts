@@ -159,9 +159,40 @@ export class TileLayer extends PixiLayer {
   > = new Map();
   // Single map-wide background texture sprite (for maps with backgroundTexture config)
   private bgTextureSprite: PIXI.TilingSprite | null = null;
+  // Shared container for depth-sorted entities (sprites, player, NPCs). When set, crop
+  // sprites are parented here instead of this.container — see getCropContainer().
+  private depthContainer: PIXI.Container | null = null;
 
   constructor() {
     super(0, true); // Z-index 0: Base tile layer
+  }
+
+  /**
+   * Set shared depth-sorted container for cross-layer z-index sorting.
+   *
+   * Grown crops (CROP_ADULT_SIZES) render taller than one tile and get a
+   * Y-based zIndex so they sort against buildings/player/NPCs like any other
+   * depth-sorted sprite — but PixiJS only sorts zIndex among siblings under the
+   * same parent. Left in this.container (a sibling added to the stage before
+   * the shared depth container), a tall crop's zIndex is compared against
+   * nothing but other tiles, so it always renders behind every building and
+   * tree regardless of its computed value — visible as a sunflower whose top
+   * half vanishes behind a house it should be standing in front of.
+   */
+  setDepthContainer(container: PIXI.Container): void {
+    this.depthContainer = container;
+  }
+
+  private getCropContainer(): PIXI.Container {
+    return this.depthContainer ?? this.container;
+  }
+
+  /** Move a sprite to its correct parent if it isn't already there. */
+  private setSpriteParent(sprite: PIXI.Container, target: PIXI.Container): void {
+    if (sprite.parent !== target) {
+      sprite.parent?.removeChild(sprite);
+      target.addChild(sprite);
+    }
   }
 
   /**
@@ -589,7 +620,7 @@ export class TileLayer extends PixiLayer {
         }
       }
 
-      this.container.addChild(sprite);
+      this.setSpriteParent(sprite, cropConfig ? this.getCropContainer() : this.container);
       this.sprites.set(spriteKey, sprite);
     } else if (sprite instanceof PIXI.TilingSprite) {
       // Update existing TilingSprite (used for tiles with textureGridSize > 1)
@@ -644,6 +675,7 @@ export class TileLayer extends PixiLayer {
         sprite.x = x * TILE_SIZE;
         sprite.y = y * TILE_SIZE;
       }
+      this.setSpriteParent(sprite, cropConfig ? this.getCropContainer() : this.container);
       sprite.visible = true;
     }
 
@@ -1173,7 +1205,13 @@ export class TileLayer extends PixiLayer {
    * Clear all sprites (when changing maps)
    */
   clear(): void {
-    this.sprites.forEach((sprite) => sprite.destroy());
+    // Crop sprites may be parented to the shared depth container rather than
+    // this.container — remove from whichever parent they actually have before
+    // destroying, mirroring SpriteLayer.clear().
+    this.sprites.forEach((sprite) => {
+      sprite.parent?.removeChild(sprite);
+      sprite.destroy();
+    });
     this.sprites.clear();
     if (this.bgTextureSprite) {
       this.bgTextureSprite.destroy();

@@ -832,6 +832,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         depthSortedContainerRef.current = depthSortedContainer;
         app.stage.addChild(depthSortedContainer);
 
+        // Tall grown crops (sunflower, corn, tomato, ...) need to sort against
+        // buildings/player/NPCs, which only works if they share this container —
+        // see TileLayer.setDepthContainer().
+        tileLayer.setDepthContainer(depthSortedContainer);
+
         // Create sprite layer
         const spriteLayer = new SpriteLayer();
         spriteLayerRef.current = spriteLayer;
