@@ -1,270 +1,381 @@
-# Farming Guide
+# Farming System
 
-Welcome to farming! Grow crops, earn gold, and create your thriving farm.
+## Overview
 
-## Getting Started
+The farming system allows players to grow crops on special farm tiles. Each farm plot has a state and timestamp tracking system that efficiently updates only when the player enters an area, not every frame.
 
-### Finding Farm Plots
+## Performance
 
-Look for **brown soil tiles** - these are your farm plots! You'll find them in:
-- The farm area (southeast of the village)
-- Near your cottage
-- Special farming zones on some maps
+- **Not taxing!** Farm states only update when:
+  - Player enters a map (batch check all plots once)
+  - Player performs a farm action (single tile update)
+- No per-frame updates
+- Timestamps handle time progression automatically
 
-### Your Farming Tools
+## Controls
 
-Press these keys to select your tool:
+### Click-Based Farming
 
-- **1** - Hand (harvest crops, clear dead plants, pick wild berries)
-- **2** - Hoe (prepare soil for planting)
-- **3** - Seeds (plant crops)
-- **4** - Watering Can (water your plants)
+The easiest way to farm is by **clicking directly on farm tiles**. A radial menu appears with available actions:
 
-The HUD in the top-left shows your currently selected tool.
+- **Click on fallow soil** → Choose "Till" to prepare the ground
+- **Click on tilled soil** → Choose "Plant" then select your seed type
+- **Click on growing crops** → Choose "Water" to speed up growth
+- **Click on ready crops** → Choose "Harvest" to collect your produce
+- **Click on dead crops** → Choose "Clear" to reset the plot
 
-### Click to Interact
+The radial menu shows all available actions with icons - just click the one you want!
 
-You can also **click directly on farm tiles** to interact with them! A circular menu will appear showing available actions based on your current tool.
+### Keyboard Shortcuts (Optional)
+
+For keyboard players, you can also use these shortcuts:
+
+**Tool Selection (Keys 1-4):**
+
+- **1** - Hand (harvest ready crops, clear dead crops)
+- **2** - Hoe (till fallow soil)
+- **3** - Seeds (plant crops in tilled soil)
+- **4** - Watering Can (water plants)
+
+**Seed Selection (Keys 5-9):**
+When using the Seeds tool (key 3), press these keys to select which crop to plant:
+
+- **5** - Radish Seeds (fast - 2 min)
+- **6** - Tomato Seeds (medium - 5 min)
+- **7** - Salad Seeds (long - 10 min)
+- **8** - Corn Seeds (premium - 15 min)
+- **9** - Pumpkin Seeds (specialty - 20 min)
+
+**Using Tools:**
+Stand on a farm tile and press `E` to perform an action with your current tool.
+
+### Debug Controls
+
+- **F4** - Open DevTools panel with farming controls:
+  - View plot statistics (total, growing, ready)
+  - Advance growth time (+1 min, +5 min, +1 hour buttons)
+  - Reset all plots on current map
+- **F6** - Quick advance farm time by 1 minute (keyboard shortcut)
+
+## Farm Tile States
+
+### State Flow
+
+```
+FALLOW (brown soil) → [hoe] → TILLED (tilled texture)
+TILLED → [seeds] → PLANTED (young plant sprite)
+PLANTED → [water] → WATERED (young plant on darker wet soil)
+WATERED/PLANTED → [time] → READY (mature plant sprite - ready to harvest!)
+READY → [harvest] → TILLED (get crops + gold, plot resets)
+
+Without water:
+PLANTED → [no water] → WILTING (young plant on dry soil) → [no water] → DEAD (dead soil, no plant)
+DEAD → [clear] → FALLOW
+```
+
+### Visual States
+
+Farm tiles now show visual sprites and colors for each state:
+
+- **Fallow** - Brown soil texture (untilled ground)
+- **Tilled** - Tilled soil texture (ready for seeds)
+- **Planted** - Young plant sprite on tilled soil (seeds growing)
+- **Watered** - Young plant sprite on darker wet soil (grows faster!)
+- **Ready** - Mature plant sprite (bright, full-grown - harvest now!)
+- **Wilting** - Young plant sprite on lighter dry soil (needs water urgently!)
+- **Dead** - Dead soil with no plant (needs clearing)
+
+**Note:** Tiles update **immediately** when you perform actions - no need to move to see changes!
+
+## Available Crops
+
+### Radish (Fast - 2 minutes)
+
+- Growth time: 2 minutes (1.5 min if watered)
+- Needs water every: 1 minute
+- Yield: 1 radish
+- Sell price: 10 gold
+- Great for beginners and testing!
+
+### Tomato (Medium - 5 minutes)
+
+- Growth time: 5 minutes (3.5 min if watered)
+- Needs water every: 2 minutes
+- Yield: 3 tomatoes
+- Sell price: 25 gold each (75 total)
+
+### Salad Greens (Long - 10 minutes)
+
+- Growth time: 10 minutes (7 min if watered)
+- Needs water every: 3 minutes
+- Yield: 5 salad greens
+- Sell price: 15 gold each (75 total)
+
+### Corn (Premium - 15 minutes)
+
+- Growth time: 15 minutes (10 min if watered)
+- Needs water every: 4 minutes
+- Yield: 4 corn
+- Sell price: 40 gold each (160 total)
+
+### Pumpkin (Specialty - 20 minutes)
+
+- Growth time: 20 minutes (14 min if watered)
+- Needs water every: 5 minutes
+- Yield: 1 pumpkin
+- Sell price: 150 gold
+- Requires patience and care!
+
+## Shared Farming & Personal Garden
+
+Farm plots work differently depending on which map you're on:
+
+### Shared Farms (Village & Farm Area)
+
+Farm plots in the **Village** and **Farm Area** are **shared between all players**. When you're signed in:
+
+- **Plant a crop** in the village and other players see it grow in real time
+- **Water someone else's crop** — everyone can tend any plot
+- **Harvests are shared** — anyone can pick a ready crop
+- A small name badge shows who planted each crop
+
+Shared farm plots are stored in the cloud, not in your personal save. This means they persist even if you clear your browser — but they also aren't included in your personal save slots.
+
+**Without an account:** Shared maps still work as normal local farms. Your changes just won't be visible to other players.
+
+### NPC Gardens — the villagers' patches
+
+The village beds and the farm-area field are never entirely bare: the villagers
+garden them. Four green fingers tend the public patches — the **Village Elder** and
+the **village child** in the village beds, the **Old Woman** and **Spring Periwinkle**
+in the farm-area field.
+
+- **About a tenth of the public tiles** always have something growing, from
+  seedlings to ripe crops — the gardeners water them, so they never wilt or die.
+- **Each gardener has favourites** she plants most (the elder's radish and pea, the
+  child's strawberries, the Old Woman's herbs, Periwinkle's melons), rounded out
+  with whatever else is in season.
+- **Be-friend them and their patch grows.** The garden is shared: when any player
+  befriends a gardener, that gardener plants more *for everyone*. Players who
+  befriend different gardeners each grow their own patch, and together the garden
+  can reach **about 80% of the public tiles** when all four are best friends.
+- **Ask them to plant something.** Once you're acquainted, a gardener will plant
+  whatever you request (from her list, in season) — the friendlier you are, the
+  more of her patch she gives over to it. Just ask: *"Could you plant something
+  for me?"*
+- **Ripe NPC crops are shared** like any other shared plot: first player to pick
+  one gets it, and the gardener quietly replants a couple of days later. Yield is
+  modest (a snack, not a seed farm), and admiring a plant (right-click / long
+  press) tells you who grew it.
+- **In winter** the beds are never bare either: the gardeners keep tending
+  hardy beds of their own favourites through the cold (they bring their own
+  seeds, so the shop's seasonal gate doesn't bind them), and spring's
+  arrival re-seeds the beds with the new season's crops.
+
+The garden is world state, not player state: the plan (each gardener's patch size
+and current request) is shared via the cloud, and the planting is computed
+deterministically from the day, so everyone sees the same garden with no extra
+tempting network traffic. See `design_docs/planned/NPC_GARDENS.md`.
+
+### Personal Garden
+
+The **Personal Garden** is your own private farming space. Find it via the path on the east side of the village.
+
+- **Only you** can see and tend your plots here
+- Saved in your personal cloud save (if signed in)
+- Perfect for growing crops without anyone else harvesting them!
+
+### Greenhouse
+
+In the corner of the **Personal Garden** stands a glass greenhouse. Step up to its door to go inside, where two beds of plots grow under glass.
+
+- **Any crop, any season** — the season outside never reaches the glass. Plant radishes in winter, pumpkins in spring.
+- **Herbs never go dormant** here — thyme, mint and lavender keep producing through the winter that sends them to sleep outside.
+- **Rain never reaches in**, so watering is entirely up to you (and never done for you by the weather).
+- Plots are **private**, like the rest of the personal garden, and saved in your personal save.
 
 ## How to Farm
 
-### Step 1: Till the Soil
+1. **Get seeds** - Visit the Seed Shed in the farm area
+   - From the village, look for the path leading to the farm area
+   - Enter the Seed Shed building
+   - Talk to the seed bag NPCs to collect free seeds
 
-1. Walk to a **brown fallow soil** tile
-2. Press **2** to equip your hoe
-3. Press **E** to till the soil
-4. The soil becomes tilled and ready for planting!
+2. **Find farm plots** - Look for brown soil tiles in the farm area, village, or personal garden
+   - Multiple plots are organised in fields
+   - Connected by paths for easy access
 
-### Step 2: Plant Seeds
+3. **Till the soil** - Click on brown (fallow) soil and choose **"Till"** from the menu
 
-1. Stand on a **tilled soil** tile
-2. Press **3** to equip seeds
-3. Press **E** to plant - a menu appears showing your available seeds
-4. Select which crop to plant
-5. A young plant appears and grows over time!
+4. **Plant seeds** - Click on tilled soil and choose **"Plant"**
+   - A menu appears showing all your available seed types
+   - Click the seed you want to plant
 
-**Available Crops:**
-- Radish, Tomato, Strawberry, Pea, Sunflower, Salad, Corn, Pumpkin, and more!
+5. **Water your crops** - Click on growing plants and choose **"Water"**
+   - Water regularly! Crops grow faster when watered
+   - If you don't water, crops will wilt and eventually die
+   - **Rain helps!** When it rains or storms, all outdoor crops are watered automatically
 
-**Note:** You need seeds in your inventory to plant. Get free starter seeds from the Seed Shed in the farm area!
+6. **Harvest** - Click on ready crops (they look mature!) and choose **"Harvest"**
+   - Crops are automatically added to your inventory
+   - Gold is automatically earned
+   - Plot returns to tilled state for replanting
 
-**Seasonal Planting:** Some crops can only be planted in certain seasons. Check if your seeds can be planted in the current season!
+7. **Clear dead crops** - Click on dead plants and choose **"Clear"**
+   - Returns plot to fallow state so you can start again
 
-### Step 3: Water Your Crops
+## Technical Architecture
 
-1. Stand on a **planted crop** tile
-2. Press **4** to equip your watering can
-3. Press **E** to water
-4. The soil becomes darker and wet 💧
+### Single Source of Truth (SSoT)
 
-**Important:** Crops need water to grow! Without water, they'll wilt and eventually die.
+- **FarmManager** ([utils/farmManager.ts](../utils/farmManager.ts)) - Manages all farm plot data
+- All farm operations go through FarmManager
+- State persisted via GameState to localStorage
 
-### Step 4: Harvest
+### Key Implementation Details
 
-1. Wait for your crop to mature (check the growth time)
-2. When ready, the plant looks full and mature - you'll see a large, beautiful plant!
-3. Stand on the tile
-4. Press **1** to equip your hand (or just click the crop)
-5. Press **E** to harvest
-6. You get crops AND bonus seeds in your inventory!
+**Farm Action Logic** ([App.tsx:196-279](../App.tsx#L196-L279)):
 
-**Bonus Seeds:** When you harvest, you'll receive 1-3 seeds of that crop type back. This helps you replant and expand your farm!
+- Checks plot state from FarmManager, not just visual tile type
+- This ensures actions work correctly even if visual and internal state differ
+- Force triggers re-render after farm actions for immediate visual feedback
 
-The tile becomes fallow again, ready to till and plant another crop.
+**Tile Rendering** ([App.tsx:728-740](../App.tsx#L728-L740)):
 
-## Crop Growth Times
+- Queries FarmManager for plot state
+- Overrides visual tile type based on plot state
+- Shows appropriate sprite/color for each farm state
 
-Different crops take different amounts of time to grow. Watered crops grow faster!
+**Farm Manager** ([utils/farmManager.ts](../utils/farmManager.ts)):
 
-| Crop | Growth Time | Watered | Seasons |
-|------|-------------|---------|---------|
-| Radish | 2 min | 1.5 min | Spring, Summer, Autumn |
-| Pea | 3 min | 2 min | Spring, Summer |
-| Strawberry | 4 min | 3 min | Spring, Summer |
-| Tomato | 5 min | 3.5 min | Spring, Summer |
-| Sunflower | 6 min | 4 min | Summer |
-| Salad | 10 min | 7 min | Spring, Summer |
-| Corn | 15 min | 10 min | Summer |
-| Pumpkin | 20 min | 14 min | Autumn |
+- Stores plots in Map with key format: `"mapId:x:y"`
+- Updates plot states based on game time (not real time)
+- Validates actions before allowing them (e.g., can't till already-tilled soil)
 
-**Tip:** Start with radishes or peas to learn the system quickly, then try longer crops for better profits!
+**Asset Management** ([assets.ts](../assets.ts), [constants.ts](../constants.ts)):
 
-## Fertiliser & Quality
+- Farming sprites imported from `public/assets-optimized/farming/`
+- Each farm tile state has corresponding sprite in TILE_LEGEND
+- Currently uses pea plant sprites as placeholders for all crops
 
-### Using Fertiliser
+### Files Created/Modified
 
-You can apply **fertiliser** to growing crops to improve their quality:
+**New Files:**
 
-1. Have fertiliser in your inventory
-2. Stand on a **planted** crop (not ready yet)
-3. Use the fertiliser tool or click the crop
-4. The crop's quality improves!
+- `data/crops.ts` - Crop definitions (growth times, water needs, rewards)
+- `utils/farmManager.ts` - Core farm logic and state management
 
-### Quality Levels
+**Modified Files:**
 
-Crops come in three quality levels:
+- `types.ts` - Added farm tile types (SOIL_FALLOW through SOIL_DEAD) and FarmPlot interface
+- `constants.ts` - Added farm tile legend entries with sprites for all farm states
+- `assets.ts` - Added farmingAssets with fallow soil, tilled soil, and plant sprites
+- `GameState.ts` - Added farming tool selection, plot persistence, and inventory system
+- `App.tsx` - Added farm action handlers (till/plant/water/harvest), plot state checking, and immediate visual updates
+- `utils/mapUtils.ts` - Added override support for dynamic tile types (for farm plots)
+- `utils/testUtils.ts` - Added farm system validation
+- `components/HUD.tsx` - Added tool display and seed selection indicator
+- `maps/gridParser.ts` - Added `X` code for farm plots
+- `maps/definitions/village.ts` - Added transition to farm area
+- `maps/definitions/farmArea.ts` - Added dedicated 20x26 farm area with multiple plots and seed shed
+- `maps/definitions/seedShed.ts` - Added seed storage building with NPC seed keepers
 
-| Quality | Appearance | Sell Value |
-|---------|------------|------------|
-| Normal | Standard | 1x |
-| Good | Slightly better | 1.5x |
-| Excellent | Premium | 2x |
+### State Management
 
-Higher quality = more gold when you sell!
+Farm plot state includes:
 
-## What Happens If I Forget to Water?
+- Position (x, y) and map ID
+- Current state (fallow, tilled, planted, etc.)
+- Crop type
+- Planted timestamp
+- Last watered timestamp
+- State changed timestamp
 
-If you don't water your crops, they'll go through these stages:
+State transitions are calculated based on timestamps when:
 
-1. **Planted** - Freshly planted, needs water soon
-2. **Wilting** - Getting thirsty! Water now or it will die
-3. **Dead** - Too late, the plant died 💀
+1. Player enters the map (all plots checked once)
+2. Player performs a farm action (single plot updated)
 
-**Clearing Dead Crops:**
-1. Press **1** to equip your hand
-2. Stand on the dead crop
-3. Press **E** to clear it
-4. The tile becomes fallow soil again
-
-## Farm Tile Colours
-
-The soil changes colour to show its state:
-
-- **Brown** - Fallow soil (needs tilling)
-- **Tilled** - Ready for planting
-- **Darker/Wet** - Watered (good!)
-- **Dry** - Needs water!
-
-## Tips for Success
-
-### Water Regularly
-Check your crops daily! Water them before they wilt to keep them healthy.
-
-### Plan Your Farm
-- Plant fast crops (radishes) when you're playing actively
-- Plant slow crops (pumpkins) before you take a break
-- Mix crop types for steady income
-
-### Use the Seed Shed
-Visit the Seed Shed in the farm area to get more seeds from friendly NPCs. They'll give you starter seeds for free!
-
-### Watch the Seasons
-Different crops grow in different seasons:
-- **Spring:** Radish, Pea, Strawberry, Tomato, Salad
-- **Summer:** Most crops grow well
-- **Autumn:** Pumpkin, Radish
-- **Winter:** Limited growing season
-
-Check the current season in the HUD before planting!
-
-### Check Your Inventory
-The HUD shows:
-- How many seeds you have
-- Which seed type is selected
-- Your current tool
-- Your gold total
-
-### Start Small
-Don't plant 50 crops at once on your first day! Start with a few plots, learn the system, then expand your farm.
-
-## Wild Foraging
-
-You can also gather food from the wild!
-
-### Wild Strawberries
-Find **wild strawberry bushes** in meadows and forest edges. Use your hand to pick them - you'll get 2-5 strawberries, and sometimes bonus seeds!
-
-### Blackberries
-In **summer**, you can pick blackberries from bramble bushes. Stand next to a bramble and use your hand to gather 3-7 blackberries.
-
-### Water Collection
-Use your **watering can** at wells to collect water. Look for wells in the village and farm areas.
-
-## Keyboard Shortcuts
-
-**Tools:**
-- **1** - Hand
-- **2** - Hoe
-- **3** - Seeds
-- **4** - Watering Can
-
-**Actions:**
-- **E** - Use current tool on the tile you're standing on
-- **Click** - Click directly on tiles to interact (shows action menu)
-
-## Common Questions
-
-**Q: Where do I get seeds?**
-
-A: Three ways! Visit the Seed Shed for free starter seeds, harvest crops to get bonus seeds back, or forage for wild strawberry seeds.
-
-**Q: How do I know when a crop is ready?**
-
-A: The plant grows visually larger as it matures. When ready, it appears as a large, full-grown plant. You can click it to harvest!
-
-**Q: Do I have to replant after harvesting?**
-
-A: Yes! Harvesting returns the tile to fallow soil. You'll need to till it again and plant new seeds.
-
-**Q: Why can't I plant this crop?**
-
-A: Check the season! Some crops can only be planted in certain seasons. The game will tell you if a crop can't be planted now.
-
-**Q: What if I run out of watering can water?**
-
-A: The watering can has unlimited uses! You can also refill it at wells around the village and farm.
-
-**Q: What does fertiliser do?**
-
-A: Fertiliser improves crop quality from normal to good, or from good to excellent. Higher quality crops sell for more gold!
-
-**Q: What do I do with harvested crops?**
-
-A: They go in your inventory and can be sold for gold, or used in cooking recipes!
-
-## Example Farming Session
-
-Here's a typical farming routine:
-
-1. **Morning:** Walk to your farm plots
-2. **Water:** Water any planted crops (press 4, then E on each crop)
-3. **Harvest:** Collect any mature crops (press 1, then E on ready plants)
-4. **Replant:** Plant new seeds in the harvested plots (press 3, select seed, press E)
-5. **Water again:** Water the newly planted crops (press 4, then E)
-6. **New plots:** Till and plant any unused fallow soil
-7. **Evening:** Come back and water everything one more time
-
-**Result:** Happy, growing crops! 🌾
-
-## Advanced Tips
-
-### Crop Rotation
-Try planting different crops in rotation to keep things interesting and maximize your income.
-
-### Seasonal Strategy
-- **Spring:** Plant strawberries and peas early
-- **Summer:** This is prime growing time - plant sunflowers and tomatoes!
-- **Autumn:** Switch to wheat and pumpkins before winter
-- **Winter:** Focus on other activities, or plan for spring
-
-### Time Management
-Plant short crops (radishes) when you'll be around to harvest them soon. Plant long crops (pumpkins) before bed or when you're taking a break.
-
-### Quality Boost
-Always use fertiliser on valuable slow-growing crops like pumpkins. The quality bonus is worth it!
-
-### Farm Layout
-Create neat rows or patterns! While it's not required, an organised farm is easier to manage.
-
-### Gold Strategy
-- Fast crops = quick small profits
-- Slow crops = patient big profits
-- Fertilised crops = premium profits
-- Mix all three for balanced income
-
-### Wild Harvesting
-Don't forget to forage! Wild strawberries and blackberries are free food and seeds.
-
----
-
-**Happy farming! May your harvests be bountiful!**
+This approach is very efficient - no continuous polling or frame-by-frame updates!
+
+## Adding More Crops
+
+Edit [data/crops.ts](data/crops.ts) to add new crop definitions:
+
+```typescript
+newCrop: {
+  id: 'newCrop',
+  name: 'newCrop',
+  displayName: 'New Crop',
+  growthTime: 10 * MINUTE,
+  growthTimeWatered: 7 * MINUTE,
+  waterNeededInterval: 3 * MINUTE,
+  wiltingGracePeriod: 2 * MINUTE,
+  deathGracePeriod: 1 * MINUTE,
+  harvestYield: 2,
+  sellPrice: 30,
+  experience: 15,
+  description: 'A wonderful new crop!',
+  seedCost: 20,
+}
+```
+
+## Adding Farm Areas to Maps
+
+1. Edit map file in `maps/definitions/`
+2. Add `X` characters for farm plots in the grid string
+3. Example: `GGGXXXGGG` creates a 3-tile farm area
+
+## Troubleshooting
+
+### Seeds not planting?
+
+1. Make sure you've selected the Seeds tool (press '3')
+2. Select a seed type (press '5' for radish seeds)
+3. Check you have seeds in inventory (visible in HUD)
+4. Make sure you're standing on **tilled** soil (not fallow soil)
+5. The console log should show: `[Action Key] Planted <crop_type>`
+
+### Tile not updating after action?
+
+- This was fixed - tiles now update immediately after farm actions
+- If it still doesn't work, try moving one tile to force a re-render
+- Check console for error messages
+
+### All tiles already tilled?
+
+- Press **F5** to reset all farm plots on the current map
+- This clears saved plot data and returns tiles to fallow state
+
+### Can't till soil?
+
+- Make sure you have the Hoe tool equipped (press '2')
+- Check that the tile is in FALLOW state (not already tilled)
+- If tile shows brown but won't till, it may already be tilled - check console logs
+
+## Recent Improvements
+
+- ✅ **Shared farming** - Village and Farm Area plots are now shared between all signed-in players in real time
+- ✅ **Personal Garden** - A new private farming map accessible from the village's east side
+- ✅ **Automatic rain watering** - When it rains or storms, all outdoor crops are watered automatically (indoor crops like those in greenhouses are not affected)
+- ✅ **Rain works offline too** - Weather is deterministic per time slot, so when you return after a break, rain that fell while the game was closed is replayed and waters the crops it reached (`utils/retroactiveRain.ts`). A crop that died before the rain is never resurrected.
+- ✅ **Gentler decay** - An unwatered crop survives 4 game days (~8 real hours): it needs water every game day, droops for 2 game days (tinted yellow-brown so you can see it), then has 1 more game day before it dies. Tune these in one place — `WATER_NEEDED` / `WILTING_GRACE` / `DEATH_GRACE` in `data/crops.ts`.
+- ✅ **Death notification** - When crops die (including while you were away) a single toast tells you how many, so bare soil is never a mystery
+- ✅ **Multi-tile crop rendering** - Crops now grow visually from small seedlings (1x1) to young plants (1.5x2) to large adult plants (2x2.5)
+- ✅ **Crop-specific sprites** - Tomato, sunflower, strawberry, and pea have unique young/adult sprites
+- ✅ **Fertiliser support** - Apply fertiliser to improve crop quality (normal → good → excellent)
+- ✅ **Quality system** - Crop quality affects sell price (1x/1.5x/2x multipliers)
+- ✅ **Seasonal planting** - Crops can only be planted in specific seasons
+- ✅ **F4 DevTools integration** - Full farming debug controls in the DevTools panel
+
+## Future Enhancements
+
+Potential additions:
+
+- Multi-harvest crops (e.g., tomato plants that produce multiple times)
+- Farm upgrades (sprinklers for auto-watering)
+- Crop processing (e.g., grain → flour → bread)
+- Scarecrows to protect crops from crows
+- Companion planting bonuses
+- More crop-specific sprites (salad, corn, pumpkin, etc.)
+- Planted-by name badges visible on shared farm plots

@@ -9,7 +9,7 @@ import { reportMessageOnce } from '../utils/errorReporting';
 /**
  * MapManager - Single Source of Truth for all map data
  *
- * Following the SSoT principle from AGENT.md, this is the ONLY place
+ * Following the SSoT principle (CLAUDE.md), this is the ONLY place
  * that manages map loading, transitions, and current map state.
  */
 class MapManager {

@@ -422,18 +422,14 @@ The game tests fundamental assumptions on startup:
 
 ## Documentation
 
-Detailed documentation is located in the [`docs/`](docs/) folder:
+[`docs/README.md`](docs/README.md) indexes everything. Layout: developer guides in `docs/`;
+**player-facing** F1 help pages in `public/docs/` (listed in `data/helpDocs.ts` — they must be
+under `public/` or they 404 in production); dated plans and investigations in `docs/history/`
+(not current — check the code first); subsystem guides next to their code
+(`utils/interactions/README.md`, `utils/pixi/README.md`, `tests/README.md`).
 
-- [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md) - **READ FIRST** — Non-obvious bugs & root causes (coordinate pipeline, click detection, audio lifecycle, z-index traps)
-- [`docs/MAP_GUIDE.md`](docs/MAP_GUIDE.md) - Map creation guide
-- [`docs/ASSETS.md`](docs/ASSETS.md) - Asset management and guidelines
-- [`docs/FARMING.md`](docs/FARMING.md) - Farming system documentation
-- [`docs/TIME_SYSTEM.md`](docs/TIME_SYSTEM.md) - Time/calendar system (seasons, days, years)
-- [`docs/COORDINATE_GUIDE.md`](docs/COORDINATE_GUIDE.md) - Position system reference
-- [`docs/SAVE_SYSTEM.md`](docs/SAVE_SYSTEM.md) - Save system and localStorage documentation
-- [`docs/SEASONAL_NPC_LOCATIONS.md`](docs/SEASONAL_NPC_LOCATIONS.md) - Seasonal NPC positioning and map transitions
-
-**In-Game Help Browser**: Press **F1** while playing to access all documentation in a browsable interface with markdown rendering.
+**Read [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md) first** — non-obvious bugs
+and root causes (coordinate pipeline, click detection, audio lifecycle, z-index traps).
 
 ## Code Organization
 
@@ -891,17 +887,13 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 | **add-tile-sprite**      | "add tile", "new sprite", "add flower", "add tree"                                             | Add tile assets with keyword optimization                                                  |
 | **add-npc-sprite**       | "add NPC", "new character", "add villager"                                                     | Add NPC sprites and factory functions                                                      |
 | **add-character-sprite** | "player sprite", "character customization"                                                     | Add player character layers                                                                |
-| **add-farming-sprite**   | "crop sprite", "farming", "soil", "plant"                                                      | Add farming system sprites                                                                 |
-| **add-inventory-sprite** | "inventory sprite", "item image", "tool sprite"                                                | Add inventory item sprites (general items)                                                 |
-| **add-grocery-item**     | "add ingredient", "grocery item", "cooking ingredient", "shop item"                            | Add grocery items as ingredients and shop inventory                                        |
+| **add-item**             | "add item", "item image", "ingredient", "shop item", "crop", "herb", "potion", "forageable plant" | Every kind of item: definition, sprite, shop stock, crop/herb growth sprites, forage sources |
 | **add-animation**        | "add animation", "particle effect", "weather effect"                                           | Add GIF animations to tiles/weather                                                        |
 | **add-pixi-component**   | "PixiJS", "WebGL", "particle system", "shader"                                                 | Add PixiJS rendering components                                                            |
 | **add-minigame**         | "create mini-game", "add mini-game", "new activity"                                            | Create self-contained mini-games (2 files + 1 registry line)                               |
 | **debug-production**     | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
 | **setup-sentry-mcp**     | "set up Sentry", "Sentry MCP 401", "Sentry not connecting", "new machine setup"                | One-time Sentry MCP install for Claude Code + Pi: token, `.mcp.json`, restart, verify      |
 | **setup-firebase**       | "set up Firebase", "cloud saves", "Firebase credentials"                                       | Guided Firebase setup (`.env.local`, rules deploy)                                         |
-| **add-herb**             | "add herb", "perennial", "regrowable crop"                                                     | Add a herb crop to the farming system                                                      |
-| **add-forageable-plant** | "forageable plant", "forage", "wild plant"                                                     | Add a multi-tile forageable plant (tile, sprite, forage provider, item)                    |
 | **add-audio**            | "add sound", "music", "ambient audio", "sound effect"                                          | Add audio files and register them with AudioManager                                        |
 | **replace-emoji**        | "replace emoji", "hand-drawn icon"                                                             | Map an emoji to a hand-drawn PNG icon                                                      |
 

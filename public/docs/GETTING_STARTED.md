@@ -1,66 +1,129 @@
 # Getting Started
 
-Welcome to your new farming adventure! This guide will help you get started with the basics.
-
-## Controls
-
-### Movement
-- **WASD** or **Arrow Keys** - Move your character
-- Character moves at a steady pace and walks diagonally when pressing two directions
-
-### Interactions
-- **E** or **Enter** - Interact with objects, NPCs, transitions, and farm tiles
-- **ESC** - Close dialogues and menus
-- **R** - Reset to spawn point if stuck
-- **B** - Open your recipe book
-- **C** - Cook (beside a fire)
-
-### Tools & Farming
-- **1** - Hand (harvest crops, clear dead plants)
-- **2** - Hoe (till soil)
-- **3** - Seeds (plant crops)
-- **4** - Watering Can (water plants)
-
-### Seed Selection (when Seeds tool is active)
-- **5** - Radish Seeds (fast - 2 min)
-- **6** - Tomato Seeds (medium - 5 min)
-- **7** - Salad Seeds (long - 10 min)
-- **8** - Corn Seeds (premium - 15 min)
-- **9** - Pumpkin Seeds (specialty - 20 min)
-
-### Help & Debug
-- **F1** - Open this help menu
-- **F3** - Toggle debug overlay (shows position, time, etc.)
-- **F5** - Reset all farm plots on current map
+Welcome to Clover Village! This peaceful farming and exploration game lets you explore a charming village, meet quirky characters, grow crops, and discover secrets.
 
 ## Your First Steps
 
-### 1. Explore Your Home
-You start in your cozy cottage. Look around and get familiar with the controls. Press **E** near the door to exit outside.
+### Moving Around
 
-### 2. Visit the Village
-Walk around and explore! The village is your hub with paths leading to different areas.
+**Keyboard:**
+- **WASD** or **Arrow Keys** - Walk in any direction
+- Walk into doorways to enter buildings
 
-### 3. Get Some Seeds
-1. Go to the **Farm Area** (southeast from village center)
-2. Enter the **Seed Shed** building (press E on the door)
-3. Talk to the seed keeper NPCs to get free starter seeds
-4. Check your inventory in the HUD (top-left)
+**Touch/iPad:**
+- Use the on-screen **D-pad** (bottom left) to move
+- Tap buildings and doors to interact
 
-### 4. Start Farming
-1. Go to the brown **fallow soil** tiles in the farm area
-2. Press **2** to equip your hoe
-3. Press **E** on fallow soil to till it (turns into tilled texture)
-4. Press **3** to equip seeds, then **5** to select radish seeds
-5. Press **E** on tilled soil to plant seeds (watch your seed count decrease!)
-6. Press **4** to equip watering can
-7. Press **E** on planted crops to water them (they grow faster!)
+### Interacting with Things
 
-### 5. Wait and Harvest
-- Radishes take 2 minutes to grow (1.5 min if watered regularly)
-- The plant will show a mature sprite when ready
-- Press **1** for hand tool, then **E** on ready crops to harvest
-- You'll automatically collect crops and earn gold!
+**Click on anything!** The game uses click-based interactions:
+
+- **Click on NPCs** to talk to them
+- **Click on doors** to enter buildings
+- **Click on items** to pick them up or use them
+- **Click on farm plots** to till, plant, water, or harvest
+
+When there are multiple actions available, a **radial menu** appears with options.
+
+**Keyboard shortcuts:**
+- **E** or **Enter** - Interact with what's in front of you
+- **F** - Forage (search for items in grass/forest areas)
+
+### Exploring the Village
+
+You start at home with your Mum. Here's what to explore:
+
+1. **Your House** - Chat with Mum, she has advice for new players
+2. **The Village** - A friendly community with shops and neighbours
+3. **The Farm Area** - Till soil, plant seeds, and grow crops (shared with other players!)
+4. **Personal Garden** - Your private farming space (east side of the village)
+5. **The Forest** - Explore deeper to find secrets and forage items
+6. **The Cave** - Discover what lies beneath...
+
+### The HUD (Heads-Up Display)
+
+**Top Left:**
+- **Wallet** - Shows your gold coins
+
+**Top Right:**
+- **Clock** - Shows the current time (hours and minutes)
+- **Calendar** - Shows season, day, and year
+- **Location** - Current map name
+
+**Bottom Center:**
+- **Quick Slot Bar** - Shows your first 9 inventory items
+- Click slots to select items, or use number keys 1-9
+- Selected slot has a yellow border
+
+**Bottom Right:**
+- **Inventory** - Click the satchel to open your inventory
+- **Collision** - Developer toggle (ignore this)
+
+### Time & Seasons
+
+The game has a real-time calendar system:
+
+- **4 seasons**: Spring, Summer, Autumn, Winter
+- **84 days** per season
+- Time passes based on real-world time
+- **5 real minutes = 1 game hour**
+- **2 real hours = 1 game day**
+
+Hover over the clock or calendar for more details!
+
+## Farming Basics
+
+### Getting Started with Farming
+
+1. **Get seeds** - Visit the Seed Shed in the farm area
+2. **Find a farm plot** - Look for brown soil tiles
+3. **Click the soil** - Choose "Till" to prepare it
+4. **Click again** - Choose "Plant" and select a seed type
+5. **Water your crops** - Click planted crops and choose "Water"
+6. **Harvest** - When crops are ready, click to harvest!
+
+**Tips:**
+- Watered crops grow faster
+- Don't forget to water - crops will wilt and die without water!
+- Start with Radishes - they grow quickly (2 minutes)
+
+### Your Inventory
+
+Click the **satchel** (bottom right) or press **I** to open your inventory:
+
+- **Seeds** - Different crop types to plant
+- **Crops** - Harvested produce to sell
+- **Tools** - Hoe, Watering Can, etc.
+
+#### Quick Slots (1-9 Keys)
+
+The first 9 items in your inventory are **quick slots** - you can press number keys **1-9** to instantly select them.
+
+**Quick Slot Bar** (always visible at bottom center):
+- Shows your first 9 inventory items
+- Click any slot to select/equip that item
+- Selected slot has a yellow border
+- Each slot shows the slot number (1-9)
+
+#### Organizing Your Inventory
+
+You can rearrange your entire inventory to customize which items appear in quick slots:
+
+**Desktop:**
+- Open inventory (I key)
+- **Drag and drop** items to reorder them
+- Drag any item to any slot to swap positions
+
+**Touch/iPad:**
+- Open inventory (I button)
+- **Tap first item** - amber glow appears (selected for swap)
+- **Tap second item** - items swap positions
+- Tap same item again to deselect
+
+**Tips:**
+- Put your most-used items in the first 9 slots for quick access
+- Use number keys 1-9 to switch between tools and seeds quickly
+- Reorganize anytime - changes save automatically
 
 ## Cooking
 
@@ -77,80 +140,69 @@ Walk up to a fire and a big **Cook here** button appears — tap it, or press **
 Away from a fire, the Cook button in the book is greyed out and tells you where to go.
 Tea is special: it needs Mum's kettle, so make it at her fireplace.
 
-## Understanding the HUD
+## Meeting the Villagers
 
-The HUD (heads-up display) in the top-left shows:
-- **Current Tool** - What you have equipped (Hand, Hoe, Seeds, Watering Can)
-- **Selected Seed** - Which crop you'll plant (when Seeds tool is active)
-- **Seed Count** - How many seeds you have in inventory
-- **Gold** - Your current money
-- **Time** - Current in-game time, day, season, and year
+Talk to everyone! Each character has their own personality:
 
-## Talking to NPCs
+- **Mum** - Your loving mother, always has advice
+- **The Elder** - Wise and knows village history
+- **The Old Woman** - Loves knitting and storytelling
+- **The Child** - Curious and full of questions
+- **Shopkeepers** - Buy and sell goods
 
-When you're near an NPC (non-player character), you'll see a blue prompt: **[E] Talk to [Name]**
+### AI Conversations
 
-Press **E** to start a conversation. Some NPCs will:
-- Give you items (like seeds)
-- Share stories and lore
-- Provide quests (coming soon!)
+Some NPCs support **AI-powered chat**! When talking to them, look for the **"Chat freely..."** button to have a natural conversation.
 
-Press **E** or **ESC** to close dialogue and continue playing.
+To enable AI chat:
+1. Press **F1** to open Help
+2. Go to **Settings**
+3. Add your Anthropic API key
 
-## Map Navigation
+## Useful Keyboard Shortcuts
 
-Look for glowing transition indicators when you're near exits:
-- **Yellow border** - Transition nearby
-- **Green border + pulsing** - Ready to use (press E)
-- Label shows where the transition leads
+| Key | Action |
+|-----|--------|
+| WASD / Arrows | Move |
+| E / Enter | Interact |
+| F | Forage |
+| I | Open Inventory |
+| J | Open Journal |
+| B | Open Recipe Book |
+| C | Cook (beside a fire) |
+| 1-9 | Select Quick Slots |
+| F1 | Help Browser |
+| F3 | Debug Overlay |
+| ESC | Close menus |
 
-Press **E** when the indicator is green to travel to a new area.
+## Tips for New Players
 
-## Farming Tips
+1. **Talk to everyone** - NPCs give hints and sometimes gifts
+2. **Explore everywhere** - Find hidden areas and secrets
+3. **Check the season** - Some crops only grow in certain seasons
+4. **Water your crops** - They'll die without regular watering
+5. **Save your gold** - You'll need it for seeds and upgrades
+6. **Hover over things** - Tooltips give useful information
 
-### Water Management
-- Plants need water every few minutes (varies by crop)
-- Unwatered plants will **wilt** (turn yellow)
-- Wilted plants will **die** if not watered in time
-- Dead plants must be cleared with Hand tool (returns plot to fallow)
+## Your Journal
 
-### Crop Strategy
-- **Radishes** - Fast and easy, great for beginners
-- **Tomatoes** - Better profit, needs more attention
-- **Salad Greens** - Hardy crop, good bulk harvest
-- **Corn** - Premium crop, requires patience
-- **Pumpkins** - Specialty crop, huge profit but takes longest
+Press **J** to open your **Journal** at any time. It has three sections:
 
-### Maximizing Profit
-1. Water regularly to speed up growth
-2. Plant multiple plots at once
-3. Stagger planting times for continuous harvests
-4. Higher-tier crops give more gold per harvest
+- **Active Quests** — Current quest chains with progress
+- **History** — Completed quests and key choices you made
+- **Conversations** — Summaries of your AI chats with NPCs
 
-## Troubleshooting
+You can also open the journal from the bookshelf in the cottage.
 
-### Can't plant seeds?
-- Make sure soil is **tilled** (not fallow)
-- Check you have seeds in inventory
-- Verify Seeds tool is equipped (press 3)
-- Select a seed type (press 5-9)
+## Need More Help?
 
-### Tile not updating?
-- Tiles update immediately after actions
-- If stuck, try moving one tile to refresh
+Press **F1** anytime to open the Help Browser:
 
-### Lost or stuck?
-- Press **R** to teleport to spawn point
-- Use map transitions to navigate between areas
+- **Farming Guide** - Detailed farming mechanics
+- **Seeds Guide** - Where to find seeds
+- **Journal** - Quest tracking and NPC conversation logs
+- **Time & Seasons** - How the calendar works
+- **AI Chat** - Setting up AI conversations
+- **Cloud Saves** - Save your progress across devices
 
-## What's Next?
-
-Explore the world and discover:
-- Different map areas with unique themes
-- Seasonal changes (crops grow differently in each season)
-- The passage of time (day/night cycle)
-- Various NPCs with stories to tell
-
-Check the **Farming Guide** for detailed crop information and advanced strategies!
-
-Have fun farming! 🌾
+Enjoy your time in Clover Village!

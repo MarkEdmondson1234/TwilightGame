@@ -225,7 +225,7 @@ Dialogue nodes are added to each gardener's own definition file
 | `utils/dialogueHandlers.ts` | Intercept `garden_favour_*` node ids → `setRequest`. |
 | `utils/FriendshipManager.ts` | On friendship level-up (existing announcement point), notify NpcGardenManager so the global plan grows. |
 | `utils/gameInitializer.ts` | Initialise NpcGardenManager at startup. |
-| `docs/FARMING.md` | Document the system. |
+| `public/docs/FARMING.md` | Document the system. |
 
 *Explicitly unchanged:* `utils/pixi/TileLayer.ts`, `components/TileRenderer.tsx`
 (plots already render), the farming interaction provider (READY plots already

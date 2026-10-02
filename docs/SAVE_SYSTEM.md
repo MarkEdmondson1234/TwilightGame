@@ -377,8 +377,8 @@ Key files for the save system:
 ## Related Documentation
 
 - [COOKING.md](./COOKING.md) - Cooking system (if exists)
-- [FARMING.md](./FARMING.md) - Farming system
-- [TIME_SYSTEM.md](./TIME_SYSTEM.md) - Time and calendar system
+- [FARMING.md](../public/docs/FARMING.md) - Farming system
+- [TIME_SYSTEM.md](../public/docs/TIME_SYSTEM.md) - Time and calendar system
 
 ---
 

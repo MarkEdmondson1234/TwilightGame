@@ -1,7 +1,7 @@
 # Mobile UX: small screens, fewer controls, straight back into play
 
 Status: **planned** (phase 0 shipped with this doc). Written 25 September 2026.
-Builds on [`docs/MOBILE_UI_PLAN.md`](../../docs/MOBILE_UI_PLAN.md) (stages 1–3) and the
+Builds on [`docs/history/MOBILE_UI_PLAN.md`](../../docs/history/MOBILE_UI_PLAN.md) (stages 1–3) and the
 #157 fixes (PRs #160, #162, #163). Performance work is separate:
 [`PERFORMANCE_MOBILE_PLAN.md`](PERFORMANCE_MOBILE_PLAN.md).
 

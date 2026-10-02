@@ -364,7 +364,7 @@ npcManager.npcStates.get('npc_id')
 
 ## Related Systems
 
-- **Time System** ([TIME_SYSTEM.md](TIME_SYSTEM.md)) - How seasons are calculated
+- **Time System** ([TIME_SYSTEM.md](../public/docs/TIME_SYSTEM.md)) - How seasons are calculated
 - **NPC System** ([types/npc.ts](../types/npc.ts)) - Full NPC type definitions
 - **Visibility Conditions** ([types/animation.ts](../types/animation.ts)) - Conditional NPC visibility
 

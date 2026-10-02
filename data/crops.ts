@@ -114,7 +114,7 @@ const MINUTE = 60 * 1000;
 const GAME_DAY = TimeManager.MS_PER_GAME_DAY; // 7,200,000 ms (2 real hours)
 
 // Water/decay timings shared by every crop (values in real ms, derived from
-// game days — see docs/FARMING.md). Tune decay difficulty here, in one place.
+// game days — see public/docs/FARMING.md). Tune decay difficulty here, in one place.
 // An unwatered crop survives WATER_NEEDED + WILTING_GRACE + DEATH_GRACE =
 // 4 game days ≈ 8 real hours, and rain (even while the game was closed — see
 // utils/retroactiveRain.ts) resets the clock.

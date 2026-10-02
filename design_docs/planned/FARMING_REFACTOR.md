@@ -423,7 +423,7 @@ After each change:
 - Lazy state calculation (efficient, not per-frame)
 - Comprehensive tests in `tests/farmManager.test.ts`
 - Flexible crop system (easy to add new crops)
-- Well-documented in `docs/FARMING.md`
+- Well-documented in `public/docs/FARMING.md`
 
 **Out of scope** (future work):
 - Multi-harvest crops (mentioned in design doc)

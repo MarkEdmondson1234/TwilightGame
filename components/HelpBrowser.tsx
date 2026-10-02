@@ -22,6 +22,7 @@ import {
 import { reportError } from '../utils/errorReporting';
 import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
 import SharedWorldStatus from './SharedWorldStatus';
+import { DOC_FILES } from '../data/helpDocs';
 
 interface HelpBrowserProps {
   onResetPosition?: () => void;
@@ -41,32 +42,6 @@ interface HelpBrowserProps {
   };
   onOpenCharacterSelect?: () => void;
 }
-
-interface DocFile {
-  name: string;
-  title: string;
-  path: string;
-}
-
-// Player-facing documentation (not developer docs)
-const DOC_FILES: DocFile[] = [
-  {
-    name: 'getting-started',
-    title: '🎮 Getting Started',
-    path: '/TwilightGame/docs/GETTING_STARTED.md',
-  },
-  { name: 'stamina', title: '💚 Stamina', path: '/TwilightGame/docs/STAMINA.md' },
-  { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
-  { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
-  { name: 'journal', title: '📖 Journal', path: '/TwilightGame/docs/JOURNAL.md' },
-  { name: 'decorations', title: '🎨 Decorations', path: '/TwilightGame/docs/DECORATIONS.md' },
-  { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
-  { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
-  { name: 'events', title: '🌍 World Events', path: '/TwilightGame/docs/EVENTS.md' },
-  { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
-  { name: 'cloud-saves', title: '☁️ Cloud Saves', path: '/TwilightGame/docs/CLOUD_SAVES.md' },
-  // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE
-];
 
 // Special "settings" tab identifier
 const SETTINGS_TAB = 'settings';

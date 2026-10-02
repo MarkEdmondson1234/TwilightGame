@@ -230,7 +230,7 @@ village: {
 - `autumn` - Days 15-21 of each year
 - `winter` - Days 22-28 of each year
 
-See `docs/TIME_SYSTEM.md` for details on the time system.
+See `public/docs/TIME_SYSTEM.md` for details on the time system.
 
 ## Layer 4: Time-of-Day Modifiers (Optional)
 
@@ -278,7 +278,7 @@ village: {
 
 The game alternates between day and night every hour. Each in-game hour lasts approximately **1.07 real-world hours** (25.7 real hours per game day ÷ 24 hours).
 
-See `docs/TIME_SYSTEM.md` for details on the time system.
+See `public/docs/TIME_SYSTEM.md` for details on the time system.
 
 ### Interaction with Seasons
 
@@ -566,7 +566,7 @@ const sageHex = getColorHex('sage');  // '#87AE73'
 ## Related Documentation
 
 - `docs/MAP_GUIDE.md` - How to create maps
-- `docs/TIME_SYSTEM.md` - How seasons and time work
+- `public/docs/TIME_SYSTEM.md` - How seasons and time work
 - `docs/ASSETS.md` - How tile images work with colors
 - `palette.ts` - Color palette definitions and API
 - `constants.ts` - Base tile color definitions
