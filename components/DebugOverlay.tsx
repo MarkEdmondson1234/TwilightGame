@@ -4,7 +4,7 @@ import { getTileData } from '../utils/mapUtils';
 import { Position, Transition, CollisionType, FarmPlotState, CropGrowthStage } from '../types';
 import DebugInfoPanel from './DebugInfoPanel';
 import { Z_DEBUG_TILES, Z_DEBUG_TRANSITIONS, Z_DEBUG_CLICK, zClass } from '../zIndex';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { farmManager } from '../utils/farmManager';
 import { CROP_ADULT_SIZES, CROP_SPRITE_CONFIG } from '../utils/pixi/TileLayer';
 import { debugLog } from '../utils/debugLog';

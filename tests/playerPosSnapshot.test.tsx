@@ -24,7 +24,7 @@ vi.mock('../utils/AudioManager', () => ({
   },
 }));
 
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: {
     getCurrentMap: () => ({ id: 'village', width: 60, height: 60 }),
     getCurrentMapId: () => 'village',

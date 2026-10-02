@@ -15,7 +15,8 @@
  * GIF <img>s over the canvas (PERFORMANCE_MOBILE_PLAN.md §5 M1).
  */
 
-import { TILE_ANIMATIONS, TILE_SIZE } from '../constants';
+import { TILE_SIZE } from '../constants';
+import { TILE_ANIMATIONS } from '../data/tileAnimations';
 import type { MapDefinition, Position, TileAnimation, TileType } from '../types';
 import { getTileData } from './mapUtils';
 import type { VisibleRange } from './viewportUtils';

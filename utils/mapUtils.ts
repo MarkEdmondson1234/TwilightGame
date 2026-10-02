@@ -1,6 +1,6 @@
 import { TILE_LEGEND } from '../constants';
 import { TileType, TileData, Position } from '../types';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { ColorResolver } from './ColorResolver';
 
 /**

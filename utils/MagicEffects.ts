@@ -10,7 +10,7 @@
  */
 
 import { WeatherType } from '../data/weatherConfig';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { TimeManager } from './TimeManager';
 import { farmManager } from './farmManager';
 

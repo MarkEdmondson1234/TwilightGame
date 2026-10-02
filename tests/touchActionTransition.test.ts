@@ -14,7 +14,7 @@ const deps = vi.hoisted(() => ({
   playSfx: vi.fn(),
 }));
 
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: { getCurrentMapId: () => 'village', getCurrentMap: () => null },
 }));
 vi.mock('../GameState', () => ({

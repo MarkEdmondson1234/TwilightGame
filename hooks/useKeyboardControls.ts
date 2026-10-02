@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, MutableRefObject } from 'react';
 import { Position, TileType } from '../types';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
 import { cookingManager } from '../utils/CookingManager';

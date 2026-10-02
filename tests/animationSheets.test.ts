@@ -14,7 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TILE_ANIMATIONS } from '../constants';
+import { TILE_ANIMATIONS } from '../data/tileAnimations';
 import { sheetMetaUrl } from '../utils/pixi/AnimationLayer';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');

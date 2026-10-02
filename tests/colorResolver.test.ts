@@ -13,7 +13,7 @@ import { TileType } from '../types';
 import { resetPalette, getColorHex } from '../palette';
 
 // Mock mapManager to avoid loading actual maps
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: {
     getCurrentColorScheme: vi.fn(() => ({
       name: 'test',

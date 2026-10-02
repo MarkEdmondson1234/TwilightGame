@@ -16,7 +16,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { gameState } from '../GameState';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { createNPC } from '../utils/npcs/createNPC';
 import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { YULE_TREE_POSITION } from '../data/yuleCelebration';

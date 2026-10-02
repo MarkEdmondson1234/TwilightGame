@@ -12,7 +12,7 @@
  */
 
 import { Season, TimeManager } from '../utils/TimeManager';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
 

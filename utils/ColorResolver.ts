@@ -12,7 +12,7 @@
 
 import { TileType, ColorScheme } from '../types';
 import { TILE_LEGEND } from '../constants';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { TimeManager, Season } from './TimeManager';
 import { getColorHexByName } from '../palette';
 

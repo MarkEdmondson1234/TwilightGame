@@ -26,7 +26,7 @@ import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
 import { MapDefinition, TileType, TileData, FarmPlotState, CropGrowthStage } from '../../types';
 import { getColorHexByName } from '../../palette';
-import { mapManager } from '../../maps';
+import { mapManager } from '../../maps/MapManager';
 import { calculateTileTransforms } from '../tileRenderUtils';
 import { ColorResolver } from '../ColorResolver';
 import { farmManager } from '../farmManager';

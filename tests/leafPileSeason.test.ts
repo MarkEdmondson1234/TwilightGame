@@ -10,7 +10,8 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getAvailableInteractions } from '../utils/interactions/index';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { TimeManager, Season } from '../utils/TimeManager';
 import type { MapDefinition } from '../types';
 import { TileType } from '../types';

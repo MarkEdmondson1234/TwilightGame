@@ -17,7 +17,7 @@ import { useClickToMove } from './useClickToMove';
 import { TimeManager } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { getFootstepKey } from '../utils/footstepSounds';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 // Re-export SizeTier type for convenience
 export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;

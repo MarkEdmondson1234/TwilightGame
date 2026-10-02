@@ -1,7 +1,7 @@
 import { useCallback, useRef, MutableRefObject } from 'react';
 import { Position, Direction } from '../types';
 import { PLAYER_SIZE, TIMING } from '../constants';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 const PLAYER_SPEED = TIMING.PLAYER_SPEED; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = TIMING.PLAYER_FRAME_MS; // time between animation frames

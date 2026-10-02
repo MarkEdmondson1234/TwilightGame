@@ -16,7 +16,7 @@ import { Position, TileType } from '../types';
 import { INTERACTION } from '../constants';
 import { screenToTile } from '../utils/screenToTile';
 import { getTileData } from '../utils/mapUtils';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
 import { farmManager } from '../utils/farmManager';
 import { hasTileTypeNearby } from '../utils/mapUtils';

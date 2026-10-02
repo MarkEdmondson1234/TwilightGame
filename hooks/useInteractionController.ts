@@ -65,7 +65,7 @@ import {
   clearBoulder,
   boulderTierToActivity,
 } from '../utils/boulderInteractions';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import {
   onWreathPlacedInVillage,
   WREATH_ITEM_IDS,

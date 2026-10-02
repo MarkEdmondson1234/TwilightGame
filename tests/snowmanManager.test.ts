@@ -9,7 +9,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { snowmanManager } from '../utils/SnowmanManager';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { gameState } from '../GameState';
 import { TimeManager, Season } from '../utils/TimeManager';
 import type { MapDefinition } from '../types';

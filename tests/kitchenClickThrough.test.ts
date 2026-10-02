@@ -13,7 +13,8 @@
  * repainting the walkmesh again cannot quietly reopen the hole.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { initializeMaps, mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps } from '../maps';
 import { getTileData, getTileCoords } from '../utils/mapUtils';
 import { isTileSolid, type Position } from '../types';
 import { transitionProvider } from '../utils/interactions/providers/transition';

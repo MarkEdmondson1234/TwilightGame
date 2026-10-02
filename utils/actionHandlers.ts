@@ -6,7 +6,8 @@
 import { Position, TileType, CollisionType, SizeTier, FarmPlotState, NPC } from '../types';
 import { getTileData, getAdjacentTiles, getTileCoords } from './mapUtils';
 import { deskManager } from './deskManager';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
 import { farmManager } from './farmManager';

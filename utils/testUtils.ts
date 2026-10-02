@@ -2,9 +2,9 @@
 
 // FIX: Added and exported the 'runSelfTests' function to resolve the import error in App.tsx.
 // This function performs basic sanity checks as suggested by its usage context.
-import { TILE_LEGEND, MAP_DATA, MAP_WIDTH, MAP_HEIGHT } from '../constants';
+import { TILE_LEGEND } from '../constants';
 import { TileType, isTileSolid } from '../types';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
 import { isPositionValid, validatePositions } from './positionValidator';
@@ -24,7 +24,6 @@ export function runSelfTests(): void {
   validateSpawnPoints();
 
   // === Procedural Map Check (basic) ===
-  validateLegacyMapData();
 
   // === Farm System Validation ===
   validateFarmSystem();
@@ -305,27 +304,6 @@ function validateSpawnPoints(): void {
         console.warn(`[Sanity Check] ⚠️ NPCs not on safe spawn tiles in "${mapId}":`, warnings);
       }
     }
-  }
-}
-
-/**
- * Validate legacy MAP_DATA (from constants.ts)
- */
-function validateLegacyMapData(): void {
-  if (MAP_DATA.length !== MAP_HEIGHT) {
-    console.warn(
-      `[Sanity Check] MAP_DATA has ${MAP_DATA.length} rows, but MAP_HEIGHT is ${MAP_HEIGHT}.`
-    );
-  }
-
-  const inconsistentRows = MAP_DATA.map((row, i) => ({ len: row.length, index: i })).filter(
-    (r) => r.len !== MAP_WIDTH
-  );
-
-  if (inconsistentRows.length > 0) {
-    console.warn(
-      `[Sanity Check] MAP_DATA rows not matching MAP_WIDTH (${MAP_WIDTH}): ${inconsistentRows.map((r) => r.index).join(', ')}`
-    );
   }
 }
 

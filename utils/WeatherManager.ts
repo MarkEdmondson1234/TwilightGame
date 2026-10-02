@@ -21,7 +21,7 @@
  */
 
 import { TimeManager } from './TimeManager';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import {
   WeatherType,
   WEATHER_SLOT_HOURS,

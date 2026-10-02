@@ -29,7 +29,8 @@
 /** @vitest-environment node */
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { initializeMaps, mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps } from '../maps';
 import { GRID_CODES } from '../maps/gridParser';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { TILE_LEGEND } from '../constants';

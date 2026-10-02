@@ -1,7 +1,7 @@
 import type { MapDefinition, Position, SizeTier, Transition } from '../types';
 import type { TransitionResult } from './actionHandlers';
 import { transitionProvider } from './interactions/providers/transition';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 export const TRANSITION_ICON_RANGE = 3.5;
 

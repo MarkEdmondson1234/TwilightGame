@@ -24,7 +24,7 @@
 import { Position } from '../types';
 import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { TIMING } from '../constants';
 
 export const SNOW_ANGEL_IMAGE = '/TwilightGame/assets-optimized/seasonal/snow_angel.png';

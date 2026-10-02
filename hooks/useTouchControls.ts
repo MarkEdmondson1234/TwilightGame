@@ -5,7 +5,7 @@
 
 import { MutableRefObject, useCallback } from 'react';
 import { Position } from '../types';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
 import {

@@ -15,7 +15,8 @@
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { handleForageAction } from '../utils/forageHandlers';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { staminaManager } from '../utils/StaminaManager';
 import type { MapDefinition } from '../types';

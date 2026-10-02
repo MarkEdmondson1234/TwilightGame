@@ -9,7 +9,7 @@ import { Position, NPC, isTileSolid } from '../types';
 
 import { metadataCache } from './MetadataCache';
 import { getTileData, getTileCoords } from './mapUtils';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 /** Node in the A* open/closed sets */
 interface PathNode {

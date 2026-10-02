@@ -9,7 +9,7 @@ vi.mock('../utils/mapUtils', () => ({
   getTileCoords: (p: { x: number; y: number }) => ({ x: Math.floor(p.x), y: Math.floor(p.y) }),
 }));
 vi.mock('../GameState', () => ({ gameState: { getPlacedItems: () => state.placed } }));
-vi.mock('../maps', () => ({ mapManager: { getCurrentMap: () => null } }));
+vi.mock('../maps/MapManager', () => ({ mapManager: { getCurrentMap: () => null } }));
 import { cookingProvider } from '../utils/interactions/providers/cooking';
 import type { InteractionContext } from '../utils/interactions/types';
 

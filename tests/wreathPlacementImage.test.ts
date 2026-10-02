@@ -19,7 +19,8 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getAvailableInteractions } from '../utils/interactions/index';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { inventoryManager } from '../utils/inventoryManager';
 import { decorationManager } from '../utils/DecorationManager';
 import { gameState } from '../GameState';

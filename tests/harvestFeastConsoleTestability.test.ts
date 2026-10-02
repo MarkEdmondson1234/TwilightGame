@@ -20,7 +20,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { gameState } from '../GameState';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { createNPC } from '../utils/npcs/createNPC';
 import { harvestFeastManager } from '../utils/HarvestFeastManager';
 import {

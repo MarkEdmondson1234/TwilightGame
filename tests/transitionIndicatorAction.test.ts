@@ -10,6 +10,10 @@ vi.mock('../maps', () => ({
   mapManager: { getCurrentMapId: () => 'forest', getTransitionAt: deps.getTransitionAt },
   transitionToMap: deps.transitionToMap,
 }));
+vi.mock('../maps/MapManager', () => ({
+  mapManager: { getCurrentMapId: () => 'forest', getTransitionAt: deps.getTransitionAt },
+  transitionToMap: deps.transitionToMap,
+}));
 vi.mock('../utils/transitionRequirements', () => ({ transitionBlockedReason: deps.blocked }));
 vi.mock('../utils/CutsceneManager', () => ({
   cutsceneManager: { triggerManualCutscene: deps.cutscene },

@@ -33,7 +33,8 @@ import {
   getMiniGamesForMapLocation,
 } from '../minigames/registry';
 import { ITEMS } from '../data/items';
-import { initializeMaps, mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps } from '../maps';
 import type { MiniGameDefinition } from '../minigames/types';
 
 const ALL = getAllMiniGames();

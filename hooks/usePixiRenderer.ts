@@ -53,7 +53,7 @@ import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
 import { getCoreTextureUrls, getResidentTextureUrls, toSeasonKey } from '../utils/mapTextureSet';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
 import { npcSpeechManager } from '../multiplayer/npcSpeech';

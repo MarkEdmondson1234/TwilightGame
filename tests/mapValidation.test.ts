@@ -27,7 +27,8 @@
 
 /** @vitest-environment node */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { initializeMaps, mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps } from '../maps';
 import {
   validateMapDefinition,
   clearValidationErrors,
