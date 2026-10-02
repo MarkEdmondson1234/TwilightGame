@@ -11,8 +11,8 @@ Longer-form material for the `debug-production` skill.
 | Question | Where to look |
 |---|---|
 | Did a real player hit an error? | Sentry, via the MCP server (Claude Code: `claude mcp list`; Pi: ask the agent to list organizations) |
-| What does the deployed build log? | `scripts/probe-live.mjs` |
-| Was a build secret set? | `scripts/fetch-bundle.sh` — Vite inlines `VITE_*` |
+| What does the deployed build log? | `.claude/skills/debug-production/scripts/probe-live.mjs` |
+| Was a build secret set? | `.claude/skills/debug-production/scripts/fetch-bundle.sh` — Vite inlines `VITE_*` |
 | Which commit is live? | `VITE_APP_VERSION` (set to `github.sha` in `deploy.yml`) |
 | Are the Firebase rules deployed? | `.github/workflows/firebase.yml` run history |
 

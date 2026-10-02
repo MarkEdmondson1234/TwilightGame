@@ -438,4 +438,4 @@ compare dom_renderer.png pixi_renderer.png difference.png
 - [PixiJS v8 Docs](https://pixijs.com/docs)
 - [PixiJS Examples](https://pixijs.com/examples)
 - [Particle Editor](https://pixijs.io/particle-emitter/)
-- [PIXI_API_REFERENCE.md](../../../design_docs/planned/PIXI_API_REFERENCE.md)
+- [PIXI_API_REFERENCE.md](../../../../design_docs/planned/PIXI_API_REFERENCE.md)

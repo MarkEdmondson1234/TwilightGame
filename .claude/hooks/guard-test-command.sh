@@ -21,8 +21,7 @@ Use one of these instead:
   make test          tests only, runs once and exits
   npm run test:run   same as `make test`, if make is unavailable
 
-Note: two tests (cropGrowth, eventChains) already fail on main for unrelated reasons.
-"2 failed" is the expected baseline, not a regression you caused.
+The suite is fully green on main — any failure is a real regression.
 EOF
   exit 2
 fi

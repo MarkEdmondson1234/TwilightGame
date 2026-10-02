@@ -1,6 +1,6 @@
 ---
 name: Add Inventory Sprite
-description: Add inventory item sprites (grocery items, tools, seeds, potions) to the game. Handles asset registration, optimization, and UI mapping following the three-location pattern. (project)
+description: Add inventory item sprites (grocery items, tools, seeds, potions) to the game. Handles asset registration, optimization, and linking the sprite to the item definition. (project)
 ---
 
 # Add Inventory Sprite
@@ -9,20 +9,18 @@ Add new sprites for inventory items (grocery items, tools, seeds, resources, pot
 
 ## Quick Start
 
-**The Three-Location Pattern (CRITICAL):**
+**The Two-Location Pattern:**
 
-Every inventory sprite must be registered in **exactly three locations**:
+Every inventory sprite is registered in **two places**:
 
-1. **`assets.ts`** - Define the optimized sprite path
-2. **The matching module under `data/items/`** - Link sprite to item definition (`image` property)
+1. **`assets.ts`** - Define the optimised sprite path
+2. **The matching module under `data/items/`** - Set the `image` property on the item definition
    - Pick the module for the item's category (see the category → module table in the `data/items.ts` header)
-   - **REQUIRED for shop items** (ShopUI reads from items.ts)
-   - Optional for non-shop items (for documentation)
-3. **`utils/inventoryUIHelper.ts`** - Map sprite for inventory UI rendering
-   - **REQUIRED for all items** (Inventory component reads from here)
+   - **This is the single source of truth for the item's picture** - the inventory, quick slot bar, shop, recipe book and cooking popup all read `item.image`
 
-**Without step 2, shop items show as 📦 placeholders in the shop.**
-**Without step 3, items show as emoji fallbacks in inventory.**
+There is no separate inventory sprite map. `getItemIcon()` in `utils/inventoryUIHelper.ts` resolves an icon in this order: runtime registry (`registerItemSprite()`, used only for picked-up placed items with per-instance art) → `item.image` → `item.icon` (emoji) → `FALLBACK_ITEM_ICON` (a brown parcel). **You do not need to edit `inventoryUIHelper.ts`.**
+
+**Without `image:` on the definition, the item shows its `icon` emoji, or the brown parcel placeholder.**
 
 **Typical workflow:**
 ```typescript
@@ -33,20 +31,15 @@ export const groceryAssets = {
   chocolate_bar: '/TwilightGame/assets-optimized/items/grocery/chocolate_bar.png',
 };
 
-// 3. Link in items.ts (optional):
+// 3. Link in data/items/ingredients.ts:
 chocolate: {
   id: 'chocolate',
   displayName: 'Chocolate',
-  image: groceryAssets.chocolate_bar,
+  image: groceryAssets.chocolate_bar,  // ← this is what every UI reads
   // ...other properties
 },
 
-// 4. Map in inventoryUIHelper.ts (CRITICAL):
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  chocolate: groceryAssets.chocolate_bar,  // ← Must add this!
-};
-
-// 5. Run optimization:
+// 4. Run optimisation:
 npm run optimize-assets
 ```
 
@@ -58,7 +51,7 @@ Invoke this skill when:
 - User asks to add seed packet sprites
 - User mentions "inventory sprite", "item image", "grocery sprite"
 - User wants to replace emoji placeholders with real images
-- User reports sprites showing as emojis instead of images (missing ITEM_SPRITE_MAP entry)
+- User reports sprites showing as emojis instead of images (missing `image:` on the item definition)
 - User adds a crop that should also be purchasable at the shop (like spinach or salad)
 - User adds cooked food sprites (recipes that produce food items)
 - User adds potion sprites (brewed items from MagicManager)
@@ -82,9 +75,8 @@ Invoke this skill when:
 **Ask user where they uploaded the sprite(s):**
 
 - **Grocery items** (cooking ingredients): `/public/assets/items/grocery/`
-- **Tools**: `/public/assets/items/tools/`
-- **Seeds**: `/public/assets/items/seeds/`
-- **Resources** (crafting materials): `/public/assets/items/resources/`
+- **Tools, seeds and raw materials**: directly in `/public/assets/items/` (e.g. `hoe.png`, `carrot_seeds.png`, `wood_fine.png`)
+- **Crafting stations/furniture/decorations/clothing**: `/public/assets/items/crafting/`, `furniture/`, `decoration/`, `clothing/`
 - **Cooked food** (finished recipes): `/public/assets/cooking/`
 - **Magical ingredients** (forageable): `/public/assets/items/magical/forageable/`
 - **Potions** (brewed results): `/public/assets/items/magical/potions/`
@@ -114,7 +106,7 @@ export const groceryAssets = {
 // In assets.ts
 export const itemAssets = {
   // ...existing tools
-  new_tool: '/TwilightGame/assets-optimized/items/tools/new_tool.png',
+  new_tool: '/TwilightGame/assets-optimized/items/new_tool.png',
 };
 ```
 
@@ -149,75 +141,19 @@ new_item: {
   stackable: true,
   sellPrice: 10,
   buyPrice: 25,
-  image: groceryAssets.new_item,  // ← Link sprite (REQUIRED for shop display)
+  image: groceryAssets.new_item,  // ← Link sprite (read by inventory, shop and recipe book)
 },
 ```
 
-**CRITICAL:** This step is **REQUIRED** for items sold in shops (ShopUI component reads `itemDef.image` from items.ts). Without this, shop items show as 📦 placeholders.
+**This step is REQUIRED for every item with a sprite.** Inventory, quick slot bar, `ShopUI`, `components/book/RecipeContent.tsx` and `CookingResultPopup` all read `item.image` via `getItem()`.
 
-**When this step is REQUIRED:**
-- ✅ Seeds available in the shop
-- ✅ Grocery items/ingredients sold in the shop
-- ✅ Tools sold in the shop
-- ✅ Any item that appears in shop inventory
+If the item previously had only an emoji `icon`, you can leave the `icon` in place — `image` takes precedence — or remove it.
 
-**When this step is optional:**
-- ⚠️ Crops harvested from farming (not sold in shop, only in inventory)
-- ⚠️ Foraged items (not sold in shop)
-- ⚠️ Crafted items (not sold in shop)
-
-### 4. Map in `utils/inventoryUIHelper.ts` (CRITICAL)
-
-**This is the most important step** - without this, sprites won't display.
-
-```typescript
-// Import asset collections at top of file
-import { itemAssets, groceryAssets } from '../assets';
-
-// Add to ITEM_SPRITE_MAP
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  // Tools
-  tool_hoe: itemAssets.hoe,
-  tool_watering_can: itemAssets.watering_can,
-
-  // Seeds
-  seed_carrot: itemAssets.carrot_seeds,
-
-  // Grocery items
-  chocolate: groceryAssets.chocolate_bar,
-  vanilla: groceryAssets.vanilla_pods,
-
-  // Crops (harvested items that also appear in shop)
-  crop_spinach: groceryAssets.spinach_bundle,
-  crop_salad: groceryAssets.salad_head,
-
-  // ← Add new items here:
-  new_item: groceryAssets.new_item,
-};
-```
-
-**Common mistake:** Forgetting this step causes sprites to show as emoji fallbacks.
-
-**Multiple items sharing one sprite:**
-```typescript
-// Both 'meat' and 'minced_meat' can use the same sprite
-meat: groceryAssets.minced_meat,
-minced_meat: groceryAssets.minced_meat,
-```
-
-**Remove emoji fallbacks when adding sprites:**
-```typescript
-// In ITEM_ICON_MAP (emoji fallback section)
-const ITEM_ICON_MAP: Record<string, string> = {
-  crop_salad: '🥗',  // ← Remove this line when adding sprite
-};
-```
-
-If an item has an emoji fallback in `ITEM_ICON_MAP` and you add a sprite, remove the emoji entry to avoid confusion. The sprite in `ITEM_SPRITE_MAP` takes precedence, but removing the fallback keeps the code clean.
+**Multiple items sharing one sprite:** point both definitions' `image` at the same asset.
 
 ### 4b. Special Case: Cooked Food Items
 
-Cooked food items (recipes that produce food) require **four locations** instead of three, plus the recipe must have an `image` property to spawn the food sprite near the player.
+Cooked food uses the same item `image`, and the recipe usually carries the same picture too.
 
 **Example: Adding chocolate_cake sprite**
 
@@ -245,61 +181,32 @@ Cooked food items (recipes that produce food) require **four locations** instead
    },
    ```
 
-4. **Map in `utils/inventoryUIHelper.ts`** (ITEM_SPRITE_MAP):
-   ```typescript
-   const ITEM_SPRITE_MAP: Record<string, string> = {
-     // Cooked Food
-     food_tea: cookingAssets.cup_of_tea,
-     food_french_toast: cookingAssets.french_toast,
-     food_chocolate_cake: cookingAssets.chocolate_cake,  // ← Add this
-   };
-   ```
-
-5. **Add to recipe in `data/recipes.ts`**:
+4. **Add `image` to the recipe in `data/recipes.ts`**:
    ```typescript
    chocolate_cake: {
      id: 'chocolate_cake',
      name: 'chocolate_cake',
      displayName: 'Chocolate Cake',
      // ...ingredients, cookingTime, etc.
-     image: cookingAssets.chocolate_cake,  // ← REQUIRED for spawning
+     image: cookingAssets.chocolate_cake,  // ← shown on the recipe page
      instructions: [...],
    },
    ```
+   The recipe's `image` is the illustration on its page in the recipe book (`components/book/RecipeContent.tsx`, opened from the cottage book). It is optional, but a recipe without one has no picture there.
 
-6. **Run optimization**:
+5. **Run optimisation**:
    ```bash
    npm run optimize-assets
    ```
 
-**Why the recipe needs `image` property:**
-
-When you cook a recipe successfully, the game spawns the food sprite near the player (1 tile above). This happens in `components/RecipeBook.tsx`:
-
-```typescript
-// After successful cooking
-if (result.success && result.foodProduced && playerPosition && currentMapId) {
-  const recipe = getRecipe(recipeId);
-  if (recipe?.image) {  // ← Checks for this!
-    // Place the food item near the player
-    const placedItem: PlacedItem = {
-      // ...
-      image: recipe.image,  // ← Uses recipe's image
-    };
-    gameState.addPlacedItem(placedItem);
-  }
-}
-```
-
-**Four locations for cooked food:**
+**Three locations for cooked food:**
 1. `assets.ts` - cookingAssets object
-2. `data/items/food.ts` - food_* item definition (for inventory display)
-3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
-4. `data/recipes.ts` - recipe definition (for spawning sprite after cooking)
+2. `data/items/food.ts` - food_* item definition (inventory, shop, etc.)
+3. `data/recipes.ts` - recipe definition (recipe book illustration)
 
 ### 4c. Special Case: Magical Potions (Brewed Items)
 
-Magical potions are brewed via the `MagicManager` system (similar to how food is cooked via `CookingManager`). They follow the standard three-location pattern but use dedicated asset collections.
+Magical potions are brewed via the `MagicManager` system (similar to how food is cooked via `CookingManager`). They follow the standard two-location pattern but use a dedicated asset collection.
 
 **File location:** `/public/assets/items/magical/potions/`
 
@@ -332,21 +239,7 @@ Magical potions are brewed via the `MagicManager` system (similar to how food is
    },
    ```
 
-4. **Map in `utils/inventoryUIHelper.ts`** (ITEM_SPRITE_MAP):
-   ```typescript
-   import { potionAssets } from '../assets';
-
-   const ITEM_SPRITE_MAP: Record<string, string> = {
-     // Potions (brewed via MagicManager)
-     potion_friendship: potionAssets.friendship_elixir,
-     potion_bitter_grudge: potionAssets.bitter_grudge,
-     potion_glamour: potionAssets.glamour_draught,
-     potion_beastward: potionAssets.beastward_balm,
-     potion_wakefulness: potionAssets.wakefulness_brew,
-   };
-   ```
-
-5. **Run optimization**:
+4. **Run optimisation**:
    ```bash
    npm run optimize-assets
    ```
@@ -359,10 +252,9 @@ Magical potions are brewed via the `MagicManager` system (similar to how food is
 - Potion recipes are in `data/potionRecipes.ts` (not `data/recipes.ts`)
 - Potions currently cannot be sold in shops (future: witch shop)
 
-**Three locations for potions:**
+**Two locations for potions:**
 1. `assets.ts` - potionAssets object
-2. `data/items/potions.ts` - potion_* item definition (for inventory display)
-3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
+2. `data/items/potions.ts` - potion_* item definition (`image`)
 
 **Existing potion sprites:**
 - `friendship_elixir.png` → `potion_friendship`
@@ -373,11 +265,11 @@ Magical potions are brewed via the `MagicManager` system (similar to how food is
 
 ### 4d. Special Case: Crops That Are Also Shop Items
 
-Some crops can be both **harvested from farming** AND **purchased at the shop** (like spinach or salad). These require additional setup beyond the standard three-location pattern.
+Some crops can be both **harvested from farming** AND **purchased at the shop** (like spinach or salad). These require additional setup beyond the standard two-location pattern.
 
 **Example: Adding salad as both a crop and shop item**
 
-1. **Complete steps 1-4** above (asset registration, items.ts, inventoryUIHelper.ts)
+1. **Complete steps 1-3** above (asset registration, `image` on the item definition)
 
 2. **Add to shop inventory** (`data/shopInventory.ts`):
    ```typescript
@@ -485,50 +377,20 @@ inventoryManager.clearAll();
 
 ## Common Issues and Troubleshooting
 
-### Issue: Sprite shows as emoji instead of image (in inventory)
+### Issue: Sprite shows as emoji or brown parcel instead of image
 
-**Cause:** Item not registered in `ITEM_SPRITE_MAP` in `inventoryUIHelper.ts`
-
-**Fix:**
-```typescript
-// Add to ITEM_SPRITE_MAP in utils/inventoryUIHelper.ts
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  your_item_id: groceryAssets.your_sprite_name,
-};
-```
-
-### Issue: Sprite shows as 📦 placeholder (in shop only)
-
-**Cause:** Item missing `image` property in `data/items.ts`
-
-**Symptoms:**
-- Item displays correctly in inventory (shows sprite)
-- Item shows as beige brick (📦) in shop UI
-- This affects seeds, tools, and grocery items sold in shops
+**Cause:** The item definition in `data/items/<category>.ts` has no `image` property (or it points at an asset key that does not exist). Inventory, quick slot bar and shop all read `item.image`, so the symptom is the same everywhere.
 
 **Fix:**
 ```typescript
-// Add image property to item definition in data/items/seeds.ts
-import { itemAssets } from '../../assets';
+// In the item's data/items/<category>.ts module
+import { groceryAssets } from '../../assets';
 
-seed_your_item: {
-  id: 'seed_your_item',
-  name: 'seed_your_item',
-  displayName: 'Your Item Seeds',
-  category: ItemCategory.SEED,
-  description: 'Description here.',
-  stackable: true,
-  sellPrice: 10,
-  buyPrice: 25,
-  cropId: 'your_item',
-  image: itemAssets.your_item_seeds,  // ← Add this line!
+your_item_id: {
+  // ...
+  image: groceryAssets.your_sprite_name,  // ← Add this line
 },
 ```
-
-**Why this happens:**
-- ShopUI component reads `itemDef.image` from items.ts
-- Inventory component reads from `ITEM_SPRITE_MAP` in inventoryUIHelper.ts
-- Shop items need BOTH locations set
 
 ### Issue: Image shows as broken/missing (beige brick emoji)
 
@@ -541,7 +403,7 @@ seed_your_item: {
 **Fixes:**
 1. **First, check if optimized file exists:**
    ```bash
-   ls "c:\Github files\TwilightGame\public\assets-optimized\items\grocery\your_item.png"
+   ls public/assets-optimized/items/grocery/your_item.png
    ```
    If it says "No such file", run optimization:
    ```bash
@@ -561,7 +423,7 @@ seed_your_item: {
    ```
 
 **Common workflow:**
-After adding a sprite to `assets.ts` and `inventoryUIHelper.ts`, you MUST:
+After adding a sprite to `assets.ts` and the item definition, you MUST:
 1. Run `npm run optimize-assets` (creates the optimized version)
 2. Hard refresh browser (Ctrl+Shift+R) to clear cache
 
@@ -571,7 +433,7 @@ After adding a sprite to `assets.ts` and `inventoryUIHelper.ts`, you MUST:
 
 **Fix:** Ensure file is in a recognized location:
 - `/public/assets/items/grocery/` ✅
-- `/public/assets/items/tools/` ✅
+- `/public/assets/items/` (top level) ✅
 - Any subdirectory under `/public/assets/items/` ✅
 
 The script recursively scans all subdirectories.
@@ -606,7 +468,7 @@ See [`docs/ADDING_INVENTORY_SPRITES.md`](../../../docs/ADDING_INVENTORY_SPRITES.
 ### Related Files
 - [`assets.ts`](../../../assets.ts) - Asset path definitions
 - [`data/items.ts`](../../../data/items.ts) - Item definitions
-- [`utils/inventoryUIHelper.ts`](../../../utils/inventoryUIHelper.ts) - Sprite rendering (CRITICAL)
+- [`utils/inventoryUIHelper.ts`](../../../utils/inventoryUIHelper.ts) - `getItemIcon()` resolution order (no edits needed)
 - [`components/Inventory.tsx`](../../../components/Inventory.tsx) - Inventory UI component
 - [`scripts/optimize-assets.js`](../../../scripts/optimize-assets.js) - Optimization script
 
@@ -616,13 +478,9 @@ When adding a new inventory item sprite:
 
 - [ ] 1. Upload PNG file to `/public/assets/items/{category}/filename.png`
 - [ ] 2. Register in `assets.ts` → appropriate assets object (e.g., `groceryAssets`)
-- [ ] 3. Link in the matching `data/items/` module → item definition `image` property
-  - **REQUIRED if item is sold in shop** (ShopUI reads from items.ts)
-  - Optional for non-shop items (inventory-only items)
-- [ ] 4. **CRITICAL:** Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
-  - **REQUIRED for all items** (Inventory component reads from here)
-- [ ] 4b. Remove emoji fallback from `ITEM_ICON_MAP` if it exists (keeps code clean)
-- [ ] 4c. (Optional) If crop is also shop item, add to `data/shopInventory.ts`
+- [ ] 3. **REQUIRED:** Link in the matching `data/items/` module → item definition `image` property
+  - Every UI (inventory, quick slot bar, shop, recipe book) reads this
+- [ ] 4. (Optional) If crop is also shop item, add to `data/shopInventory.ts`
 - [ ] 5. Run `npm run optimize-assets` (creates optimized version)
 - [ ] 6. Run `make verify` (typecheck + full test suite; `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches bad item IDs. the suite is fully green)
 - [ ] 7. Test in game:
@@ -639,14 +497,9 @@ This skill loads information progressively:
 
 ## Notes
 
-- **The three-location pattern is MANDATORY** - missing any step will cause issues
-- **Step 3 (items.ts) is REQUIRED for shop items** - ShopUI reads `itemDef.image`, not inventoryUIHelper
-- **Step 4 (inventoryUIHelper.ts) is REQUIRED for all items** - Inventory component reads from ITEM_SPRITE_MAP
-- **Always optimize sprites** - high-resolution images will crash the game
-- **Two different rendering systems:**
-  - **ShopUI** → reads `image` from `data/items.ts`
-  - **Inventory** → reads from `ITEM_SPRITE_MAP` in `utils/inventoryUIHelper.ts`
-  - Both must be set for shop items to display correctly everywhere
+- **Both locations are MANDATORY** - `assets.ts` and the item's `image` property
+- **The item definition's `image` is the single source of truth** - `utils/inventoryUIHelper.ts` reads it via `getItem()`; there is no separate sprite map to maintain
+- **Always optimise sprites** - high-resolution images will crash the game
 - **Asset paths must use `/assets-optimized/`** - not `/assets/`
-- **Multiple items can share one sprite** - just map both item IDs to the same asset
+- **Multiple items can share one sprite** - point both definitions' `image` at the same asset
 - **File naming**: Use descriptive snake_case names matching item context (e.g., `chocolate_bar.png` not `choc.png`)

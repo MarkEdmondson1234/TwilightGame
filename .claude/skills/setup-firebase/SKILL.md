@@ -115,6 +115,6 @@ firebase/
 
 **UI entry points:**
 - `components/HelpBrowser.tsx` — Account management UI (F1 → Settings)
-- `components/AIDialogueBox.tsx` — NPC gossip injection from shared data
+- `components/dialogue/UnifiedDialogueBox.tsx` — NPC gossip injection from shared data (unified scripted + AI dialogue)
 
 **Config:** `firebase/config.ts` reads `VITE_FIREBASE_*` from `.env.local`. If vars are missing, all Firebase features silently disable — the game works fully offline.

@@ -9,18 +9,9 @@ npm run test:run   # same, if make is unavailable
 > ⚠️ **Never run `npm test`.** That is `vitest` with no arguments, which starts **watch mode**
 > and never exits — it will hang your session.
 >
-> An optional guard script exists at `.claude/hooks/guard-test-command.sh` which blocks that
-> one command and prints the alternatives. It is **not registered** by default. To enable it,
-> add to the `hooks` object in `.claude/settings.json`:
->
-> ```json
-> "PreToolUse": [
->   { "matcher": "Bash", "hooks": [
->       { "type": "command",
->         "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-test-command.sh\"",
->         "timeout": 5 } ] }
-> ]
-> ```
+> `.claude/hooks/guard-test-command.sh` blocks that one command and prints the alternatives. It is
+> registered as a `PreToolUse` hook in `.claude/settings.json`, so Claude Code sessions are
+> protected; other agents (Pi, Cursor, a human) are not.
 
 ## The baseline is green
 

@@ -8,9 +8,8 @@ Inventory items can display either **image sprites** or **emoji fallbacks**. Whe
 
 1. Add the image file to the correct folder
 2. Register the sprite in `assets.ts`
-3. Link the sprite to the item definition in `items.ts`
-4. Map the sprite in `inventoryUIHelper.ts` for UI rendering
-5. Run the asset optimization script
+3. Link the sprite to the item definition (`image` property in the matching `data/items/` module)
+4. Run the asset optimization script
 
 ## Step-by-Step Guide
 
@@ -103,51 +102,17 @@ export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
 };
 ```
 
-**Note:** The `image` property in `items.ts` is currently optional and not used directly by the rendering system. However, it's good practice to include it for future compatibility and documentation purposes.
+**This is the critical step.** The item's `image` is the single source of truth for its picture: the inventory, quick slot bar, shop, recipe book and cooking popup all read it via `getItem()`.
 
-### 4. Map Sprite in `inventoryUIHelper.ts`
+**How it works:** `getItemIcon()` in `utils/inventoryUIHelper.ts` resolves an icon in this order:
+1. Runtime registry (`registerItemSprite()` — only for picked-up placed items with per-instance art)
+2. `item.image` — renders as `<img>`
+3. `item.icon` — an emoji, renders as text
+4. `FALLBACK_ITEM_ICON` — a brown parcel image
 
-**This is the critical step** - the inventory UI rendering system reads from `ITEM_SPRITE_MAP`:
+There is no separate sprite map to edit in `inventoryUIHelper.ts`.
 
-```typescript
-import { itemAssets, groceryAssets } from '../assets';
-
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  // Tools
-  tool_hoe: itemAssets.hoe,
-  tool_watering_can: itemAssets.watering_can,
-
-  // Ingredients (grocery items)
-  chocolate: groceryAssets.chocolate_bar,
-  vanilla: groceryAssets.vanilla_pods,
-  meat: groceryAssets.minced_meat,
-
-  // Add your new item sprite here:
-  new_ingredient: groceryAssets.new_ingredient,
-  new_tool: itemAssets.new_tool,
-};
-```
-
-**How it works:**
-- The `getItemIcon()` function checks `ITEM_SPRITE_MAP` first
-- If found, it returns the sprite URL (renders as `<img>`)
-- If not found, it falls back to `ITEM_ICON_MAP` emoji (renders as text)
-
-**Example - Before and After:**
-
-Before adding to `ITEM_SPRITE_MAP`:
-```typescript
-// Item shows as emoji 🍫
-chocolate: not in ITEM_SPRITE_MAP → falls back to ITEM_ICON_MAP['chocolate'] = '🍫'
-```
-
-After adding to `ITEM_SPRITE_MAP`:
-```typescript
-// Item shows as image sprite
-chocolate: groceryAssets.chocolate_bar → renders optimized PNG image
-```
-
-### 5. Run Asset Optimization
+### 4. Run Asset Optimization
 
 After adding your sprite files, run the optimization script:
 
@@ -173,7 +138,7 @@ npm run optimize-assets
 /public/assets-optimized/items/grocery/chocolate_bar.png  (22 KB - optimized 97% savings)
 ```
 
-### 6. Test in Game
+### 5. Test in Game
 
 1. **Clear localStorage** (if testing existing save):
    ```javascript
@@ -192,16 +157,17 @@ npm run optimize-assets
 
 ## Common Issues and Troubleshooting
 
-### Issue: Sprite shows as emoji instead of image
+### Issue: Sprite shows as emoji (or brown parcel) instead of image
 
-**Cause:** Item not registered in `ITEM_SPRITE_MAP` in `inventoryUIHelper.ts`
+**Cause:** The item definition has no `image` property, or it names an asset key that does not exist
 
 **Fix:**
 ```typescript
-// Add to ITEM_SPRITE_MAP in utils/inventoryUIHelper.ts
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  your_item_id: groceryAssets.your_sprite_name,
-};
+// In the item's data/items/<category>.ts module
+your_item_id: {
+  // ...
+  image: groceryAssets.your_sprite_name,
+},
 ```
 
 ### Issue: Image shows as broken/missing (beige brick emoji)
@@ -251,10 +217,9 @@ When adding a new inventory item sprite:
 
 - [ ] 1. Add PNG file to `/public/assets/items/{category}/filename.png`
 - [ ] 2. Register in `assets.ts` → appropriate assets object (e.g., `groceryAssets`)
-- [ ] 3. Link in the matching `data/items/` module → item definition `image` property
-- [ ] 4. **CRITICAL:** Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
-- [ ] 5. Run `npm run optimize-assets`
-- [ ] 6. Clear localStorage and test in game
+- [ ] 3. **CRITICAL:** Link in the matching `data/items/` module → item definition `image` property
+- [ ] 4. Run `npm run optimize-assets`
+- [ ] 5. Run `make verify`, then test in game
 
 ## Examples
 
@@ -290,21 +255,13 @@ olive_oil: {
 },
 ```
 
-**4. Map in `utils/inventoryUIHelper.ts`:**
-```typescript
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  // ... existing mappings
-  olive_oil: groceryAssets.olive_oil,  // ← Add mapping
-};
-```
-
-**5. Optimize:**
+**4. Optimize:**
 ```bash
 npm run optimize-assets
 # ✅ olive_oil.png: 800KB → 52KB (saved 93.5%)
 ```
 
-**6. Test:**
+**5. Test:**
 ```javascript
 inventoryManager.addItem('olive_oil', 1);
 ```
@@ -340,16 +297,7 @@ tool_axe: {
 },
 ```
 
-**4. Map in `utils/inventoryUIHelper.ts`:**
-```typescript
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  tool_hoe: itemAssets.hoe,
-  tool_watering_can: itemAssets.watering_can,
-  tool_axe: itemAssets.axe,  // ← Add tool mapping
-};
-```
-
-**5. Optimize and test:**
+**4. Optimize and test:**
 ```bash
 npm run optimize-assets
 ```
@@ -409,7 +357,7 @@ export const groceryAssets = {
   minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
 };
 
-// In items.ts
+// In data/items/ingredients.ts
 meat: {
   id: 'meat',
   name: 'meat',
@@ -423,12 +371,6 @@ minced_meat: {
   displayName: 'Minced Meat',
   image: groceryAssets.minced_meat,  // Same sprite
 },
-
-// In inventoryUIHelper.ts
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  meat: groceryAssets.minced_meat,         // Both map
-  minced_meat: groceryAssets.minced_meat,  // to same sprite
-};
 ```
 
 ## Optimization Settings
@@ -470,17 +412,16 @@ const targetCompression = isShowcaseItem ? 4 : 6;
 - [`ASSETS.md`](ASSETS.md) - General asset management guidelines
 - [`docs/FARMING.md`](FARMING.md) - Farming system (includes crop sprites)
 - [`data/items.ts`](../data/items.ts) - Item definitions
-- [`utils/inventoryUIHelper.ts`](../utils/inventoryUIHelper.ts) - Inventory rendering logic
+- [`utils/inventoryUIHelper.ts`](../utils/inventoryUIHelper.ts) - `getItemIcon()` resolution order
 - [`components/Inventory.tsx`](../components/Inventory.tsx) - Inventory UI component
 
 ## Summary
 
-The key insight: **Inventory sprites must be registered in THREE places:**
+The key insight: **Inventory sprites are registered in TWO places:**
 
-1. **`assets.ts`** - Define the optimized sprite path
-2. **`items.ts`** - Link sprite to item definition (optional, for future use)
-3. **`inventoryUIHelper.ts`** - Map sprite for UI rendering (**CRITICAL** - this is what actually displays the image)
+1. **`assets.ts`** - Define the optimised sprite path
+2. **`data/items/<category>.ts`** - Set `image` on the item definition (**CRITICAL** - every UI reads this)
 
-Without step 3, the sprite will fall back to an emoji.
+Without step 2, the item falls back to its `icon` emoji or the brown parcel placeholder.
 
 After adding sprites, always run `npm run optimize-assets` to generate the optimized versions that the game actually uses.
