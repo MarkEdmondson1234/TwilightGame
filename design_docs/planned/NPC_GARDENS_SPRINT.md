@@ -90,4 +90,4 @@ plots, seasonal clearing), marker round-trip + decay skip + yield cap, favourite
 persistence, shared-plot leak guard (inverted: NPC plots ARE shared plots).
 
 ## Task 12 — Docs
-- [ ] `docs/FARMING.md` section; design doc status → Implemented.
+- [ ] `public/docs/FARMING.md` section; design doc status → Implemented.

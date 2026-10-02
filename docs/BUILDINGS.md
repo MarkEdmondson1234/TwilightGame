@@ -536,7 +536,7 @@ Done! The barn now appears in the village with seasonal variations and proper co
 - **[MAP_GUIDE.md](MAP_GUIDE.md)** - How to create and design maps
 - **[ASSETS.md](ASSETS.md)** - Asset guidelines and optimization
 - **[COORDINATE_GUIDE.md](COORDINATE_GUIDE.md)** - Understanding the position system
-- **[TIME_SYSTEM.md](TIME_SYSTEM.md)** - Seasonal variation system
+- **[TIME_SYSTEM.md](../public/docs/TIME_SYSTEM.md)** - Seasonal variation system
 
 ## Related Files
 

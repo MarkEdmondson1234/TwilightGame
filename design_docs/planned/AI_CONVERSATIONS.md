@@ -8,7 +8,7 @@
 
 ## Documentation
 
-- **Player Guide**: [docs/AI_CHAT.md](../../docs/AI_CHAT.md) - In-game help (F1 → AI Chat tab)
+- **Player Guide**: [public/docs/AI_CHAT.md](../../public/docs/AI_CHAT.md) - In-game help (F1 → AI Chat tab)
 - **Developer Guide**: [docs/AI_CONVERSATIONS_DEV.md](../../docs/AI_CONVERSATIONS_DEV.md) - Technical details
 
 ## Overview

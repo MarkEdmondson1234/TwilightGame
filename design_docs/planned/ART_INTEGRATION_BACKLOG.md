@@ -16,7 +16,7 @@ asset commits landed alongside (separate agent).
 
 The staging folder is **not** committed to the repo. Each item below lists what it is and
 what integration would involve. When integrating, follow the relevant skill
-(`add-npc-sprite`, `add-character-sprite`, `add-tile-sprite`, `add-inventory-sprite`) and
+(`add-npc-sprite`, `add-character-sprite`, `add-tile-sprite`, `add-item`) and
 the PR + art-review workflow in §4.
 
 | Artwork | What it is | Likely destination | Notes |

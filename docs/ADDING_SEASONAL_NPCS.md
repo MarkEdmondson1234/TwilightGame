@@ -430,7 +430,7 @@ Seasonal NPC locations are **not saved** to localStorage:
 ## Related Documentation
 
 - [SEASONAL_NPC_LOCATIONS.md](SEASONAL_NPC_LOCATIONS.md) - Full technical documentation
-- [TIME_SYSTEM.md](TIME_SYSTEM.md) - How seasons are calculated
+- [TIME_SYSTEM.md](../public/docs/TIME_SYSTEM.md) - How seasons are calculated
 - [MAP_GUIDE.md](MAP_GUIDE.md) - Creating and validating maps
 - [types/npc.ts](../types/npc.ts) - NPC type definitions
 

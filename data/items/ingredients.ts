@@ -2,7 +2,7 @@
  * Cooking ingredients — shop-bought store cupboard items.
  *
  * Add here: anything bought from the grocer and used in cooking recipes
- * (flour, sugar, butter, spices). This is the target of the `add-grocery-item`
+ * (flour, sugar, butter, spices). This is the target of the `add-item`
  * skill. Before adding, check `./crops.ts` — if it is grown, it belongs there.
  *
  * Part of the item registry — composed into `ITEMS` by `data/items.ts`.
