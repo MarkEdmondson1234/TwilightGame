@@ -246,12 +246,12 @@ const cookingData = characterData.load('cooking');
 ### Data Migration
 
 Saves carry a `saveVersion` and go through an ordered migration chain on load
-(`GameState.ts`). **To change the persisted shape, add a numbered migration** — do not add
+(`GameStatePersistence.ts`). **To change the persisted shape, add a numbered migration** — do not add
 another ad-hoc `if (!parsed.x)` back-fill, which runs on every load forever and can never be
 retired.
 
 ```typescript
-// GameState.ts
+// GameStatePersistence.ts
 export const SAVE_VERSION = 1; // bump this to N when the shape changes
 
 const SAVE_MIGRATIONS: Record<number, (save: Record<string, unknown>) => void> = {
@@ -366,7 +366,8 @@ Planned features for the save system:
 
 Key files for the save system:
 
-- `GameState.ts` - Main save/load logic and localStorage interface
+- `GameState.ts` - Core save/load and localStorage interface; the state shape is `state/types.ts` and domain methods are in `state/*.ts`
+- `GameStatePersistence.ts` - Loading, `SAVE_VERSION` and the migration chain
 - `utils/CharacterData.ts` - Unified API for character data
 - `utils/CookingManager.ts` - Cooking data save/load
 - `utils/FriendshipManager.ts` - NPC relationship data

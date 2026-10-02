@@ -29,7 +29,7 @@ The cutscene system provides a cinematic storytelling framework for Twilight Gam
    - Renders backgrounds, characters, and dialogue
    - Handles user input (E/Enter to advance, ESC to skip)
 
-3. **GameState Integration** (`GameState.ts`)
+3. **GameState Integration** (`state/seasonalEvents.ts`)
    - Persists completed cutscenes to localStorage
    - Syncs with CutsceneManager on load
 
