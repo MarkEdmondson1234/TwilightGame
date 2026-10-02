@@ -123,8 +123,9 @@ function reportPerformance(): void {
     // Slow minutes earn attribution: what was the world doing? The getter is
     // only called when the threshold is crossed, and its failure must not cost
     // us the report we already assembled.
-    if (stalls >= SLOW_MINUTE_STALLS && slowMinuteContext) {
-      safely(() => Object.assign(summary, slowMinuteContext()));
+    const getContext = slowMinuteContext;
+    if (stalls >= SLOW_MINUTE_STALLS && getContext) {
+      safely(() => Object.assign(summary, getContext()));
     }
     Sentry.setContext('game_performance', summary);
     log('game.performance', summary);

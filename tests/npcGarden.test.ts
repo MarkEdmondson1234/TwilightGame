@@ -587,6 +587,7 @@ describe('NPC garden — interactions and dialogue', () => {
       for (const cropId of gardener.requestable) {
         expect(ids).toContain(`garden_favour_${cropId}`);
         const crop = getCrop(cropId);
+        if (!crop) throw new Error(`requestable crop ${cropId} is not defined`);
         const seasons = responses
           .filter((r) => r.nextId === `garden_favour_${cropId}`)
           .map((r) => r.requiredSeason);

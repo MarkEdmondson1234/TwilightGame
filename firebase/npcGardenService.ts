@@ -27,6 +27,8 @@ import {
   setDoc,
   Unsubscribe,
   Timestamp,
+  type DocumentData,
+  type UpdateData,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
@@ -187,7 +189,7 @@ class NpcGardenService {
         };
 
         if (snapshot.exists()) {
-          tx.update(planRef, next as unknown as { [x: string]: unknown });
+          tx.update(planRef, next as unknown as UpdateData<DocumentData>);
         } else {
           tx.set(planRef, next as unknown as { [x: string]: unknown });
         }

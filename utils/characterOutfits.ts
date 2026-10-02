@@ -81,7 +81,7 @@ export function resolveOutfit(
   characterId: string,
   outfit: string | null | undefined
 ): string {
-  return getOutfit(characterId, outfit) ? outfit : DEFAULT_OUTFIT;
+  return outfit && getOutfit(characterId, outfit) ? outfit : DEFAULT_OUTFIT;
 }
 
 /**

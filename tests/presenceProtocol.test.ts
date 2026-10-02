@@ -114,8 +114,8 @@ describe('decodePresence', () => {
   it('drops an emote that is not in the closed vocabulary', () => {
     // The RTDB rules reject these too, but rules can lag a deploy and this is
     // the safety property the whole emote design rests on.
-    expect(decodePresence(wire({ e: 'something-nasty' as never })!).e).toBeNull();
-    expect(decodePresence(wire({ e: 'wave' })!).e).toBe('wave');
+    expect(decodePresence(wire({ e: 'something-nasty' as never }))?.e).toBeNull();
+    expect(decodePresence(wire({ e: 'wave' }))?.e).toBe('wave');
   });
 
   it('strips control characters from a display name', () => {

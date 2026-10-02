@@ -550,6 +550,7 @@ const App: React.FC = () => {
     isMovingRef,
     updateMovement,
     setDestination: setClickToMoveDestination,
+    cancelPath: cancelClickToMove,
     setPlayerPos,
     setPlayerScale,
     setPlayerSizeTier,
@@ -1377,11 +1378,22 @@ const App: React.FC = () => {
     onShowCharacterCreator: () => openUI('characterCreator'),
     onSetActiveNPC: setActiveNPC,
     onSetDebugOpen: setDebugOpen,
-    onSetShowDevTools: (show: boolean) => (show ? openUI('devTools') : closeUI('devTools')),
-    onSetShowSpriteEditor: (show: boolean) =>
-      show ? openUI('spriteEditor') : closeUI('spriteEditor'),
-    onSetShowVFXTestPanel: (show: boolean) =>
-      show ? openUI('vfxTestPanel') : closeUI('vfxTestPanel'),
+    // The debug hotkeys pass an updater (`prev => !prev`); treating it as a boolean
+    // made every press "open", so the key could never close its panel.
+    onSetShowDevTools: (show) =>
+      typeof show === 'function' ? toggleUI('devTools') : show ? openUI('devTools') : closeUI('devTools'),
+    onSetShowSpriteEditor: (show) =>
+      typeof show === 'function'
+        ? toggleUI('spriteEditor')
+        : show
+          ? openUI('spriteEditor')
+          : closeUI('spriteEditor'),
+    onSetShowVFXTestPanel: (show) =>
+      typeof show === 'function'
+        ? toggleUI('vfxTestPanel')
+        : show
+          ? openUI('vfxTestPanel')
+          : closeUI('vfxTestPanel'),
     onSetShowHelpBrowser: (show: boolean) =>
       show ? openUI('helpBrowser') : closeUI('helpBrowser'),
     onOpenCooking: openCooking,
@@ -2908,7 +2920,7 @@ const App: React.FC = () => {
               const safe = mapManager.findUnoccupiedPosition(currentMap.id, currentMap.spawnPoint,
                 (pos) => !constrainShopFloor || !isOutsideMobileShopFloor(pos));
               if (safe) {
-                setClickToMoveDestination(null);
+                cancelClickToMove();
                 teleportPlayer(safe);
                 gameState.updatePlayerLocation(currentMap.id, safe, gameState.getPlayerLocation().seed);
                 gameState.flushSave();

@@ -72,7 +72,10 @@ export class WeatherManager {
 
     const globalWeather = getWeatherForSlot(slotIndex, time.season);
     const currentMapId = mapManager.getCurrentMapId();
-    const effectiveWeather = getEffectiveWeather(globalWeather, currentMapId);
+    // No map yet (startup) — getWeatherZone() would call startsWith on null.
+    const effectiveWeather = currentMapId
+      ? getEffectiveWeather(globalWeather, currentMapId)
+      : globalWeather;
     const currentWeather = this.gameState.getWeather();
 
     if (effectiveWeather !== currentWeather) {
