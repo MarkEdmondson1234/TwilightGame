@@ -438,7 +438,7 @@ and root causes (coordinate pipeline, click detection, audio lifecycle, z-index 
 | Path | What |
 | --- | --- |
 | `App.tsx` | Main component (~3,500 lines — **over the 500-line rule**). **Read its navigation header first**: it maps every subsystem to the hook that owns it. Add logic to that `use*Controller`/hook and only *wire* it here |
-| `GameState.ts` | Persistent game state singleton (~155 methods) — prefer a focused manager + `characterData` for new state |
+| `GameState.ts` + `state/` | Persistent game state singleton. GameState.ts is only the core (save, subscribe, reset); methods live by domain in `state/*.ts` (stamina, effects, exploration, seasonalEvents, weather, world, quests, characterDomains) and the save shape in `state/types.ts`. Callers still use `gameState.foo()` — read the header of GameState.ts before adding state |
 | `constants.ts` | Game constants, `TIMING`, `DEBUG` flags; re-exports `TILE_LEGEND`/`SPRITE_METADATA` |
 | `types/` (via `types.ts`) | Shared types: `TileType` (`types/core.ts`, append-only numeric enum), `Position`, `MapDefinition`, … |
 | `assets.ts` | Every asset URL, grouped by kind (`groceryAssets`, `npcAssets`, …) |
@@ -760,7 +760,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
 ## Code Maintenance Guidelines
 
 **The 500-line rule.** No file should exceed ~500 lines, and no function ~100. Many already do
-(69 files; `App.tsx`, `GameState.ts`, `maps/procedural.ts`, `utils/farmManager.ts`,
+(68 files; `App.tsx`, `maps/procedural.ts`, `utils/farmManager.ts`,
 `hooks/usePixiRenderer.ts` are the worst) — **do not grow them further**. Extract, don't expand:
 put new logic in a new focused file, or the matching `use*Controller` hook, and only wire it from
 the big file.

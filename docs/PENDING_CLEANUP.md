@@ -122,7 +122,7 @@ incrementally — one controller per PR, never a big-bang split:
 | File                      | Lines  | Notes                                                                                                                                                                      |
 | ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `App.tsx`                 | ~2,990 | The wiring hub: ~104 imports, ~84 hook call sites. Extract remaining domains (cutscene wiring, farm animation, UI effects) the same way `useUIState`/`useToast` were done. |
-| `GameState.ts`            | ~2,056 | Save-state + placement + quest surface. Consider splitting persistence-facing code from state.                                                                             |
+| `GameState.ts`            | ~340   | **Done:** split by domain into `state/*.ts` (methods still on `gameState`). Next step, if wanted: callers migrate to focused managers one domain at a time.                 |
 | `utils/forageHandlers.ts` | ~1,712 |                                                                                                                                                                            |
 | `maps/procedural.ts`      | ~1,708 |                                                                                                                                                                            |
 | `components/DevTools.tsx` | ~1,670 | Debug tooling — low priority.                                                                                                                                              |
