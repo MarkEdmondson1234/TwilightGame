@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, RoomLayer, RoomProp } from '../../types';
+import { type MapDefinition, TileType, type RoomLayer, type RoomProp } from '../../types';
 import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';

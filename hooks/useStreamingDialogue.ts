@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
-import { NPCEmotion } from '../services/anthropicClient';
+import { type NPCEmotion } from '../services/anthropicClient';
 
 const BATCH_INTERVAL_MS = 50; // Update UI at most every 50ms
 

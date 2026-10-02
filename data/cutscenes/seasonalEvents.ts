@@ -12,7 +12,7 @@
  *   Winter  day 42 — Yule          (the Village Elder)
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 import { YULE_CUTSCENE_ID, YULE_CATCHUP_CUTSCENE_ID, YULE_CATCHUP_RECAP } from '../yuleCelebration';
 import {
   HARVEST_FEAST_CATCHUP_CUTSCENE_ID,

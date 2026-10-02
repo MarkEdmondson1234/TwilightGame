@@ -13,7 +13,7 @@
  * entries), so talking to the kitten follows the story automatically.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC, createWanderingNPC } from '../createNPC';
 import { TimeManager } from '../../TimeManager';

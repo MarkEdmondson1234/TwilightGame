@@ -44,7 +44,7 @@
  */
 
 import { gameState } from '../GameState';
-import { FarmPlot, NPCFriendship, Photo, DeskContents } from '../types';
+import { type FarmPlot, type NPCFriendship, type Photo, type DeskContents } from '../types';
 import { debugLog } from './debugLog';
 import { reportErrorOnce, reportMessageOnce } from './errorReporting';
 

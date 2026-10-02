@@ -12,7 +12,7 @@ import React, { useState, useMemo } from 'react';
 import { inventoryManager } from '../utils/inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
 import { getOpenFoodSlots, placeFeastFood } from '../data/questHandlers/harvestFeastHandler';
-import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import ItemTooltip, { type TooltipContent } from './ItemTooltip';
 import GameIcon from './GameIcon';
 import { Z_MODAL, zClass } from '../zIndex';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';

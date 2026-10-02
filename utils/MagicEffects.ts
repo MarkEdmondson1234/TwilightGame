@@ -9,12 +9,12 @@
  *   applyPotionEffect('potion_raincaller', callbacks);
  */
 
-import { WeatherType } from '../data/weatherConfig';
+import { type WeatherType } from '../data/weatherConfig';
 import { mapManager } from '../maps/MapManager';
 import { TimeManager } from './TimeManager';
 import { farmManager } from './farmManager';
 
-import { Position, FarmPlotState } from '../types';
+import { type Position, FarmPlotState } from '../types';
 import { debugLog } from './debugLog';
 
 // ============================================================================

@@ -20,7 +20,7 @@
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
-import { PlacedItem } from '../../types';
+import { type PlacedItem } from '../../types';
 import { getItem } from '../../data/items';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';

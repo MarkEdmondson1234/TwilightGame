@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Photo } from '../types';
+import { type Photo } from '../types';
 import { Z_MODAL, zStyle } from '../zIndex';
 
 interface PhotoViewerProps {

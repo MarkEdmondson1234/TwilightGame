@@ -13,7 +13,7 @@ import { createOldWomanKnittingNPC } from '../utils/npcs/village/oldWomanKnittin
 import { createShopkeeperNPC } from '../utils/npcs/village/shopkeeper';
 import { createVillageElderNPC } from '../utils/npcs/village/villageElder';
 import { createWitchWolfNPC } from '../utils/npcs/forest/witchWolf';
-import { NPC } from '../types';
+import { type NPC } from '../types';
 
 /**
  * Every villager who can be asked about Nevarre during the ghost_queen quest

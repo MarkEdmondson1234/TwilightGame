@@ -13,7 +13,7 @@
  * - CutsceneDefinition (complete cutscene definition)
  */
 
-import { Position } from './core';
+import { type Position } from './core';
 
 // ============================================================================
 // Cutscene System Types

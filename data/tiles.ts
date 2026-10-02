@@ -5,7 +5,7 @@
  * Re-exported from constants.ts for backward compatibility.
  */
 
-import { TileType, TileData, CollisionType } from '../types';
+import { TileType, type TileData, CollisionType } from '../types';
 import { tileAssets, farmingAssets } from '../assets';
 import { resolveAppleTreeImage } from '../utils/fruitTreeRegistry';
 

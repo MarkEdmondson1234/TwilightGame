@@ -6,7 +6,7 @@
  * (not a walking character) with a slow, occasional blink animation.
  */
 
-import { NPC, Position } from '../../types';
+import { type NPC, type Position } from '../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../assets';
 import { createStaticNPC } from './createNPC';
 

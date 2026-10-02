@@ -22,8 +22,8 @@
  */
 
 import {
-  PotionRecipeDefinition,
-  PotionLevel,
+  type PotionRecipeDefinition,
+  type PotionLevel,
   getPotionRecipe,
   getPotionRecipesByLevel,
 } from '../data/potionRecipes';

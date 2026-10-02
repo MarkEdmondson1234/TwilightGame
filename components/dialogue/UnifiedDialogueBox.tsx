@@ -7,18 +7,18 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { NPC, DialogueNode, DialogueResponse } from '../../types';
+import { type NPC, type DialogueNode, type DialogueResponse } from '../../types';
 import {
   NPC_PERSONAS,
   buildSystemPrompt,
-  GameContext,
+  type GameContext,
   getDialogue,
 } from '../../services/dialogueService';
 import {
   generateStructuredResponse,
   generateStreamingResponse,
   isAIAvailable,
-  NPCEmotion,
+  type NPCEmotion,
 } from '../../services/anthropicClient';
 import {
   getHistoryForAPI,

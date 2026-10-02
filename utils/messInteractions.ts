@@ -13,7 +13,7 @@
 
 import {
   MESS_PILE_POSITIONS,
-  MessPilePosition,
+  type MessPilePosition,
   getMessCleaned,
   getMessRemaining,
   markMessCleaned,

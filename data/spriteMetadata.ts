@@ -8,7 +8,7 @@
  * Extracted from constants.ts for better organisation.
  */
 
-import { TileType, SpriteMetadata } from '../types';
+import { TileType, type SpriteMetadata } from '../types';
 import { tileAssets, orchardAssets } from '../assets';
 
 export const SPRITE_METADATA: SpriteMetadata[] = [

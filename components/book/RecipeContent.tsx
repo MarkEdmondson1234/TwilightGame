@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../../data/recipes';
+import { type RecipeDefinition, type RecipeCategory, RECIPES, getRecipe } from '../../data/recipes';
 import { getItem } from '../../data/items';
-import { cookingManager, CookingResult } from '../../utils/CookingManager';
+import { cookingManager, type CookingResult } from '../../utils/CookingManager';
 import { audioManager } from '../../utils/AudioManager';
-import { Position } from '../../types';
-import { BookThemeConfig } from './bookThemes';
-import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
+import { type Position } from '../../types';
+import { type BookThemeConfig } from './bookThemes';
+import { type BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';

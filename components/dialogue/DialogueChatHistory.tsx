@@ -9,7 +9,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import ChatBubble from '../ChatBubble';
-import { DisplayMessage } from '../../hooks/useChatHistory';
+import { type DisplayMessage } from '../../hooks/useChatHistory';
 import { DIALOGUE_FONT, TEXT_FONT } from './dialogueHelpers';
 import { TimeManager } from '../../utils/TimeManager';
 

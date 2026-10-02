@@ -13,14 +13,14 @@
  *   manager.updateAllCameras(cameraX, cameraY);
  */
 
-import { TileLayer } from './TileLayer';
-import { SpriteLayer } from './SpriteLayer';
-import { PlayerSprite } from './PlayerSprite';
-import { ShadowLayer } from './ShadowLayer';
-import { WeatherLayer } from './WeatherLayer';
-import { DarknessLayer } from './DarknessLayer';
-import { PlacedItemsLayer } from './PlacedItemsLayer';
-import { BackgroundImageLayer } from './BackgroundImageLayer';
+import { type TileLayer } from './TileLayer';
+import { type SpriteLayer } from './SpriteLayer';
+import { type PlayerSprite } from './PlayerSprite';
+import { type ShadowLayer } from './ShadowLayer';
+import { type WeatherLayer } from './WeatherLayer';
+import { type DarknessLayer } from './DarknessLayer';
+import { type PlacedItemsLayer } from './PlacedItemsLayer';
+import { type BackgroundImageLayer } from './BackgroundImageLayer';
 
 // Union type of all layer types
 type PixiLayer =

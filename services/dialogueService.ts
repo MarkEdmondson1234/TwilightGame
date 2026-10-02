@@ -8,10 +8,10 @@
  * - Conversation history tracking
  */
 
-import { DialogueNode, NPC, FriendshipTier } from '../types';
+import { type DialogueNode, type NPC, type FriendshipTier } from '../types';
 import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
-import { GiftReaction, getGiftReactionDialogue } from '../data/giftReactions';
+import { type GiftReaction, getGiftReactionDialogue } from '../data/giftReactions';
 import { friendshipManager } from '../utils/FriendshipManager';
 import { globalEventManager } from '../utils/GlobalEventManager';
 import { eventChainManager } from '../utils/EventChainManager';

@@ -9,7 +9,7 @@
  *    (5×5-area adjacency geometry) and sparrow feathers (NPC state) — bespoke.
  */
 
-import { TileType } from '../../types';
+import { type TileType } from '../../types';
 
 export interface ForageResult {
   found: boolean;

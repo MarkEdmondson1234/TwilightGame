@@ -5,7 +5,7 @@
  * Uses cottage-core styling with gentle animation.
  */
 
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_DESTINATION_MARKER, zStyle } from '../zIndex';
 

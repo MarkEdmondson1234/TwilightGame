@@ -23,7 +23,7 @@
 import { TimeManager } from './TimeManager';
 import { mapManager } from '../maps/MapManager';
 import {
-  WeatherType,
+  type WeatherType,
   WEATHER_SLOT_HOURS,
   getWeatherForSlot,
   getEffectiveWeather,

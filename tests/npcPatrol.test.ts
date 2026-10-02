@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { npcManager } from '../NPCManager';
 import { createNPC } from '../utils/npcs/createNPC';
-import { NPCBehavior, TileType, Direction, CollisionType, Position } from '../types';
+import { NPCBehavior, TileType, Direction, CollisionType, type Position } from '../types';
 
 const ARRIVAL = 0.06; // PATROL_ARRIVAL_EPSILON (0.05) + float noise
 const FRAME = 1000 / 60;

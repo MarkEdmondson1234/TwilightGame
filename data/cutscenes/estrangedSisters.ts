@@ -5,7 +5,7 @@
  * Shows the two estranged twin sisters meeting for the first time in fifty years.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 // Ruins background sprites (seasonal variants exist, using spring-summer as default)
 const RUINS_BG = '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_spring-summer.png';

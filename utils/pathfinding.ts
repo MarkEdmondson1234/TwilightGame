@@ -5,7 +5,7 @@
  * Optimised for small maps (30x30) - runs in sub-millisecond time.
  */
 
-import { Position, NPC, isTileSolid } from '../types';
+import { type Position, type NPC, isTileSolid } from '../types';
 
 import { metadataCache } from './MetadataCache';
 import { getTileData, getTileCoords } from './mapUtils';

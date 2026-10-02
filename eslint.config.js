@@ -129,6 +129,14 @@ export default tseslint.config(
         },
       ],
 
+      // Type-only imports must say so. esbuild drops them either way, but written as
+      // value imports they read as runtime dependencies — to people, agents and cycle
+      // checkers alike (several "import cycles" were only ever types).
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { fixStyle: 'inline-type-imports', disallowTypeAnnotations: false },
+      ],
+
       // Allow explicit any in some cases (warn instead of error)
       '@typescript-eslint/no-explicit-any': 'warn',
 

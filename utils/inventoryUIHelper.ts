@@ -3,9 +3,9 @@
  * to the format expected by the Inventory UI component
  */
 
-import { InventoryItem as UIInventoryItem } from '../components/Inventory';
+import { type InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
-import { getItem, ItemDefinition } from '../data/items';
+import { getItem, type ItemDefinition } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
 import { FALLBACK_ITEM_ICON } from './iconMap';

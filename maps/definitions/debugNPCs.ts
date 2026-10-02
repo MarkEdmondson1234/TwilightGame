@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, NPCBehavior } from '../../types';
+import { type MapDefinition, TileType, NPCBehavior } from '../../types';
 import { parseGrid } from '../gridParser';
 import {
   createCatNPC,

@@ -3,7 +3,7 @@
  * Shared between keyboard and touch input handlers
  */
 
-import { Position, TileType, CollisionType, SizeTier, FarmPlotState, NPC } from '../types';
+import { type Position, TileType, CollisionType, type SizeTier, FarmPlotState, type NPC } from '../types';
 import { getTileData, getAdjacentTiles, getTileCoords } from './mapUtils';
 import { deskManager } from './deskManager';
 import { mapManager } from '../maps/MapManager';
@@ -22,7 +22,7 @@ import { staminaManager } from './StaminaManager';
 
 import { getTierName } from './MagicEffects';
 
-import { cookingManager, CookingResult } from './CookingManager';
+import { cookingManager, type CookingResult } from './CookingManager';
 import {
   getNearbyCookingStation,
   NO_COOKING_STATION_MESSAGE,

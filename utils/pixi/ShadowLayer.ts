@@ -19,9 +19,9 @@
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
-import { MapDefinition, SpriteMetadata } from '../../types';
+import { type MapDefinition, type SpriteMetadata } from '../../types';
 import { getTileData } from '../mapUtils';
-import { Season, DaylightHours, SEASONAL_DAYLIGHT } from '../TimeManager';
+import { Season, type DaylightHours, SEASONAL_DAYLIGHT } from '../TimeManager';
 // DaylightHours is used in calculateShadowParams parameter type
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';

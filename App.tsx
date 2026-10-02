@@ -13,7 +13,7 @@ import {
   TIMING,
   SHARED_FARM_MAP_IDS,
 } from './constants';
-import { Position, Direction, NPC } from './types';
+import { type Position, Direction, type NPC } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -30,8 +30,8 @@ import Bookshelf from './components/Bookshelf';
 import { initializeGameCore, initializeGameAssets } from './utils/gameInitializer';
 import { mapManager } from './maps/MapManager';
 import { transitionToMap } from './maps';
-import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
-import { gameState, CharacterCustomization } from './GameState';
+import { getValidationErrors, hasValidationErrors, type MapValidationError } from './maps/gridParser';
+import { gameState, type CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useTouchControls } from './hooks/useTouchControls';
@@ -108,7 +108,7 @@ import EmoteWheel from './components/EmoteWheel';
 import ChatPanel from './components/ChatPanel';
 import BattleSpectator from './components/BattleSpectator';
 import PresenceIndicator from './components/PresenceIndicator';
-import Inventory, { InventoryItem } from './components/Inventory';
+import Inventory, { type InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
@@ -144,11 +144,11 @@ import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import FurnitureCatalogueUI from './components/FurnitureCatalogueUI';
-import GiftModal, { GiftResult } from './components/GiftModal';
+import GiftModal, { type GiftResult } from './components/GiftModal';
 import BasketModal from './components/BasketModal';
 import HarvestFeastModal from './components/HarvestFeastModal';
 import GlamourModal from './components/GlamourModal';
-import { applyPotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
+import { applyPotionEffect, type MagicEffectCallbacks, type SizeTier } from './utils/MagicEffects';
 import {
   onFirstMeetingComplete as onFairyQueenFirstMeeting,
   grantFairyFormPotion,
@@ -162,7 +162,7 @@ import { startWizardTrialsPatience } from './data/questHandlers/wizardTrialsPati
 import { spawnWizardTrialsMordecaiIfAbsent } from './utils/npcs/mine';
 import { getItem, ItemCategory } from './data/items';
 import { DEFAULT_OUTFIT } from './utils/characterOutfits';
-import { WeatherType } from './data/weatherConfig';
+import { type WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
 import VFXRenderer from './components/VFXRenderer';
 import VFXTestPanel from './components/VFXTestPanel';

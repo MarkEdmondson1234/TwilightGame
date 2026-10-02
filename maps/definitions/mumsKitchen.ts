@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, RoomLayer } from '../../types';
+import { type MapDefinition, TileType, type RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createMumNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';

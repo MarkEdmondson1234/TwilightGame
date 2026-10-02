@@ -3,7 +3,7 @@
  * Centralized logic for calculating tile transforms (flip, rotate, scale, brightness)
  */
 
-import { TileData, TileTransformSettings } from '../types';
+import { type TileData, type TileTransformSettings } from '../types';
 
 export interface TileTransformResult {
     transform: string;

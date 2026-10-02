@@ -10,7 +10,7 @@
  * Nothing here throws to callers.
  */
 
-import { doc, setDoc, onSnapshot, arrayUnion, Unsubscribe } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, arrayUnion, type Unsubscribe } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG } from '../constants';

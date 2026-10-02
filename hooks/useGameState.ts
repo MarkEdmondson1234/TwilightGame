@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { gameState, GameState } from '../GameState';
+import { gameState, type GameState } from '../GameState';
 
 /**
  * React hook for accessing and subscribing to game state

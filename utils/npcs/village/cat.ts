@@ -4,7 +4,7 @@
  * A cat with sleeping/angry/standing state machine.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 

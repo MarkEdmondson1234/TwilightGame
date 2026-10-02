@@ -1,5 +1,5 @@
-import { useCallback, useRef, MutableRefObject } from 'react';
-import { Position, Direction } from '../types';
+import { useCallback, useRef, type MutableRefObject } from 'react';
+import { type Position, Direction } from '../types';
 import { PLAYER_SIZE, TIMING } from '../constants';
 import { mapManager } from '../maps/MapManager';
 

@@ -19,11 +19,11 @@
 import * as PIXI from 'pixi.js';
 import { playerGroundingOffset } from '../playerGrounding';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
-import { Position, Direction } from '../../types';
+import { type Position, type Direction } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE, Z_PLAYER_FLYING } from '../../zIndex';
-import { MovementMode } from '../tileCategories';
+import { type MovementMode } from '../tileCategories';
 
 // Player feet offset from center (in tiles)
 // Used for depth sorting - entities with feet below this Y appear in front

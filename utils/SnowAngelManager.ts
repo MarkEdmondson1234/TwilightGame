@@ -21,7 +21,7 @@
  * delete, so whoever is standing there is the janitor.
  */
 
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
 import { mapManager } from '../maps/MapManager';

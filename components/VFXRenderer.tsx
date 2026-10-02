@@ -8,7 +8,7 @@
 import React from 'react';
 import { TILE_SIZE } from '../constants';
 import { getVFXDefinition } from '../data/vfxConfig';
-import { ActiveVFX } from '../hooks/useVFX';
+import { type ActiveVFX } from '../hooks/useVFX';
 import LightningBoltEffect from './vfx/LightningBoltEffect';
 import SmokePuffEffect from './vfx/SmokePuffEffect';
 import MagicBurstEffect from './vfx/MagicBurstEffect';

@@ -7,7 +7,7 @@
  * the player there via the App.tsx `build_snowman` completion branch.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 export const buildSnowmanCutscene: CutsceneDefinition = {
   id: 'build_snowman',

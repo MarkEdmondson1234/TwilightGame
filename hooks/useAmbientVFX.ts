@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Position, TileType } from '../types';
+import { type Position, TileType } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { gameState } from '../GameState';
 

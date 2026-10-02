@@ -11,7 +11,7 @@
  * per-map weather condition here, only a global season check.
  */
 
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
 import { mapManager } from '../maps/MapManager';

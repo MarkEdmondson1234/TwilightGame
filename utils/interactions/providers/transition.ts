@@ -5,7 +5,7 @@
  */
 
 import type { AvailableInteraction, InteractionContext } from '../types';
-import { SizeTier, isTileSolid, type Transition } from '../../../types';
+import { type SizeTier, isTileSolid, type Transition } from '../../../types';
 import { getTileCoords } from '../../mapUtils';
 import { getTierName } from '../../MagicEffects';
 import { mapManager } from '../../../maps/MapManager';

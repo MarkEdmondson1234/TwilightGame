@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { DialogueNode, DialogueResponse } from '../../types';
+import { type DialogueNode, type DialogueResponse } from '../../types';
 import { cookingManager } from '../../utils/CookingManager';
 import { TimeManager } from '../../utils/TimeManager';
 import { decorationManager } from '../../utils/DecorationManager';

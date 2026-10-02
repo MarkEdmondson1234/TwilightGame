@@ -8,7 +8,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { getChatHistory } from '../services/aiChatHistory';
 import { parseAssistantContent } from '../components/ChatBubble';
-import { NPCEmotion } from '../services/anthropicClient';
+import { type NPCEmotion } from '../services/anthropicClient';
 
 export interface DisplayMessage {
   id: string;

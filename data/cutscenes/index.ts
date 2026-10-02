@@ -5,7 +5,7 @@
  * Import and export all cutscenes here
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 import { introCutscene } from './intro';
 import { springCutscene, summerCutscene, autumnCutscene, winterCutscene } from './seasonChange';
 import { elderMemoryCutscene } from './elderMemory';

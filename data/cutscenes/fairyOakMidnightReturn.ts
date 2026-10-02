@@ -10,7 +10,7 @@
  * The potion grant is handled by the cutscene completion handler in App.tsx.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 import { npcAssets, tileAssets } from '../../assets';
 
 // Dark blue → purple radial gradient (reused from main cutscene)

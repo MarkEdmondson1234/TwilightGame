@@ -14,7 +14,7 @@
  * Nothing here throws to callers.
  */
 
-import { doc, setDoc, deleteDoc, collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, collection, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG } from '../constants';

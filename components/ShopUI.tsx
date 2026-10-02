@@ -15,11 +15,11 @@ import { Z_SHOP, Z_SHOP_CONFIRM, zClass } from '../zIndex';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { shopManager } from '../utils/ShopManager';
-import { ShopItem } from '../data/shopInventory';
-import { getItem, ItemDefinition, ItemCategory } from '../data/items';
+import { type ShopItem } from '../data/shopInventory';
+import { getItem, type ItemDefinition, ItemCategory } from '../data/items';
 import { magicManager } from '../utils/MagicManager';
 import { TimeManager } from '../utils/TimeManager';
-import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import ItemTooltip, { type TooltipContent } from './ItemTooltip';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 import { audioManager } from '../utils/AudioManager';
 import { decorationManager } from '../utils/DecorationManager';

@@ -4,7 +4,7 @@
  * The village shopkeeper who sells seeds and supplies.
  */
 
-import { NPC, Position, EntryAnimation } from '../../../types';
+import { type NPC, type Position, type EntryAnimation } from '../../../types';
 import { npcAssets } from '../../../assets';
 
 import { createStaticNPC } from '../createNPC';

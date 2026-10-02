@@ -24,7 +24,7 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
-import { MapDefinition, TileType, TileData, FarmPlotState, CropGrowthStage } from '../../types';
+import { type MapDefinition, TileType, type TileData, FarmPlotState, CropGrowthStage } from '../../types';
 import { getColorHexByName } from '../../palette';
 import { mapManager } from '../../maps/MapManager';
 import { calculateTileTransforms } from '../tileRenderUtils';

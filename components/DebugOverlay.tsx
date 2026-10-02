@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, DEBUG } from '../constants';
 import { getTileData } from '../utils/mapUtils';
-import { Position, Transition, CollisionType, FarmPlotState, CropGrowthStage } from '../types';
+import { type Position, type Transition, CollisionType, FarmPlotState, CropGrowthStage } from '../types';
 import DebugInfoPanel from './DebugInfoPanel';
 import { Z_DEBUG_TILES, Z_DEBUG_TRANSITIONS, Z_DEBUG_CLICK, zClass } from '../zIndex';
 import { mapManager } from '../maps/MapManager';

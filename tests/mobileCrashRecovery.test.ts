@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { renderHook, cleanup } from '@testing-library/react';
-import { Sprite, Texture, TextureSource } from 'pixi.js';
+import { type Sprite, Texture, TextureSource } from 'pixi.js';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { textureManager } from '../utils/TextureManager';
 import { useKeyboardControls, type KeyboardControlsConfig } from '../hooks/useKeyboardControls';

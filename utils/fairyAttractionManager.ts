@@ -12,8 +12,8 @@
 
 import { TimeManager } from './TimeManager';
 import { farmManager } from './farmManager';
-import { NPC, FarmPlotState } from '../types';
-import { Position } from '../types';
+import { type NPC, FarmPlotState } from '../types';
+import { type Position } from '../types';
 import { createMorganNPC, createStellaNPC } from './npcs/forestNPCs';
 import { createSeededRandom, hashString } from './seededRandom';
 

@@ -8,7 +8,7 @@
  * - Atmospheric narration
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 // Asset paths for cutscene characters (using optimized NPC sprites)
 const characterSprites = {

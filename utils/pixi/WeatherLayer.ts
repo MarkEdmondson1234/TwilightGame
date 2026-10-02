@@ -25,10 +25,10 @@ import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
 import { gameState } from '../../GameState';
 import {
-  WeatherType,
+  type WeatherType,
   PARTICLE_CONFIGS,
   FOG_CONFIGS,
-  ParticleConfig,
+  type ParticleConfig,
 } from '../../data/weatherConfig';
 import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
 import { WeatherTint } from './WeatherTint';

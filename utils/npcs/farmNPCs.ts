@@ -6,7 +6,7 @@
  * - Future: chickens, pigs, etc.
  */
 
-import { NPC, Position } from '../../types';
+import { type NPC, type Position } from '../../types';
 import { npcAssets } from '../../assets';
 import { createStaticNPC } from './createNPC';
 

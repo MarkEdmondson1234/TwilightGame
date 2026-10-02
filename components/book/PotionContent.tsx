@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { PotionRecipeDefinition, PotionLevel } from '../../data/potionRecipes';
+import { type PotionRecipeDefinition, type PotionLevel } from '../../data/potionRecipes';
 import { getItem } from '../../data/items';
-import { magicManager, BrewingResult } from '../../utils/MagicManager';
+import { magicManager, type BrewingResult } from '../../utils/MagicManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
-import { BookThemeConfig } from './bookThemes';
-import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
+import { type BookThemeConfig } from './bookThemes';
+import { type BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
 import LevelUpCelebration from '../LevelUpCelebration';
 import { renderEncyclopaediaPages } from './EncyclopaediaContent';
-import { EncyclopaediaEntry, ENCYCLOPAEDIA_ENTRIES } from '../../data/ingredientEncyclopaedia';
+import { type EncyclopaediaEntry, ENCYCLOPAEDIA_ENTRIES } from '../../data/ingredientEncyclopaedia';
 import { npcAssets } from '../../assets';
 import CookingResultPopup from '../CookingResultPopup';
 

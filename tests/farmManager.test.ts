@@ -24,7 +24,7 @@ vi.mock('../constants', async (importOriginal) => {
 
 // Must import after mocks are set up
 import { farmManager } from '../utils/farmManager';
-import { FarmPlotState, FarmPlot, TileType } from '../types';
+import { FarmPlotState, type FarmPlot, TileType } from '../types';
 import { inventoryManager } from '../utils/inventoryManager';
 import { GREENHOUSE_MAP_ID } from '../constants';
 

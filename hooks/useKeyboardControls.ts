@@ -3,8 +3,8 @@
  * Handles all keyboard input for the game
  */
 
-import { useEffect, useRef, MutableRefObject } from 'react';
-import { Position, TileType } from '../types';
+import { useEffect, useRef, type MutableRefObject } from 'react';
+import { type Position, TileType } from '../types';
 import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
@@ -19,7 +19,7 @@ import {
   checkTransition,
   handleFarmAction,
   handleForageAction,
-  ForageResult,
+  type ForageResult,
 } from '../utils/actionHandlers';
 import {
   handleDebugKey,

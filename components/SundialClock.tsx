@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameTime, TimeOfDay } from '../utils/TimeManager';
+import { type GameTime, TimeOfDay } from '../utils/TimeManager';
 
 interface SundialClockProps {
   currentTime: GameTime;

@@ -20,7 +20,7 @@ import type { MapDefinition, Position } from '../../types';
 import { Z_ANIMATION_FOREGROUND, Z_GROUND_DECORATION, Z_SPRITE_BACKGROUND } from '../../zIndex';
 import { textureManager } from '../TextureManager';
 import type { VisibleRange } from '../viewportUtils';
-import { AnimationLayerName, getTileAnimationPlacements } from '../tileAnimationPlacement';
+import { type AnimationLayerName, getTileAnimationPlacements } from '../tileAnimationPlacement';
 
 /** Sidecar written by scripts/optimize-assets.js next to each sheet. */
 interface SheetMeta {

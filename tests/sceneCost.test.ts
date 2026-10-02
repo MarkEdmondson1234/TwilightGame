@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { measureSceneCost, SceneNode } from '../utils/PerformanceMonitor';
+import { measureSceneCost, type SceneNode } from '../utils/PerformanceMonitor';
 
 /**
  * Scene cost is what the CI performance gate now grades, in place of frame rate.

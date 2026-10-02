@@ -1,8 +1,8 @@
-import { NPC, Position, Direction, NPCBehavior, isTileSolid } from './types';
+import { type NPC, type Position, Direction, NPCBehavior, isTileSolid } from './types';
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE } from './constants';
 import { metadataCache } from './utils/MetadataCache';
-import { TimeManager, Season } from './utils/TimeManager';
+import { TimeManager, type Season } from './utils/TimeManager';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { audioManager } from './utils/AudioManager';
 import { createDecisionRandom, slotPhaseOffset } from './utils/seededRandom';

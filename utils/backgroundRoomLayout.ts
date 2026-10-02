@@ -28,7 +28,7 @@
  */
 
 import { TILE_SIZE } from '../constants';
-import { ImageRoomLayer, MapDefinition, Position } from '../types';
+import { type ImageRoomLayer, type MapDefinition, type Position } from '../types';
 
 /** On-screen size of a room's artwork before viewport scaling is applied. */
 export interface RoomArtworkSize {

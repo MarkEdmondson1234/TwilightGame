@@ -7,7 +7,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { NPCEmotion } from '../services/anthropicClient';
+import { type NPCEmotion } from '../services/anthropicClient';
 import { useTypewriter } from '../hooks/useTypewriter';
 
 export interface ChatBubbleProps {

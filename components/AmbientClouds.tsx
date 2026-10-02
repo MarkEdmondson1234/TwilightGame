@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { Z_SKY_DECORATIONS } from '../zIndex';
-import { AmbientCloudConfig } from '../types/maps';
+import { type AmbientCloudConfig } from '../types/maps';
 
 interface AmbientCloudsProps {
   clouds: AmbientCloudConfig[];

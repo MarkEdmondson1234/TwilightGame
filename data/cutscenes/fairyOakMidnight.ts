@@ -22,7 +22,7 @@
  * Plays once per save file.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 import { npcAssets, tileAssets } from '../../assets';
 
 // Shared animation type for background layer helpers

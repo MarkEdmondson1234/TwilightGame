@@ -5,9 +5,9 @@
  * emotion-to-sprite resolution, and the ThinkingIndicator component.
  */
 
-import { NPC } from '../../types';
-import { NPCPersona } from '../../services/dialogueService';
-import { NPCEmotion } from '../../services/anthropicClient';
+import { type NPC } from '../../types';
+import { type NPCPersona } from '../../services/dialogueService';
+import { type NPCEmotion } from '../../services/anthropicClient';
 
 // ============================================================================
 // Font constant

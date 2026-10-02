@@ -42,7 +42,7 @@ vi.mock('../utils/inventoryManager', () => ({
 }));
 
 import { farmManager } from '../utils/farmManager';
-import { FarmPlotState, FarmPlot } from '../types';
+import { FarmPlotState, type FarmPlot } from '../types';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { WEATHER_SLOT_HOURS } from '../data/weatherConfig';
 import { eventBus, GameEvent } from '../utils/EventBus';

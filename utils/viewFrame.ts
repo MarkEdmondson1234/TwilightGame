@@ -15,7 +15,7 @@
  * world (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §6A).
  */
 
-import { MapDefinition, Position } from '../types';
+import { type MapDefinition, type Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { getRoomTransform } from './backgroundRoomLayout';
 import { NO_OVERSCROLL, type CameraOverscroll } from './touchLayout';

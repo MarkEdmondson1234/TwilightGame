@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, TileType, FarmPlotState } from '../types';
+import { type MapDefinition, TileType, FarmPlotState } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { TILE_SIZE, SPRITE_METADATA } from '../constants';
 import { calculateTileTransforms } from '../utils/tileRenderUtils';

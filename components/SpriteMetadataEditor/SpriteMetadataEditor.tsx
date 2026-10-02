@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { TileType, SpriteMetadata } from '../../types';
+import { TileType, type SpriteMetadata } from '../../types';
 import { TILE_LEGEND, TILE_SIZE } from '../../constants';
 import { spriteMetadataOverrides } from '../../utils/SpriteMetadataOverrides';
 import './SpriteMetadataEditor.css';

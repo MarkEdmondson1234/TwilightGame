@@ -20,8 +20,8 @@ import { rememberActivityLead } from '../../utils/activityLeadStorage';
 import type { ActivityLeadId } from '../../utils/activityDiscovery';
 import { getRememberedActivityLeads } from '../../utils/activityLeadStorage';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { BookThemeConfig } from './bookThemes';
-import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
+import { type BookThemeConfig } from './bookThemes';
+import { type BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import { eventChainManager } from '../../utils/EventChainManager';
 import {

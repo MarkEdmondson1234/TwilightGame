@@ -3,7 +3,7 @@ import { useQuestGuideRefresh } from '../hooks/useQuestGuideRefresh';
 import { readQuestConversations } from '../utils/readQuestNextSteps';
 import { npcManager } from '../NPCManager';
 import QuestConversationCue from './QuestConversationCue';
-import { NPC, Position } from '../types';
+import { type NPC, type Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { getNPCIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';

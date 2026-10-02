@@ -9,7 +9,7 @@
  * - Dialogue choices
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 export const introCutscene: CutsceneDefinition = {
   id: 'game_intro',

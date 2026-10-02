@@ -7,8 +7,8 @@
  * Part of Phase 3 App.tsx refactoring - Domain Controllers.
  */
 
-import { useState, useRef, useEffect, useCallback, MutableRefObject } from 'react';
-import { Position, Direction, NPC } from '../types';
+import { useState, useRef, useEffect, useCallback, type MutableRefObject } from 'react';
+import { type Position, Direction, type NPC } from '../types';
 import { TIMING } from '../constants';
 import { gameState } from '../GameState';
 import { getSpriteConfig } from '../utils/characterSprites';

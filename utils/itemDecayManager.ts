@@ -1,4 +1,4 @@
-import { PlacedItem } from '../types';
+import { type PlacedItem } from '../types';
 
 /**
  * Item Decay Manager

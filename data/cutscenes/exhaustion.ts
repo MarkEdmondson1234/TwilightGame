@@ -11,7 +11,7 @@
  * Completion action transitions the player into mums_kitchen.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 export const exhaustionCutscene: CutsceneDefinition = {
   id: 'exhaustion',

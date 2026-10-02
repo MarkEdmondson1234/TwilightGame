@@ -5,9 +5,9 @@
  * These map to the data model defined in FIREBASE_PERSISTENCE.md.
  */
 
-import { Timestamp } from 'firebase/firestore';
-import { CharacterCustomization } from '../GameState';
-import { FarmPlot, NPCFriendship, PlacedItem, DeskContents } from '../types';
+import { type Timestamp } from 'firebase/firestore';
+import { type CharacterCustomization } from '../GameState';
+import { type FarmPlot, type NPCFriendship, type PlacedItem, type DeskContents } from '../types';
 
 // ============================================
 // User Profile

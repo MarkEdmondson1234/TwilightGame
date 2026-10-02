@@ -1,4 +1,4 @@
-import { CharacterCustomization } from '../GameState';
+import { type CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 
 /**

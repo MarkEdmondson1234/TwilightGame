@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { Position } from '../types';
-import { VFX_DEFINITIONS, VFXCategory } from '../data/vfxConfig';
+import { type Position } from '../types';
+import { VFX_DEFINITIONS, type VFXCategory } from '../data/vfxConfig';
 import { Z_DEBUG_PANEL, zClass } from '../zIndex';
 
 interface VFXTestPanelProps {

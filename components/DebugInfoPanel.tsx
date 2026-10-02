@@ -1,5 +1,5 @@
 import React from 'react';
-import { Position, isTileSolid } from '../types';
+import { type Position, isTileSolid } from '../types';
 import { getTileData, getTileCoords } from '../utils/mapUtils';
 import { PLAYER_SIZE } from '../constants';
 import { mapManager } from '../maps/MapManager';

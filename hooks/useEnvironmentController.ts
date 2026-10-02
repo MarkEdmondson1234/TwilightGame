@@ -11,14 +11,14 @@
  * Part of Phase 3 App.tsx refactoring - Domain Controllers.
  */
 
-import { useEffect, useCallback, MutableRefObject } from 'react';
+import { useEffect, useCallback, type MutableRefObject } from 'react';
 import { gameState } from '../GameState';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import {
   isWeatherAllowedOnMap,
   weatherLayerTransition,
-  WeatherType,
+  type WeatherType,
   getCurrentGlobalWeather,
   getEffectiveWeather,
 } from '../data/weatherConfig';

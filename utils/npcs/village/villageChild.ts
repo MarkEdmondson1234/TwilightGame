@@ -4,7 +4,7 @@
  * A curious little girl who wanders around the village.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
 import { gardenRequestNodes } from '../../../data/npcGardeners';

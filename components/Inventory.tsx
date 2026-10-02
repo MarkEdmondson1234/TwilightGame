@@ -1,7 +1,7 @@
 import MobileMenuShell from './MobileMenuShell';
 import '../src/styles/mobileMenus.css';
 import React, { useState } from 'react';
-import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import ItemTooltip, { type TooltipContent } from './ItemTooltip';
 import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CharacterCustomization, gameState } from '../GameState';
+import { type CharacterCustomization, gameState } from '../GameState';
 import {
   DEFAULT_OUTFIT,
   getOutfits,

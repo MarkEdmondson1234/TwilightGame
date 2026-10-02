@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { getVFXDefinition } from '../data/vfxConfig';
 import { debugLog } from '../utils/debugLog';
 

@@ -3,8 +3,8 @@
  * Handles touch input for mobile devices
  */
 
-import { MutableRefObject, useCallback } from 'react';
-import { Position } from '../types';
+import { type MutableRefObject, useCallback } from 'react';
+import { type Position } from '../types';
 import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
@@ -15,7 +15,7 @@ import {
   checkTransition,
   handleFarmAction,
   handleForageAction,
-  ForageResult,
+  type ForageResult,
 } from '../utils/actionHandlers';
 import { debugLog } from '../utils/debugLog';
 

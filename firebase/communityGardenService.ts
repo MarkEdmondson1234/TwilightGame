@@ -20,12 +20,12 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
-  Unsubscribe,
-  Timestamp,
+  type Unsubscribe,
+  type Timestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
-import { FarmPlot, FarmPlotState } from '../types';
+import { type FarmPlot, FarmPlotState } from '../types';
 import { debugLog } from '../utils/debugLog';
 
 // ============================================

@@ -14,7 +14,7 @@ import {
   getBasketContents,
   MAX_BASKET_MEALS,
 } from '../data/questHandlers/mrFoxPicnicHandler';
-import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import ItemTooltip, { type TooltipContent } from './ItemTooltip';
 import GameIcon from './GameIcon';
 import { Z_MODAL, zClass } from '../zIndex';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
