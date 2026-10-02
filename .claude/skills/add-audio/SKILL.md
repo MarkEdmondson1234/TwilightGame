@@ -63,7 +63,7 @@ public/assets/audio/
 
 ### 2. Register in assets.ts
 
-Add entry to `audioAssets` in [assets.ts](assets.ts):
+Add entry to `audioAssets` in [assets.ts](../../../assets.ts):
 
 ```typescript
 import { AudioAssetConfig } from './utils/AudioManager';

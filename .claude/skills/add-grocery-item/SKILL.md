@@ -89,7 +89,7 @@ almonds: {
 
 ### 4. Add to Shop Inventory in data/shopInventory.ts
 
-**Add to SHOP_INVENTORY array:**
+**Add to the `GENERAL_STORE_INVENTORY` array** (or `MUSHRAS_SHOP_INVENTORY` / `SHELLA_SHOP_INVENTORY` for those shops):
 ```typescript
 {
   itemId: 'almonds',

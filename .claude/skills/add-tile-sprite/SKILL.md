@@ -142,7 +142,7 @@ If adding multiple variations of the same tile type:
 
 **Only needed if adding a NEW type** not covered by existing keywords (see table above).
 
-Edit `/scripts/optimize-assets.js` in the `optimizeTiles()` function (~line 250):
+Edit `scripts/optimize-assets.js` in the `optimizeTiles()` function:
 
 **Example: Adding a new flower type (e.g., "rose"):**
 ```javascript

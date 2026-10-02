@@ -7,6 +7,8 @@ description: Add PixiJS rendering components (layers, sprites, effects). Use whe
 
 This skill helps you implement PixiJS rendering components for high-performance game rendering using WebGL.
 
+> **Read first:** most of the renderer already exists. See "Existing Layers — Check These First" in [SKILL.md](SKILL.md) for every layer in `utils/pixi/` — `TileLayer`, `SpriteLayer`, `WeatherLayer`, `AnimationLayer` and more — and extend one before creating a new file. Layers are wired up in `hooks/usePixiRenderer.ts`, not `App.tsx`. The code below is illustrative: `utils/pixi/ParticleEffect.ts` and `data/particlePresets.ts` do **not** exist, and `utils/pixi/TileLayer.ts` already does (read it rather than recreating it).
+
 ## When to Use
 
 Use this skill when you need to:
@@ -50,17 +52,11 @@ Use this skill when you need to:
 
 #### 1. Verify TextureManager Exists
 
-Check if TextureManager is already created:
+`utils/TextureManager.ts` exists — always load textures through it (it scopes them per map; see "Texture Memory" in `CLAUDE.md`).
 
-```bash
-ls -la utils/TextureManager.ts
-```
+#### 2. TileLayer Class (illustrative)
 
-If not, create it using the template in [PIXI_API_REFERENCE.md](../../../design_docs/planned/PIXI_API_REFERENCE.md#texture-manager-v8-compatible).
-
-#### 2. Create TileLayer Class
-
-Create `utils/pixi/TileLayer.ts`:
+`utils/pixi/TileLayer.ts` already exists; this simplified version shows the pattern for a new layer:
 
 ```typescript
 import * as PIXI from 'pixi.js';
@@ -159,9 +155,9 @@ export class TileLayer {
 }
 ```
 
-#### 3. Integrate with App.tsx
+#### 3. Integrate (illustrative — real wiring is in `hooks/usePixiRenderer.ts`)
 
-Add PixiJS renderer to App.tsx:
+Sketch of the integration:
 
 ```typescript
 // In App.tsx
@@ -257,9 +253,11 @@ Compare PixiJS vs DOM rendering:
 
 **Use case**: Add rain, snow, fireflies, sparkles, or other particle effects.
 
-#### 1. Create ParticleEffect Class
+Weather particles already live in `utils/pixi/WeatherLayer.ts` (presets in `data/weatherConfig.ts`) and tile animations in `utils/pixi/AnimationLayer.ts` — extend those first. If neither fits:
 
-Create `utils/pixi/ParticleEffect.ts`:
+#### 1. Create a particle layer (illustrative)
+
+For example `utils/pixi/YourParticleLayer.ts`:
 
 ```typescript
 import * as PIXI from 'pixi.js';
@@ -388,7 +386,7 @@ export class ParticleEffect {
 
 #### 2. Create Effect Presets
 
-Create `data/particlePresets.ts`:
+For example alongside the layer, or in `data/` next to `data/weatherConfig.ts`:
 
 ```typescript
 import * as PIXI from 'pixi.js';

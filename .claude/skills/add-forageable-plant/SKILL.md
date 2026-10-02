@@ -11,9 +11,9 @@ Add new forageable plants (like moonpetal, addersmeat, or luminescent toadstool)
 
 **CRITICAL FIRST STEP:** Run `npm run optimize-assets` BEFORE coding to optimize uploaded sprites.
 
-**The Eight-Location Pattern (CRITICAL):**
+**The Seven-Location Pattern (CRITICAL):**
 
-Every forageable plant requires setup in **eight locations**:
+Every forageable plant requires setup in **seven locations**:
 
 1. **`types/core.ts`** - Add TileType enum entry
 2. **`maps/gridParser.ts`** - Add grid character code
@@ -21,13 +21,11 @@ Every forageable plant requires setup in **eight locations**:
 4. **`data/tiles.ts`** - Add TILE_LEGEND entry with collision and rendering info
 5. **`data/spriteMetadata.ts`** - Add multi-tile sprite configuration
 6. **`utils/ColorResolver.ts`** - Map tile to background colour
-7. **`data/items/magicalIngredients.ts`** - Add foraged item definition with `forageSuccessRate`
-8. **`utils/inventoryUIHelper.ts`** - Map sprite for inventory UI (CRITICAL)
+7. **`data/items/magicalIngredients.ts`** - Add foraged item definition with `forageSuccessRate` and `image` (the inventory reads `image` directly)
 
-**Plus foraging logic in `utils/actionHandlers.ts` (CRITICAL - 3 locations):**
-9a. **Add to forageable tiles list** in `getAvailableInteractions()` - Makes radial menu appear
-9b. **Add foraging handler** - Handles the actual foraging logic
-9c. **Add to cooldown check** - Prevents re-foraging same day
+**Plus foraging logic (CRITICAL - 2 locations):**
+8a. **`utils/interactions/providers/forage.ts`** - Add the tile type to the multi-tile `hasTileTypeNearby()` list so the "Forage" option appears
+8b. **`utils/forage/sources.ts`** - Add a `FORAGE_SOURCES` entry (item, success rate, season/time gates, cooldown, messages)
 
 ## When to Use This Skill
 
@@ -211,21 +209,9 @@ luminescent_toadstool: {
 - RARE: Hard to find, 10% drop
 - LEGENDARY: Extremely rare
 
-### Phase 9: Add Inventory UI Mapping (CRITICAL)
+### Phase 9: Inventory Sprite (no extra step)
 
-**File:** `utils/inventoryUIHelper.ts`
-
-Add to `ITEM_SPRITE_MAP`:
-
-```typescript
-// Magical Ingredients (forageable)
-moonpetal: magicalAssets.moonpetal_flower,
-addersmeat: magicalAssets.addersmeat_flower,
-dragonfly_wings: magicalAssets.dragonfly_wings,
-luminescent_toadstool: magicalAssets.luminescent_toadstool, // ← Add this!
-```
-
-**Without this step, the item shows as an emoji in inventory!**
+There is no inventory sprite map. `getItemIcon()` in `utils/inventoryUIHelper.ts` reads `item.image` from the definition you wrote in Phase 8, so `image: magicalAssets.your_item` is all the inventory needs.
 
 ### Phase 10: Run Asset Optimization (CRITICAL - DO THIS FIRST)
 
@@ -241,114 +227,55 @@ This optimizes:
 
 ### Phase 11: Add Foraging Logic
 
-**File:** `utils/actionHandlers.ts`
+Foraging is split between a click **provider** (is "Forage" offered here?) and a declarative **source table** (what happens when it runs). Read `utils/interactions/README.md` first. You should not need to touch `utils/actionHandlers.ts`.
 
-**CRITICAL:** Three locations must be updated in this file:
+**11a. Offer the interaction — `utils/interactions/providers/forage.ts`**
 
-**11a. Add to forageable tiles list in `getAvailableInteractions()` (around line 2302):**
-
-Find the `hasTileTypeNearby()` check and add your tile type:
+`forageProvider()` adds a "Forage" radial option when a forageable is near the clicked tile. Add your tile type to the multi-tile `hasTileTypeNearby(tileX, tileY, [...], 1)` list:
 
 ```typescript
-// Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower)
-if (!canForage) {
-  canForage = hasTileTypeNearby(tileX, tileY, [
+canForage = hasTileTypeNearby(
+  tileX,
+  tileY,
+  [
     TileType.BEE_HIVE,
-    TileType.LUMINESCENT_TOADSTOOL, // ← Add your tile here!
-    TileType.MOONPETAL,
-    TileType.ADDERSMEAT,
-    TileType.WOLFSBANE,
-    TileType.MUSTARD_FLOWER,
-  ]);
-}
+    TileType.LUMINESCENT_TOADSTOOL,
+    // ...
+    TileType.YOUR_PLANT, // ← Add your tile here!
+  ],
+  1
+);
 ```
 
-**WITHOUT THIS STEP, THE RADIAL MENU WON'T APPEAR!** This is the most common bug.
+**Without this step the "Forage" option never appears.** Radius 1 covers 3×3 sprites with a centred anchor; larger sprites need a bigger radius or a separate check.
 
-**11b. Add foraging handler (in `handleForageAction`, after addersmeat, before bee hive):**
+**11b. Describe the harvest — `utils/forage/sources.ts`**
+
+`handleForageAction()` (`utils/forageHandlers.ts`) walks `FORAGE_SOURCES` top to bottom and the first source whose anchor is near the player owns the forage; `utils/forage/anchorForage.ts` then runs the gates, the success roll (`item.forageSuccessRate`, else `fallbackSuccessRate`), the quantity roll, the inventory save and the cooldown. Add one entry (see `ForageSource` in `utils/forage/types.ts`):
 
 ```typescript
-// Luminescent toadstool foraging (mushroom forest exclusive)
-// Check if player is within the 3x3 area of any toadstool anchor
-let toadstoolAnchor: { x: number; y: number } | null = null;
-
-// Search nearby tiles for anchor (check 1 tile in each direction for 3x3 coverage)
-for (let dy = -1; dy <= 1; dy++) {
-  for (let dx = -1; dx <= 1; dx++) {
-    const checkX = playerTileX + dx;
-    const checkY = playerTileY + dy;
-    const checkTile = getTileData(checkX, checkY);
-
-    if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
-      toadstoolAnchor = { x: checkX, y: checkY };
-      console.log('[Forage] Found luminescent toadstool anchor at (' + checkX + ', ' + checkY + ')');
-      break;
-    }
-  }
-  if (toadstoolAnchor) break;
-}
-
-if (toadstoolAnchor) {
-  // For time/season restricted plants, add checks here:
-  // const { season, timeOfDay } = TimeManager.getCurrentTime();
-  // if (season !== Season.SPRING && season !== Season.SUMMER) {
-  //   return { found: false, message: 'The plant is dormant.' };
-  // }
-  // if (timeOfDay !== 'Night') {
-  //   return { found: false, message: 'The flowers are closed.' };
-  // }
-
-  const toadstool = getItem('luminescent_toadstool');
-  if (!toadstool) {
-    console.error('[Forage] Luminescent toadstool item not found!');
-    return { found: false, message: 'Something went wrong.' };
-  }
-
-  const successRate = toadstool.forageSuccessRate ?? 0.5;
-  const succeeded = Math.random() < successRate;
-
-  if (!succeeded) {
-    gameState.recordForage(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
-    return {
-      found: false,
-      message: 'You search amongst the glowing toadstools, but find none suitable for harvesting.',
-    };
-  }
-
-  // Random quantity: 50% → 1, 35% → 2, 15% → 3
-  const rand = Math.random();
-  const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
-
-  inventoryManager.addItem('luminescent_toadstool', quantityFound);
-  console.log('[Forage] Found ' + quantityFound + ' ' + toadstool.displayName);
-
-  const inventoryData = inventoryManager.getInventoryData();
-  characterData.saveInventory(inventoryData.items, inventoryData.tools);
-  gameState.recordForage(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
-
-  return {
-    found: true,
-    seedId: 'luminescent_toadstool',
-    seedName: toadstool.displayName,
-    message: 'Found ' + quantityFound + ' ' + toadstool.displayName + '!',
-  };
-}
+// ── Luminescent toadstool (mushroom forest exclusive) — any season, any time ──
+{
+  label: 'luminescent toadstool',              // unique; used in debug logs
+  tileTypes: [TileType.LUMINESCENT_TOADSTOOL],
+  itemId: 'luminescent_toadstool',
+  fallbackSuccessRate: 0.5,                     // only if the item has no forageSuccessRate
+  gates: [                                      // optional; helpers in utils/forage/helpers.ts
+    // seasonGate([Season.SPRING, Season.SUMMER], 'The plant is dormant.'),
+    // nightGate('The flowers are closed. They only bloom at night.'),
+    // weatherGate('snow', 'It only blooms in the snow.'),
+  ],
+  cooldownMessage: "You've already gathered from this plant today.",
+  failureMessage: 'You search amongst the glowing toadstools, but find none suitable for harvesting.',
+  // rollQuantity / successMessage / findAnchor are optional overrides
+},
 ```
 
-**11c. Add to cooldown check (around line 782):**
+**Order matters** — when two forageables are near each other, the earlier entry wins.
 
-Find the multi-tile cooldown check loop and add your tile type:
+**Cooldown (once per day per plant):** give new sources a `cooldownMessage`, which checks the cooldown against the plant's anchor tile so the whole sprite shares one cooldown. Then add the source's `label` to the expected set in `tests/forageSources.test.ts` ("declares cooldownMessage exactly for the sources that self-check cooldown"). The older sources without one rely on the early scan over `EARLY_COOLDOWN_TILES` in `utils/forageHandlers.ts`; do not add new tiles there.
 
-```typescript
-if (
-  checkTile?.type === TileType.MOONPETAL ||
-  checkTile?.type === TileType.ADDERSMEAT ||
-  checkTile?.type === TileType.LUMINESCENT_TOADSTOOL // ← Add this!
-) {
-  cooldownCheckPos = { x: checkX, y: checkY };
-  break;
-}
-```
+Special cases that are not simple anchor tiles (stream dragonfly wings, sparrow feathers) live in `utils/forage/specialForage.ts`; bush harvests in `utils/forage/bushHarvest.ts`.
 
 ### Phase 12: Validate
 
@@ -367,18 +294,20 @@ Fix any TypeScript errors before testing, and confirm the test suite is clean.
 - `tests/assetIntegrity.test.ts` — fails if the tile or inventory sprite path does not resolve to a real file, i.e. a typo or a skipped `npm run optimize-assets`.
 - `tests/itemSSoT.test.ts` — fails if the new magical-ingredient item duplicates an existing item or is referenced anywhere by an ID that is not in `ITEMS`.
 - `tests/interactionProviders.test.ts` — covers the interaction provider registry the foraging interaction is registered through.
+- `tests/forageSources.test.ts` — fails if a `FORAGE_SOURCES` entry names an item or tile type that does not exist, reuses a label, or declares `cooldownMessage` without being listed in its expected set.
+- `tests/forageCooldown.test.ts` — guards the once-per-day cooldown.
 
 ### Phase 13: Add to Procedural Generation (Optional)
 
 **File:** `maps/procedural.ts`
 
-If the plant should appear in procedurally generated maps, add spawn logic:
+If the plant should appear in procedurally generated maps, add spawn logic inside the relevant generator. **Use the generator's seeded `rng()`, never `Math.random()`** — procedural maps are shared between players and must be pure functions of `(seed, depth)`; `tests/proceduralDeterminism.test.ts` fails on a stray `Math.random()`.
 
 ```typescript
 // Add luminescent toadstools to mushroom forest
 for (let i = 0; i < 8; i++) {
-  const x = Math.floor(Math.random() * (width - 2)) + 1;
-  const y = Math.floor(Math.random() * (height - 2)) + 1;
+  const x = Math.floor(rng() * (width - 2)) + 1;
+  const y = Math.floor(rng() * (height - 2)) + 1;
   const dx = Math.abs(x - spawnX);
   const dy = Math.abs(y - spawnY);
   if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
@@ -399,39 +328,29 @@ Adjust the loop count (`8`) based on desired rarity.
 
 ## Quick Reference: Foraging Restrictions
 
-**No restrictions (like luminescent toadstool):**
-```typescript
-// Just get the item and check success rate
-const item = getItem('item_id');
-const successRate = item.forageSuccessRate ?? 0.5;
-```
+Restrictions are `gates` on the `FORAGE_SOURCES` entry, built with the helpers in `utils/forage/helpers.ts`. The first gate that blocks wins, before the success roll.
+
+**No restrictions (like luminescent toadstool):** omit `gates`.
 
 **Season restricted (like addersmeat - spring/summer only):**
 ```typescript
-const { season } = TimeManager.getCurrentTime();
-if (season !== Season.SPRING && season !== Season.SUMMER) {
-  return { found: false, message: 'The plant is dormant.' };
-}
+gates: [seasonGate([Season.SPRING, Season.SUMMER], 'The plant is dormant.')],
 ```
 
 **Time restricted (like moonpetal - night only):**
 ```typescript
-const { timeOfDay } = TimeManager.getCurrentTime();
-if (timeOfDay !== 'Night') {
-  return { found: false, message: 'The flowers are closed.' };
-}
+gates: [nightGate('The flowers are closed.')],
 ```
 
 **Both season AND time restricted:**
 ```typescript
-const { season, timeOfDay } = TimeManager.getCurrentTime();
-if (season !== Season.SPRING && season !== Season.SUMMER) {
-  return { found: false, message: 'Dormant in this season.' };
-}
-if (timeOfDay !== 'Night') {
-  return { found: false, message: 'Only blooms at night.' };
-}
+gates: [
+  seasonGate([Season.SPRING, Season.SUMMER], 'Dormant in this season.'),
+  nightGate('Only blooms at night.'),
+],
 ```
+
+`seasonGate` also accepts a function `(season) => message` for a season-specific message (see heather).
 
 ## Common Issues
 
@@ -439,26 +358,17 @@ if (timeOfDay !== 'Night') {
 **Cause:** Missing ColorResolver mapping
 **Fix:** Add `[TileType.YOUR_PLANT]: 'grass'` to `TILE_TYPE_TO_COLOR_KEY`
 
-### Issue: Item shows as emoji in inventory
-**Cause:** Missing `ITEM_SPRITE_MAP` entry in `inventoryUIHelper.ts`
-**Fix:** Add `your_item: magicalAssets.your_item` to the map
+### Issue: Item shows as emoji or brown parcel in inventory
+**Cause:** The item definition has no `image` (or it names an asset key that does not exist)
+**Fix:** Add `image: magicalAssets.your_item` to the definition in `data/items/magicalIngredients.ts`
 
 ### Issue: Can't forage the plant / No radial menu appears
-**Cause:** Missing from forageable tiles list in `getAvailableInteractions()`
-**Fix:** THIS IS THE #1 BUG! Add tile type to the `hasTileTypeNearby()` array around line 2302:
-```typescript
-canForage = hasTileTypeNearby(tileX, tileY, [
-  TileType.BEE_HIVE,
-  TileType.YOUR_PLANT, // ← Add here!
-  TileType.MOONPETAL,
-  // ...
-]);
-```
+**Cause:** Tile type missing from the multi-tile `hasTileTypeNearby()` list in `utils/interactions/providers/forage.ts`
+**Fix:** THIS IS THE #1 BUG! Add `TileType.YOUR_PLANT` to that list.
 
-Also check all three locations in `actionHandlers.ts`:
-1. **Forageable tiles list** in `getAvailableInteractions()` (line ~2302) - MOST CRITICAL
-2. **Foraging handler** in `handleForageAction()` (line ~1074+)
-3. **Cooldown check** (line ~782)
+### Issue: "Forage" appears but nothing is ever found / wrong item
+**Cause:** No `FORAGE_SOURCES` entry for the tile in `utils/forage/sources.ts`, or an earlier entry near the same spot claims the forage first
+**Fix:** Add the entry (Phase 11b), and check its position in the array.
 
 ### Issue: TypeScript error "Type 'string' not assignable to 'string[]'"
 **Cause:** `image` property in tiles.ts must be an array
@@ -470,20 +380,19 @@ Also check all three locations in `actionHandlers.ts`:
 
 ## Files Modified Summary
 
-| File | Purpose | Line # |
-|------|---------|--------|
-| `types/core.ts` | TileType enum | ~138 |
-| `maps/gridParser.ts` | Grid character code | ~113 |
-| `assets.ts` | Tile + inventory sprite paths | ~180, ~327 |
-| `data/tiles.ts` | TILE_LEGEND rendering config | ~655 |
-| `data/spriteMetadata.ts` | Multi-tile sprite size/offset | ~223 |
-| `utils/ColorResolver.ts` | Background colour mapping | ~87 |
-| `data/items/magicalIngredients.ts` | Foraged item definition | ~50 |
-| `utils/inventoryUIHelper.ts` | Inventory sprite mapping | ~107 |
-| `utils/actionHandlers.ts` | **Forageable tiles list** (CRITICAL) | **~2302** |
-| `utils/actionHandlers.ts` | Foraging handler | ~1323 |
-| `utils/actionHandlers.ts` | Cooldown check | ~782 |
-| `maps/procedural.ts` | (Optional) Procedural spawning | ~516 |
+| File | Purpose |
+|------|---------|
+| `types/core.ts` | TileType enum |
+| `maps/gridParser.ts` | Grid character code |
+| `assets.ts` | Tile + inventory sprite paths |
+| `data/tiles.ts` | TILE_LEGEND rendering config |
+| `data/spriteMetadata.ts` | Multi-tile sprite size/offset |
+| `utils/ColorResolver.ts` | Background colour mapping |
+| `data/items/magicalIngredients.ts` | Foraged item definition (incl. `image`) |
+| `utils/interactions/providers/forage.ts` | **Forageable tiles list** (CRITICAL) |
+| `utils/forage/sources.ts` | `FORAGE_SOURCES` entry: gates, rates, cooldown, messages |
+| `tests/forageSources.test.ts` | Expected cooldown set (if you set `cooldownMessage`) |
+| `maps/procedural.ts` | (Optional) Procedural spawning |
 
 ## Example Plants for Reference
 
@@ -504,11 +413,9 @@ Also check all three locations in `actionHandlers.ts`:
 - [ ] 5. Add TILE_LEGEND entry in `data/tiles.ts`
 - [ ] 6. Add sprite metadata in `data/spriteMetadata.ts`
 - [ ] 7. Add ColorResolver mapping in `utils/ColorResolver.ts`
-- [ ] 8. Add item definition in `data/items/magicalIngredients.ts` (with forageSuccessRate)
-- [ ] 9. Add inventory UI mapping in `utils/inventoryUIHelper.ts`
-- [ ] **10a. Add to forageable tiles list in `getAvailableInteractions()` - CRITICAL!**
-- [ ] 10b. Add foraging handler in `handleForageAction()`
-- [ ] 10c. Add to cooldown check in `handleForageAction()`
+- [ ] 8. Add item definition in `data/items/magicalIngredients.ts` (with `forageSuccessRate` and `image`)
+- [ ] **9. Add to the forageable tiles list in `utils/interactions/providers/forage.ts` - CRITICAL!**
+- [ ] 10. Add a `FORAGE_SOURCES` entry in `utils/forage/sources.ts` (and its label to the cooldown set in `tests/forageSources.test.ts` if it has `cooldownMessage`)
 - [ ] 11. (Optional) Add to procedural generation in `maps/procedural.ts`
 - [ ] 12. Run `make verify` to validate (typecheck + tests; `tests/colorResolver.test.ts` catches a missing `TILE_TYPE_TO_COLOR_KEY` entry, `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches item duplicates. the suite is fully green)
 - [ ] 13. Test in game (place on map, forage, check inventory)

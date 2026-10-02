@@ -1,6 +1,6 @@
 ---
 name: Add NPC Sprite
-description: Add a new NPC (non-player character) sprite to the game, supporting both SVG and PNG formats
+description: Add a new NPC (non-player character) sprite to the game — hand-drawn PNG, optimised, with phone-sized variants
 ---
 
 # Add NPC Sprite
@@ -16,76 +16,56 @@ Use this skill when you need to:
 
 ## Prerequisites
 
-- The NPC image file should be ready (SVG or PNG format)
+- The NPC image file should be ready (PNG with a transparent background)
 - Know the NPC's identifier/name (e.g., "elder", "shopkeeper", "child")
 
-## File Formats
+## File Format
 
-NPCs can use either:
-- **SVG** (recommended for scalable vector graphics)
-- **PNG** (for hand-drawn raster graphics with transparency)
+NPC sprites are **hand-drawn PNGs** with transparent backgrounds — every entry in `npcAssets` is a PNG served from `assets-optimized/`. Two legacy SVGs (`child.svg`, `elder.svg`) remain in `public/assets/npcs/` but nothing references them; do not use SVG for new NPCs.
 
 ## Steps
 
 ### 1. Place the Asset File
 
 Place the NPC sprite in `/public/assets/npcs/`:
-- Format: `[npcName].svg` or `[npcName].png`
-- Examples: `elder.svg`, `shopkeeper.svg`, `child.png`, `farmer.png`
-- **SVG**: Ensure proper viewBox and dimensions
-- **PNG**: Use transparent background, consistent size with other NPCs
-
-Current NPC examples in the codebase:
-- `elder.svg`
-- `shopkeeper.svg`
-- `child.svg`
+- Single-frame NPC: `/public/assets/npcs/[npcName].png` (e.g. `little_girl.png`)
+- Animated NPC (several frames/states): a subfolder, e.g. `/public/assets/npcs/cat/cat_stand_01.png`, `cat_stand_02.png`, …
+- Use a transparent background and a size consistent with other NPCs
 
 ### 2. Register in assets.ts
 
-Add the asset to the `npcAssets` object in `assets.ts`:
+Add the asset to the `npcAssets` object in `assets.ts`, always using the optimised path:
 
-For SVG files:
-```typescript
-export const npcAssets = {
-  // ... existing assets
-  [npcName]: '/TwilightGame/assets/npcs/[npcName].svg',
-};
-```
-
-For PNG files (use optimized path):
 ```typescript
 export const npcAssets = {
   // ... existing assets
   [npcName]: '/TwilightGame/assets-optimized/npcs/[npcName].png',
+  [npcName]_portrait: '/TwilightGame/assets-optimized/npcs/[npcName].png', // dialogue portrait (may reuse a frame)
 };
 ```
 
-**Note**:
-- SVG files are referenced directly from `public/assets/npcs/`
-- PNG files are referenced from `public/assets-optimized/npcs/` (after optimization)
+**Never reference `/assets/npcs/`** — the original is what the browser then downloads and uploads to the GPU.
 
-### 3. Run Asset Optimization (PNG only)
-
-If you added a PNG file, run the optimization script:
+### 3. Run Asset Optimisation
 
 ```bash
 npm run optimize-assets
 ```
 
 This will:
-- Optimize PNG compression
-- Place optimized version in `/public/assets-optimized/npcs/`
-
-**SVG files do not require optimization** - they are already optimized vector graphics.
+- Resize to at most 1024px on the longest edge with `fit: 'inside'` (aspect ratio preserved)
+- Place the optimised version in `/public/assets-optimized/npcs/`
+- Write a `[name]@half.png` sibling (512px) that phones load instead of the full file — `TextureManager` picks it automatically, so do not reference it in `assets.ts`
 
 ### 4. Verify
 
 Check that:
 - Original file exists at `/public/assets/npcs/[fileName]`
-- For PNG: Optimized file created at `/public/assets-optimized/npcs/[fileName]`
-- Asset is properly registered in `npcAssets` object (or create this object if it doesn't exist)
+- Optimised file (and its `@half.png` sibling) exists under `/public/assets-optimized/npcs/`
+- Asset is registered in the `npcAssets` object
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
-- `tests/assetIntegrity.test.ts` walks every path exported from `assets.ts` and fails if the new `npcAssets` entry does not resolve to a real file — typically a typo, wrong case, or (for PNG) a skipped `npm run optimize-assets`
+- `tests/assetIntegrity.test.ts` walks every path exported from `assets.ts` and fails if the new `npcAssets` entry does not resolve to a real file — typically a typo, wrong case, or a skipped `npm run optimize-assets`
+- `tests/textureVariants.test.ts` fails if the sprite landed without its `@half.png` sibling — run `npm run optimize-assets`
 - **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ## Asset Key Naming Convention
@@ -99,40 +79,25 @@ Use descriptive, lowercase names with underscores:
 - `blacksmith`
 - `farmer_joe`
 
-## Example: Adding an SVG NPC
-
-1. Place file: `/public/assets/npcs/merchant.svg`
-2. Register in assets.ts:
-   ```typescript
-   export const npcAssets = {
-     elder: '/TwilightGame/assets/npcs/elder.svg',
-     shopkeeper: '/TwilightGame/assets/npcs/shopkeeper.svg',
-     merchant: '/TwilightGame/assets/npcs/merchant.svg',
-   };
-   ```
-3. No optimization needed for SVG
-4. Verify file path is correct
-
 ## Example: Adding a PNG NPC
 
 1. Place file: `/public/assets/npcs/farmer.png`
 2. Register in assets.ts:
    ```typescript
    export const npcAssets = {
-     // ... existing SVG assets
+     // ... existing assets
      farmer: '/TwilightGame/assets-optimized/npcs/farmer.png',
+     farmer_portrait: '/TwilightGame/assets-optimized/npcs/farmer.png',
    };
    ```
 3. Run: `npm run optimize-assets`
-4. Verify optimization created `/public/assets-optimized/npcs/farmer.png`
+4. Verify optimisation created `/public/assets-optimized/npcs/farmer.png` and `farmer@half.png`
 
 ## Important Notes
 
-- **SVG files**: Reference directly from `public/assets/npcs/`
-- **PNG files**: Reference from `public/assets-optimized/npcs/`
-- If `npcAssets` doesn't exist in assets.ts, create it following the same pattern as `tileAssets`
+- **Always reference `public/assets-optimized/npcs/`**, never the originals
 - All sprites use **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
-- SVG sprites scale smoothly at any size
+- Dialogue portraits are rendered as React `<img>`, not GPU textures; only the world sprite and `animatedStates` frames are uploaded to the GPU
 - Ensure transparent backgrounds for proper rendering
 
 ## Creating NPC Instances in Maps
