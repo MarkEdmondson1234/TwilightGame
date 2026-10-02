@@ -15,6 +15,7 @@
 import { eventChainManager } from '../../utils/EventChainManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -61,7 +62,7 @@ export function isWizardTrialsStrengthAtStage(stageId: string): boolean {
 export function startWizardTrialsStrength(): void {
   if (!eventChainManager.isChainStarted(QUEST_ID)) {
     eventChainManager.startChain(QUEST_ID, DEFAULT_METADATA);
-    if (DEBUG.QUEST) console.log('[WizardTrialsStrength] Trial started');
+    if (DEBUG.QUEST) debugLog('WizardTrialsStrength', 'Trial started');
   }
 }
 
@@ -73,7 +74,7 @@ export function startWizardTrialsStrength(): void {
 export function resetWizardTrialsStrengthIfActive(): void {
   if (eventChainManager.isChainActive(QUEST_ID)) {
     eventChainManager.resetChain(QUEST_ID);
-    if (DEBUG.QUEST) console.log('[WizardTrialsStrength] Reset after exhaustion');
+    if (DEBUG.QUEST) debugLog('WizardTrialsStrength', 'Reset after exhaustion');
   }
 }
 
@@ -87,7 +88,7 @@ export function resetWizardTrialsStrengthIfActive(): void {
 export function restartWizardTrialsStrength(): void {
   eventChainManager.resetChain(QUEST_ID);
   eventChainManager.startChain(QUEST_ID, DEFAULT_METADATA);
-  if (DEBUG.QUEST) console.log('[WizardTrialsStrength] Restarted fresh on load');
+  if (DEBUG.QUEST) debugLog('WizardTrialsStrength', 'Restarted fresh on load');
 }
 
 // ============================================================================
@@ -124,7 +125,7 @@ export function markBoulderCleared(boulderId: number): boolean {
   eventChainManager.setMetadata(QUEST_ID, 'bouldersCleared', cleared);
 
   if (DEBUG.QUEST) {
-    console.log(`[WizardTrialsStrength] Boulder ${boulderId} cleared (${getBouldersRemaining()} remaining)`);
+    debugLog('WizardTrialsStrength', `Boulder ${boulderId} cleared (${getBouldersRemaining()} remaining)`);
   }
 
   eventBus.emit(GameEvent.BOULDER_CLEARED, { boulderId });
@@ -138,6 +139,6 @@ export function checkTrialComplete(): void {
 
   if (areAllBouldersCleared()) {
     eventChainManager.advanceToStage(QUEST_ID, 'cleared');
-    if (DEBUG.QUEST) console.log('[WizardTrialsStrength] All boulders cleared — door unlocked');
+    if (DEBUG.QUEST) debugLog('WizardTrialsStrength', 'All boulders cleared — door unlocked');
   }
 }

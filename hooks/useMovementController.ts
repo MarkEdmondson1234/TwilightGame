@@ -18,6 +18,7 @@ import { TimeManager } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { getFootstepKey } from '../utils/footstepSounds';
 import { mapManager } from '../maps/MapManager';
+import { isSameTile } from '../utils/mapUtils';
 
 // Re-export SizeTier type for convenience
 export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;
@@ -296,9 +297,7 @@ export function useMovementController(
         animationFrameRef.current !== snap.animationFrame;
       if (!changed) return result;
 
-      const tileChanged =
-        Math.floor(pos.x) !== Math.floor(snap.pos.x) ||
-        Math.floor(pos.y) !== Math.floor(snap.pos.y);
+      const tileChanged = !isSameTile(pos, snap.pos);
       const due = now - snap.committedAt >= TIMING.PLAYER_SNAPSHOT_MS;
       // Coming to a stop always commits, so React ends on the exact resting
       // position. Idle animation (fairy wings) changes the frame without

@@ -16,6 +16,7 @@ import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
 import { mapManager } from '../maps/MapManager';
 import { getItem } from '../data/items';
+import { isSameTile } from './mapUtils';
 
 export const SNOWMAN_IMAGE = '/TwilightGame/assets-optimized/seasonal/snowman.png';
 const SNOWMAN_ITEM_ID = 'seasonal_snowman';
@@ -30,13 +31,10 @@ function isTileFree(mapId: string, pos: Position): boolean {
     if (def?.interactionTileRadius === 0) {
       const ix = item.position.x + (def.interactionOffsetX ?? 0);
       const iy = item.position.y + (def.interactionOffsetY ?? 0);
-      return Math.floor(pos.x) === Math.floor(ix) && Math.floor(pos.y) === Math.floor(iy);
+      return isSameTile(pos, { x: ix, y: iy });
     }
 
-    if (
-      Math.floor(item.position.x) === Math.floor(pos.x) &&
-      Math.floor(item.position.y) === Math.floor(pos.y)
-    ) {
+    if (isSameTile(item.position, pos)) {
       return true;
     }
 
@@ -102,9 +100,7 @@ class SnowmanManagerClass {
    * Removes every snowman, on every map, the moment it stops being winter.
    */
   check(): void {
-    const snowmen = gameState
-      .getAllPlacedItems()
-      .filter((item) => item.itemId === SNOWMAN_ITEM_ID);
+    const snowmen = gameState.getAllPlacedItems().filter((item) => item.itemId === SNOWMAN_ITEM_ID);
     if (snowmen.length === 0) return;
 
     if (!TimeManager.isCurrentSeason(Season.WINTER)) {

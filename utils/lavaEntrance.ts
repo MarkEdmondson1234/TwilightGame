@@ -13,7 +13,7 @@
 
 import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
-import { findClearTileNear } from './mapUtils';
+import { findClearTileNear, getTileCoords } from './mapUtils';
 import { TileType } from '../types';
 import { debugLog } from './debugLog';
 import { battleManager } from '../multiplayer/battle';
@@ -39,10 +39,7 @@ export function chooseLavaEntranceTile(
   if (published && published.x !== undefined && published.y !== undefined) {
     return { x: published.x, y: published.y };
   }
-  return findClearTileNear(
-    { x: Math.floor(goblinPosition.x), y: Math.floor(goblinPosition.y) },
-    mapId
-  );
+  return findClearTileNear(getTileCoords(goblinPosition), mapId);
 }
 
 /**

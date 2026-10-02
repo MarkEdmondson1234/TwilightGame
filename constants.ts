@@ -326,16 +326,6 @@ export const NPC_GARDEN = {
 } as const;
 
 /**
- * WATER_CAN - Watering can capacity settings
- *
- * Controls how many uses the watering can has before needing refill.
- */
-export const WATER_CAN = {
-  MAX_CAPACITY: 10, // Maximum water uses per fill
-  USES_PER_WATER: 1, // Water uses consumed per watering action
-} as const;
-
-/**
  * INTERACTION - Click interaction distance settings
  *
  * Controls when click interactions execute immediately vs walk-first.

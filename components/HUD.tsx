@@ -5,7 +5,7 @@ import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
-import { WATER_CAN, WATERING_CAN } from '../constants';
+import { WATERING_CAN } from '../constants';
 import { resolveIcon, isImageIcon } from '../utils/iconMap';
 import AnalogClock from './AnalogClock';
 import PotionEffectIndicator from './PotionEffectIndicator';
@@ -171,7 +171,7 @@ const HUD: React.FC<HUDProps> = ({ mapName, selectedItemId, selectedItemQuantity
               {/* Water level for watering can */}
               {selectedItemId === 'tool_watering_can' && (
                 <span className="text-xs text-cyan-300">
-                  💧 {waterLevel}/{WATER_CAN.MAX_CAPACITY}
+                  💧 {waterLevel}/{WATERING_CAN.CAPACITY}
                 </span>
               )}
             </div>

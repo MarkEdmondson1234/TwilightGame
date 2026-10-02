@@ -5,7 +5,7 @@
  */
 
 import type { AvailableInteraction, InteractionContext } from '../types';
-import { WATER_CAN } from '../../../constants';
+import { WATERING_CAN } from '../../../constants';
 import { gameState } from '../../../GameState';
 import { checkWaterSource, checkWellInteraction, handleCollectWater, handleRefillWaterCan } from '../../actionHandlers';
 
@@ -32,7 +32,7 @@ export function waterProvider(ctx: InteractionContext): AvailableInteraction[] {
   if (
     currentTool === 'tool_watering_can' &&
     checkWaterSource(position) &&
-    gameState.getWaterLevel() < WATER_CAN.MAX_CAPACITY
+    gameState.getWaterLevel() < WATERING_CAN.CAPACITY
   ) {
     interactions.push({
       type: 'refill_water_can',

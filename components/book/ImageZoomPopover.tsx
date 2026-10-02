@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { Z_TOOLTIP, zClass } from '../../zIndex';
 
 interface ImageZoomPopoverProps {
   src: string;
@@ -78,7 +79,7 @@ const ImageZoomPopover: React.FC<ImageZoomPopoverProps> = ({
       {/* Zoom popover - rendered at document level via fixed positioning */}
       {isHovered && (
         <div
-          className="fixed pointer-events-none z-[9999] rounded-lg shadow-2xl border-2 border-white/50 bg-white/95 p-2 animate-in fade-in zoom-in-95 duration-150"
+          className={`fixed pointer-events-none ${zClass(Z_TOOLTIP)} rounded-lg shadow-2xl border-2 border-white/50 bg-white/95 p-2 animate-in fade-in zoom-in-95 duration-150`}
           style={{
             left: popoverPosition.x,
             top: popoverPosition.y,

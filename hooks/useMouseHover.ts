@@ -15,7 +15,7 @@ import type { ViewFrame } from '../utils/viewFrame';
 import { type Position, TileType } from '../types';
 import { INTERACTION } from '../constants';
 import { screenToTile } from '../utils/screenToTile';
-import { getTileData } from '../utils/mapUtils';
+import { getTileData, isSameTile } from '../utils/mapUtils';
 import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
 import { farmManager } from '../utils/farmManager';
@@ -98,10 +98,7 @@ function classifyTile(tileX: number, tileY: number, mapId: string): HighlightCat
   const currentMap = mapManager.getCurrentMap();
   if (currentMap) {
     for (const transition of currentMap.transitions) {
-      if (
-        Math.floor(transition.fromPosition.x) === tileX &&
-        Math.floor(transition.fromPosition.y) === tileY
-      ) {
+      if (isSameTile(transition.fromPosition, { x: tileX, y: tileY })) {
         return 'transition';
       }
     }

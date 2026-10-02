@@ -15,7 +15,6 @@
 import type { RadialMenuOption } from '../components/RadialMenu';
 import type { InventoryItem } from '../components/Inventory';
 import { ItemCategory, getItem, type ItemDefinition } from '../data/items';
-import { DEFAULT_OUTFIT } from './characterOutfits';
 
 /** Items that are given to an NPC rather than drunk by the player. */
 const GIFT_ONLY_POTIONS = new Set(['potion_friendship', 'potion_bitter_grudge']);

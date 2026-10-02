@@ -67,7 +67,7 @@ import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { handleOpenCooking } from './utils/actionHandlers';
-import { getLavaLakeAnchor } from './utils/mapUtils';
+import { getLavaLakeAnchor, getTileCoords } from './utils/mapUtils';
 import { chooseLavaEntranceTile, openLavaEntranceAt } from './utils/lavaEntrance';
 import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRest';
 import { buildInventoryActions, hasInventoryActions } from './utils/inventoryActions';
@@ -81,13 +81,14 @@ import { FOOD_TO_RECIPE_ID } from './data/recipes';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
-import { TimeManager, Season } from './utils/TimeManager';
+import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import {
   Z_PLAYER,
   Z_TILE_BACKGROUND,
   Z_INVENTORY_RADIAL_MENU,
   Z_LOADING,
+  Z_CUTSCENE_PROGRESS,
   Z_FULL_SCREEN_EFFECT,
   zClass,
 } from './zIndex';
@@ -1608,8 +1609,7 @@ const App: React.FC = () => {
     // placed items, so they are re-evaluated when the player changes tile (or
     // after a short while on the same tile, in case furniture appears under
     // them), not on every frame.
-    const _ptx = Math.floor(playerPosRef.current.x);
-    const _pty = Math.floor(playerPosRef.current.y);
+    const { x: _ptx, y: _pty } = getTileCoords(playerPosRef.current);
     const standing = standingTileRef.current;
     if (
       standing.tileX !== _ptx ||
@@ -2401,7 +2401,9 @@ const App: React.FC = () => {
       return (
         <div className="bg-black w-full h-full relative">
           <CutscenePlayer onComplete={handleLoadingCutsceneComplete} />
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-[200]">
+          <div
+            className={`absolute bottom-0 left-0 right-0 h-1 bg-white/10 ${zClass(Z_CUTSCENE_PROGRESS)}`}
+          >
             <div
               className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
               style={{ width: `${loadingProgress * 100}%` }}
@@ -3062,8 +3064,7 @@ const App: React.FC = () => {
                         {
                           npcId,
                           mapId: battleMapId,
-                          x: Math.floor(goblin.position.x),
-                          y: Math.floor(goblin.position.y),
+                          ...getTileCoords(goblin.position),
                         }
                       );
                     } else if (openLavaEntranceAt(battleMapId, chosen)) {
@@ -3355,7 +3356,9 @@ const App: React.FC = () => {
       {isLoadingCutscene && isCutscenePlaying && (
         <>
           <CutscenePlayer onComplete={handleLoadingCutsceneComplete} />
-          <div className="fixed bottom-0 left-0 right-0 h-1 bg-white/10 z-[200]">
+          <div
+            className={`fixed bottom-0 left-0 right-0 h-1 bg-white/10 ${zClass(Z_CUTSCENE_PROGRESS)}`}
+          >
             <div
               className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
               style={{ width: `${loadingProgress * 100}%` }}

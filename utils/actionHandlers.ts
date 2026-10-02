@@ -17,7 +17,7 @@ import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
 import { getCropIdFromSeed } from '../data/items';
 
-import { WATER_CAN } from '../constants';
+import { WATERING_CAN } from '../constants';
 import { staminaManager } from './StaminaManager';
 
 import { getTierName } from './MagicEffects';
@@ -691,7 +691,7 @@ export function checkWaterSource(playerPos: Position): boolean {
  */
 export function handleRefillWaterCan(): { success: boolean; message: string } {
   // Check if can is already full
-  if (gameState.getWaterLevel() >= WATER_CAN.MAX_CAPACITY) {
+  if (gameState.getWaterLevel() >= WATERING_CAN.CAPACITY) {
     return {
       success: false,
       message: 'Watering can is already full!',
