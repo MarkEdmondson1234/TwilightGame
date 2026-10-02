@@ -13,7 +13,7 @@
 import React, { useEffect } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, render } from '@testing-library/react';
-import { useMovementController, UseMovementControllerReturn } from '../hooks/useMovementController';
+import { useMovementController, type UseMovementControllerReturn } from '../hooks/useMovementController';
 import { TIMING } from '../constants';
 
 vi.mock('../utils/AudioManager', () => ({
@@ -24,7 +24,7 @@ vi.mock('../utils/AudioManager', () => ({
   },
 }));
 
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: {
     getCurrentMap: () => ({ id: 'village', width: 60, height: 60 }),
     getCurrentMapId: () => 'village',

@@ -11,7 +11,7 @@
  * 4. When happy, user exports code to update constants.ts
  */
 
-import { TileType, SpriteMetadata } from '../types';
+import { TileType, type SpriteMetadata } from '../types';
 import { SPRITE_METADATA } from '../constants';
 import { metadataCache } from './MetadataCache';
 

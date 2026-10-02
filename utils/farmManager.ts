@@ -8,8 +8,8 @@ import { getAuthService } from '../firebase/safe';
  * Uses TimeManager for all time calculations (game days/hours, not real time)
  */
 
-import { FarmPlot, FarmPlotState, Position, TileType, CropGrowthStage } from '../types';
-import { getCrop, canPlantInSeason, CropQuality, getNextQuality } from '../data/crops';
+import { type FarmPlot, FarmPlotState, type Position, TileType, CropGrowthStage } from '../types';
+import { getCrop, canPlantInSeason, type CropQuality, getNextQuality } from '../data/crops';
 import { mapManager } from '../maps/MapManager';
 import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';

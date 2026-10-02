@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CharacterCustomization } from '../GameState';
+import { type CharacterCustomization } from '../GameState';
 import {
   generateCharacterSprites,
   generateCharacterSpritesAsync,
@@ -9,7 +9,7 @@ import {
   DEFAULT_CHARACTER,
   isCustomCharacterSprite,
 } from '../utils/characterSprites';
-import { Direction } from '../types';
+import { type Direction } from '../types';
 import { debugLog } from '../utils/debugLog';
 
 /**

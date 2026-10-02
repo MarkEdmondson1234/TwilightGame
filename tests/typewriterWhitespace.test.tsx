@@ -17,7 +17,8 @@ import React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTypewriter } from '../hooks/useTypewriter';
-import { initializeMaps, mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps } from '../maps';
 import { npcManager } from '../NPCManager';
 
 let intervalCallback: (() => void) | undefined;

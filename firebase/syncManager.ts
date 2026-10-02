@@ -21,7 +21,7 @@ import { authService } from './authService';
 import { cloudSaveService } from './cloudSaveService';
 import { syncDiaryFromFirestore } from '../services/diaryService';
 import { gameState } from '../GameState';
-import { FIRESTORE_PATHS, SyncMetadata } from './types';
+import { FIRESTORE_PATHS, type SyncMetadata } from './types';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { reportError, reportMessageOnce } from '../utils/errorReporting';
 import { debugLog } from '../utils/debugLog';

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTouchDevice } from '../../hooks/useTouchDevice';
-import { BookThemeConfig } from './bookThemes';
+import { type BookThemeConfig } from './bookThemes';
 import BookPage from './BookPage';
-import { BookChapter } from '../../hooks/useBookPagination';
+import { type BookChapter } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
 
 interface BookSpreadProps<ChapterId extends string> {

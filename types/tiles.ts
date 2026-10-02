@@ -9,7 +9,7 @@
  * - ColorScheme (map colour themes)
  */
 
-import { TileType, CollisionType } from './core';
+import { type TileType, type CollisionType } from './core';
 
 export interface SeasonalImageSet {
   spring?: string[]; // Images to use in spring (higher frequency if defined)

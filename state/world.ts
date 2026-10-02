@@ -7,7 +7,7 @@
 
 import type { GameStateManager } from '../GameState';
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
-import { DeskContents, PlacedItem } from '../types';
+import { type DeskContents, type PlacedItem } from '../types';
 import { GameEvent, eventBus } from '../utils/EventBus';
 import { debugLog } from '../utils/debugLog';
 import { shouldDecay } from '../utils/itemDecayManager';

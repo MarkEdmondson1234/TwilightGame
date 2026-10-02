@@ -24,7 +24,7 @@
  *    dialogue choices (`triggerCutscene`), never triggered directly.
  */
 
-import { CutsceneDefinition, CutsceneCharacter, CutsceneScene } from '../../types';
+import { type CutsceneDefinition, type CutsceneCharacter, type CutsceneScene } from '../../types';
 import { tileAssets, npcAssets } from '../../assets';
 
 /** Every scene shares this look: Mordecai's projection over the tileable mine floor. */

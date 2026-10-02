@@ -9,7 +9,7 @@
  * - WeatherAnimation (fullscreen weather effects)
  */
 
-import { TileType, Position } from './core';
+import { type TileType, type Position } from './core';
 
 // Animation system types
 export interface DaySchedule {

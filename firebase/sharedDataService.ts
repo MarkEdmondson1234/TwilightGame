@@ -29,9 +29,9 @@ import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { debugLog } from '../utils/debugLog';
 import {
-  SharedConversationSummary,
-  SharedWorldEvent,
-  SharedEventType,
+  type SharedConversationSummary,
+  type SharedWorldEvent,
+  type SharedEventType,
   FIRESTORE_PATHS,
 } from './types';
 

@@ -15,7 +15,7 @@
 import { farmManager } from '../farmManager';
 import { characterData } from '../CharacterData';
 import { transitionToMap } from '../../maps';
-import { Position } from '../../types';
+import { type Position } from '../../types';
 import { inventoryManager } from '../inventoryManager';
 import { debugLog } from '../debugLog';
 

@@ -4,7 +4,7 @@
  * The wise elder who sits beneath the cherry tree.
  */
 
-import { NPC, Position } from '../../../types';
+import { type NPC, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 import { GARDENING_QUEST_ID, GARDENING_QUEST_STAGES } from '../../../data/questHandlers/gardeningQuestHandler';

@@ -19,7 +19,7 @@ import { startDiagnosticOperation, logTextureEviction } from './sessionDiagnosti
  * arithmetic — not download size — is what has to fit inside a phone's budget.
  */
 
-import { Assets, Texture, type Container } from 'pixi.js';
+import { Assets, type Texture, type Container } from 'pixi.js';
 import { getCachedPerformanceSettings } from './performanceTier';
 import { debugLog } from './debugLog';
 import { resolveTextureUrl } from './textureVariants';

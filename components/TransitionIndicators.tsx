@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, Position, Transition } from '../types';
+import { type MapDefinition, type Position, type Transition } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { getTransitionIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';

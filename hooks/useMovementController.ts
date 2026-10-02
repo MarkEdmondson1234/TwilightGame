@@ -7,8 +7,8 @@
  * Part of Phase 3 App.tsx refactoring - Domain Controllers.
  */
 
-import { useState, useRef, useEffect, useCallback, MutableRefObject } from 'react';
-import { Position, Direction, NPC } from '../types';
+import { useState, useRef, useEffect, useCallback, type MutableRefObject } from 'react';
+import { type Position, Direction, type NPC } from '../types';
 import { TIMING } from '../constants';
 import { gameState } from '../GameState';
 import { getSpriteConfig } from '../utils/characterSprites';
@@ -17,7 +17,7 @@ import { useClickToMove } from './useClickToMove';
 import { TimeManager } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { getFootstepKey } from '../utils/footstepSounds';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 
 // Re-export SizeTier type for convenience
 export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;

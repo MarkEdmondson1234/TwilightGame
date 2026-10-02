@@ -20,7 +20,7 @@ import {
   collection,
   onSnapshot,
   serverTimestamp,
-  Unsubscribe,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';

@@ -10,7 +10,8 @@
  * presentation concerns plus wreath creation.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MiniGameContext } from '../types';
 import { getItem } from '../../data/items';
 import { getCanvasScale, getClientPos, toCanvasCoords } from './wreathHelpers';

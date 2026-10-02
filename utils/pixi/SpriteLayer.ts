@@ -19,7 +19,7 @@
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
-import { MapDefinition, SpriteMetadata, TileType } from '../../types';
+import { type MapDefinition, type SpriteMetadata, TileType } from '../../types';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
 import { selectVariant } from '../spriteVariantUtils';

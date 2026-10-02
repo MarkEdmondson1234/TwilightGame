@@ -15,7 +15,7 @@
  * based on current quest state.
  */
 
-import { NPC, Direction } from '../../../types';
+import { type NPC, Direction } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 import {

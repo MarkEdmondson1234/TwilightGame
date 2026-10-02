@@ -7,7 +7,7 @@
  * - FarmPlot (complete farm plot definition)
  */
 
-import { Position } from './core';
+import { type Position } from './core';
 
 // Farm system types
 export enum FarmPlotState {

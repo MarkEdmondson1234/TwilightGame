@@ -17,18 +17,18 @@
  */
 
 import {
-  NPC,
+  type NPC,
   NPCBehavior,
   Direction,
-  Position,
-  AnimatedNPCStates,
-  ProximityTrigger,
-  FriendshipConfig,
-  DailyResourceConfig,
-  DialogueNode,
-  AnimationConditions,
-  SeasonalLocation,
-  EntryAnimation,
+  type Position,
+  type AnimatedNPCStates,
+  type ProximityTrigger,
+  type FriendshipConfig,
+  type DailyResourceConfig,
+  type DialogueNode,
+  type AnimationConditions,
+  type SeasonalLocation,
+  type EntryAnimation,
 } from '../../types';
 import { TIMING } from '../../constants';
 

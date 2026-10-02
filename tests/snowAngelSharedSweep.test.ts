@@ -11,7 +11,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: { getCurrentMapId: () => 'village', getCurrentMap: () => ({ id: 'village' }) },
 }));
 

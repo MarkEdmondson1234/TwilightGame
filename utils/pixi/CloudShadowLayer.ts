@@ -18,7 +18,7 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { Z_CLOUD_SHADOWS } from '../../zIndex';
 import {
-  CloudShadowConfig,
+  type CloudShadowConfig,
   generateCloudShadows,
   getSeasonalModifiers,
   weatherAllowsShadows,

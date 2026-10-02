@@ -1,8 +1,8 @@
-import { useCallback, MutableRefObject } from 'react';
-import { Position, NPC, isTileSolid } from '../types';
+import { useCallback, type MutableRefObject } from 'react';
+import { type Position, type NPC, isTileSolid } from '../types';
 import { PLAYER_SIZE } from '../constants';
 import { getTileData } from '../utils/mapUtils';
-import { MovementMode, isTileBlockingForMode } from '../utils/tileCategories';
+import { type MovementMode, isTileBlockingForMode } from '../utils/tileCategories';
 import { metadataCache } from '../utils/MetadataCache';
 
 /**

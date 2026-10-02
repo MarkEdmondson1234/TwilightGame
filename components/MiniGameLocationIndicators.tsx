@@ -1,6 +1,6 @@
 import { COMMUNAL_EASEL } from '../data/communalEasel';
 import React from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';

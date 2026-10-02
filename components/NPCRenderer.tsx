@@ -1,5 +1,5 @@
 import React from 'react';
-import { Position, Direction } from '../types';
+import { type Position, Direction } from '../types';
 import { TILE_SIZE, PLAYER_SIZE } from '../constants';
 import { npcManager } from '../NPCManager';
 import { TimeManager } from '../utils/TimeManager';

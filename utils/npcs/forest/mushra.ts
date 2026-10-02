@@ -2,7 +2,7 @@
  * Mushra NPC Factory Function
  */
 
-import { NPC, Direction, NPCBehavior, Position, DialogueNode, DialogueResponse } from '../../../types';
+import { type NPC, Direction, NPCBehavior, type Position, type DialogueNode, type DialogueResponse } from '../../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../../assets';
 import { createWanderingNPC, createStaticNPC } from '../createNPC';
 import {

@@ -1,4 +1,4 @@
-import { MapDefinition, TileType } from '../../types';
+import { type MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createMushraNPC, createDaveadNPC } from '../../utils/npcFactories';
 import { tileAssets } from '../../assets';

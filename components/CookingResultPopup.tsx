@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { npcAssets } from '../assets';
-import { BookThemeConfig } from './book/bookThemes';
+import { type BookThemeConfig } from './book/bookThemes';
 
 /** Minimal result shape shared by CookingResult and BrewingResult */
 interface PopupResult {

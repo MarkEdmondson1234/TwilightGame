@@ -5,7 +5,7 @@
  * Uses original unoptimized sprites for better quality when zoomed in.
  */
 
-import { CharacterCustomization } from '../GameState';
+import { type CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { fairyAssets } from '../assets';
 import { getSpriteDir, resolveOutfit } from './characterOutfits';

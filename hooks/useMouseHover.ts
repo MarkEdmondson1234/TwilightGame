@@ -10,18 +10,18 @@
  * classification (farm, forage, transition, NPC, cooking, etc.).
  */
 
-import { useEffect, useRef, useState, MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { ViewFrame } from '../utils/viewFrame';
-import { Position, TileType } from '../types';
+import { type Position, TileType } from '../types';
 import { INTERACTION } from '../constants';
 import { screenToTile } from '../utils/screenToTile';
 import { getTileData } from '../utils/mapUtils';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
 import { farmManager } from '../utils/farmManager';
 import { hasTileTypeNearby } from '../utils/mapUtils';
 import { gameState } from '../GameState';
-import { HighlightLayer, type HighlightCategory } from '../utils/pixi/HighlightLayer';
+import { type HighlightLayer, type HighlightCategory } from '../utils/pixi/HighlightLayer';
 import { debugLog } from '../utils/debugLog';
 
 export interface UseMouseHoverConfig {

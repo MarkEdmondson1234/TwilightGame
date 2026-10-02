@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, NPC } from '../../types';
+import { type MapDefinition, TileType, type NPC } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createWizardTrialsMordecaiOrNull } from '../../utils/npcs/mine';
 

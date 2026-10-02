@@ -23,7 +23,7 @@ import type { InteractionContext } from '../utils/interactions/types';
 import { CollisionType } from '../types';
 
 let colorScheme = 'village';
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: { getCurrentMap: () => ({ colorScheme }) },
 }));
 vi.mock('../utils/DecorationManager', () => ({

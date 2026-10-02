@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useMemo, useCallback } from 'react';
-import { PotionLevel } from '../data/potionRecipes';
+import { type PotionLevel } from '../data/potionRecipes';
 import { Z_MODAL, zClass } from '../zIndex';
 
 interface LevelUpCelebrationProps {

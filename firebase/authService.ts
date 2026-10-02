@@ -19,12 +19,12 @@ import {
   EmailAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User,
-  UserCredential,
+  type User,
+  type UserCredential,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseInitialized } from './config';
-import { UserProfile, FIRESTORE_PATHS } from './types';
+import { type UserProfile, FIRESTORE_PATHS } from './types';
 import { reportError, setErrorReportingUser } from '../utils/errorReporting';
 import { debugLog } from '../utils/debugLog';
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { BookThemeConfig } from './bookThemes';
-import { EncyclopaediaEntry } from '../../data/ingredientEncyclopaedia';
+import { type BookThemeConfig } from './bookThemes';
+import { type EncyclopaediaEntry } from '../../data/ingredientEncyclopaedia';
 import { getItem } from '../../data/items';
 import ImageZoomPopover from './ImageZoomPopover';
 

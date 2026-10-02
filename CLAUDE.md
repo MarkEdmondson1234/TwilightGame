@@ -774,6 +774,10 @@ Where things go:
 - Startup → `utils/gameInitializer.ts`; render sections over ~100 lines → a component
 - Naming: hooks `useX.ts`, components `PascalCase.tsx`, utilities `camelCase.ts`, constants
   `SCREAMING_SNAKE_CASE`
+- **Imports:** import a singleton from the module that defines it (`maps/MapManager`, not the
+  `maps` barrel, which also loads every map definition); mark type-only imports `import type`
+  (ESLint enforces it). `constants.ts` must stay a leaf — no imports of assets or managers.
+  `tests/importCycles.test.ts` fails on any new runtime import cycle; its header says how to fix one.
 
 Code standards: strict TypeScript; no `any` (use `unknown` + guards); interfaces for data; discriminated unions
 for state variants; refs (not state) for anything that changes every frame; comments explain

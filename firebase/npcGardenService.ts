@@ -25,8 +25,8 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
-  Unsubscribe,
-  Timestamp,
+  type Unsubscribe,
+  type Timestamp,
   type DocumentData,
   type UpdateData,
 } from 'firebase/firestore';

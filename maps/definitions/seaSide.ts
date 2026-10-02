@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, RoomLayer } from '../../types';
+import { type MapDefinition, TileType, type RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND, Z_SPRITE_FOREGROUND } from '../../zIndex';
 import { createShellaNPC } from '../../utils/npcFactories';

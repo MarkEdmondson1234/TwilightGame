@@ -1,10 +1,10 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { applyPotionEffect, MagicEffectCallbacks } from '../utils/MagicEffects';
+import { applyPotionEffect, type MagicEffectCallbacks } from '../utils/MagicEffects';
 import { getGiftPreferenceReveal } from '../utils/actionHandlers';
 import { createStaticNPC } from '../utils/npcs/createNPC';
 import { farmManager } from '../utils/farmManager';
-import { FarmPlotState, FarmPlot } from '../types';
+import { FarmPlotState, type FarmPlot } from '../types';
 
 /**
  * potion_revealing (the Revealing Tonic) used to always report success:false and

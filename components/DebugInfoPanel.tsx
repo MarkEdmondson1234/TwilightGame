@@ -1,8 +1,8 @@
 import React from 'react';
-import { Position, isTileSolid } from '../types';
+import { type Position, isTileSolid } from '../types';
 import { getTileData, getTileCoords } from '../utils/mapUtils';
 import { PLAYER_SIZE } from '../constants';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { TimeManager } from '../utils/TimeManager';
 import { ColorResolver } from '../utils/ColorResolver';
 import { getColorHexByName } from '../palette';

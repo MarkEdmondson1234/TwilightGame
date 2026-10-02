@@ -6,7 +6,7 @@
  */
 
 import type { GameState, GameStateManager } from '../GameState';
-import { ColorScheme, FarmPlot, NPCFriendship } from '../types';
+import { type ColorScheme, type FarmPlot, type NPCFriendship } from '../types';
 import { debugLog } from '../utils/debugLog';
 
 export const characterDomainsMethods = {

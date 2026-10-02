@@ -13,7 +13,7 @@
  * on Firestore. See design_docs/planned/MULTIPLAYER.md §4.
  */
 
-import { getDatabase, Database } from 'firebase/database';
+import { getDatabase, type Database } from 'firebase/database';
 import { getFirebaseApp, isFirebaseInitialized } from './config';
 import { debugLog } from '../utils/debugLog';
 

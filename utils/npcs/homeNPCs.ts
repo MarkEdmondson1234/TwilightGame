@@ -4,7 +4,7 @@
  * NPCs that appear in home/family settings.
  */
 
-import { NPC, Position } from '../../types';
+import { type NPC, type Position } from '../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../assets';
 import { createStaticNPC } from './createNPC';
 

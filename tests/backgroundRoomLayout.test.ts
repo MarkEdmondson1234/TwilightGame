@@ -33,7 +33,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { mapManager } from '../maps/MapManager';
 import { getRoomArtworkSize, getRoomCoverScale, getRoomPan } from '../utils/backgroundRoomLayout';
 import { TILE_SIZE, TILE_LEGEND, PLAYER_SIZE } from '../constants';
-import { CollisionType, MapDefinition, TileData } from '../types';
+import { CollisionType, type MapDefinition, type TileData } from '../types';
 
 /**
  * Real window sizes, chosen to span the aspect ratios that actually break this:

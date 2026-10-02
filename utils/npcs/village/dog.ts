@@ -4,7 +4,7 @@
  * A loyal dog that follows the village child.
  */
 
-import { NPC, Position } from '../../../types';
+import { type NPC, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
 

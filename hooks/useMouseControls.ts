@@ -6,9 +6,9 @@
  * recreating event listeners on every frame during movement.
  */
 
-import { useEffect, useRef, useState, MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { ViewFrame } from '../utils/viewFrame';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { Z_HUD } from '../zIndex';
 import { screenToTile } from '../utils/screenToTile';
 import { createLongPressTracker } from '../utils/longPress';

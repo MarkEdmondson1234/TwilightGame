@@ -21,22 +21,22 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
-import { GameState } from '../GameState';
+import { type GameState } from '../GameState';
 import { SHARED_FARM_MAP_IDS } from '../constants';
 import {
-  SaveSlot,
-  SaveMetadata,
-  CharacterSaveData,
-  InventorySaveData,
-  FarmingSaveData,
-  CookingSaveData,
-  MagicSaveData,
-  FriendshipsSaveData,
-  QuestsSaveData,
-  WorldSaveData,
-  StatsSaveData,
-  DecorationSaveData,
-  ConversationsSaveData,
+  type SaveSlot,
+  type SaveMetadata,
+  type CharacterSaveData,
+  type InventorySaveData,
+  type FarmingSaveData,
+  type CookingSaveData,
+  type MagicSaveData,
+  type FriendshipsSaveData,
+  type QuestsSaveData,
+  type WorldSaveData,
+  type StatsSaveData,
+  type DecorationSaveData,
+  type ConversationsSaveData,
   FIRESTORE_PATHS,
   SAVE_DATA_DOCS,
 } from './types';

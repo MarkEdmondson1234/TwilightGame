@@ -30,7 +30,7 @@ import {
   markBoulderCleared,
   isWizardTrialsStrengthActive,
   isWizardTrialsStrengthAtStage,
-  BoulderTier,
+  type BoulderTier,
 } from '../data/questHandlers/wizardTrialsStrengthHandler';
 
 // ============================================================================

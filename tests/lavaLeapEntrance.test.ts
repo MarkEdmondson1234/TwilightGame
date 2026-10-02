@@ -9,7 +9,7 @@ import { npcProvider } from '../utils/interactions/providers/npc';
 import type { InteractionContext } from '../utils/interactions/types';
 import { NPCBehavior, TileType } from '../types';
 import { gameState } from '../GameState';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { transitionProvider } from '../utils/interactions/providers/transition';
 import { transitionBlockedReason } from '../utils/transitionRequirements';
 import { LAVA_LEAP_QUEST, unlockLavaPassage } from '../minigames/lava-leap/progression';

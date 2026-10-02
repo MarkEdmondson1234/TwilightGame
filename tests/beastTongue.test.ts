@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { getDialogue } from '../services/dialogueService';
 import { gameState } from '../GameState';
-import { applyPotionEffect, MagicEffectCallbacks } from '../utils/MagicEffects';
+import { applyPotionEffect, type MagicEffectCallbacks } from '../utils/MagicEffects';
 import { POTION_EFFECT_DISPLAY } from '../components/PotionEffectIndicator';
 import { TimeManager } from '../utils/TimeManager';
 import { createCatNPC } from '../utils/npcs/village/cat';
@@ -13,7 +13,7 @@ import { createPossumNPC } from '../utils/npcs/forest/possum';
 import { createBunnyflyNPC } from '../utils/npcs/forest/bunnyfly';
 import { createUmbraWolfNPC } from '../utils/npcs/forest/umbraWolf';
 import { createCowNPC } from '../utils/npcs/farmNPCs';
-import { NPC } from '../types';
+import { type NPC } from '../types';
 
 /**
  * Beast Tongue is the only potion whose whole payoff lives in other files: the potion sets

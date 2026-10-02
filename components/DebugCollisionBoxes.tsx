@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, Position, isTileSolid, CollisionType } from '../types';
+import { type MapDefinition, type Position, isTileSolid, CollisionType } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { TILE_SIZE } from '../constants';
 import { metadataCache } from '../utils/MetadataCache';

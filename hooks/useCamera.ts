@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { computeCameraPosition, type CameraPosition } from '../utils/viewFrame';
 
 interface CameraConfig {

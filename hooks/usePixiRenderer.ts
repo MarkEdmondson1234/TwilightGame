@@ -18,17 +18,17 @@ import {
  * This hook extracts ~625 lines of PixiJS code from App.tsx to improve maintainability.
  */
 
-import { useRef, useState, useEffect, useCallback, MutableRefObject } from 'react';
+import { useRef, useState, useEffect, useCallback, type MutableRefObject } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition, TileData, NPC } from '../types';
+import { type Position, type Direction, type MapDefinition, type TileData, type NPC } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE, TIMING } from '../constants';
 import { createContextRecovery } from '../utils/pixi/contextRecovery';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
-import { VisibleRange } from '../utils/viewportUtils';
+import { type VisibleRange } from '../utils/viewportUtils';
 import { reportErrorOnce } from '../utils/errorReporting';
 import { getRendererResolution } from '../utils/rendererResolution';
 import { textureManager } from '../utils/TextureManager';
-import { performanceMonitor, SceneNode } from '../utils/PerformanceMonitor';
+import { performanceMonitor, type SceneNode } from '../utils/PerformanceMonitor';
 import { ColorResolver } from '../utils/ColorResolver';
 import { TileLayer } from '../utils/pixi/TileLayer';
 import { PlayerSprite } from '../utils/pixi/PlayerSprite';
@@ -43,7 +43,7 @@ import { WeatherLayer } from '../utils/pixi/WeatherLayer';
 import { CloudShadowLayer } from '../utils/pixi/CloudShadowLayer';
 import { ForegroundParallaxLayer } from '../utils/pixi/ForegroundParallaxLayer';
 import { hasForegroundParallax } from '../data/foregroundParallax';
-import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
+import { DarknessLayer, type LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { RoomPropsLayer } from '../utils/pixi/RoomPropsLayer';
 import { AnimationLayer } from '../utils/pixi/AnimationLayer';
@@ -53,14 +53,14 @@ import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
 import { getCoreTextureUrls, getResidentTextureUrls, toSeasonKey } from '../utils/mapTextureSet';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
 import { npcSpeechManager } from '../multiplayer/npcSpeech';
 import { TimeManager, TimeOfDay } from '../utils/TimeManager';
 import { DEFAULT_REFERENCE_VIEWPORT } from './useViewportScale';
 import type { Season } from '../data/shopInventory';
-import { MovementMode } from '../utils/tileCategories';
+import { type MovementMode } from '../utils/tileCategories';
 import { getCachedPerformanceSettings } from '../utils/performanceTier';
 import { debugLog } from '../utils/debugLog';
 import { getPlayerSpriteInfo } from './useCharacterSprites';

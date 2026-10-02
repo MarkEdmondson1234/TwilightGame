@@ -11,20 +11,20 @@
  */
 
 import {
-  NPCFriendship,
-  FriendshipTier,
-  NPC,
-  NPCGiftConfig,
-  NPCFavourConfig,
-  FavourType,
+  type NPCFriendship,
+  type FriendshipTier,
+  type NPC,
+  type NPCGiftConfig,
+  type NPCFavourConfig,
+  type FavourType,
 } from '../types';
-import { characterData, FriendshipData } from './CharacterData';
+import { characterData, type FriendshipData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
-import { getGiftReaction, GiftReaction } from '../data/giftReactions';
+import { RECIPES, NPC_FOOD_PREFERENCES, type RecipeCategory } from '../data/recipes';
+import { getGiftReaction, type GiftReaction } from '../data/giftReactions';
 import {
   isGardeningQuestActive,
   getCurrentSeasonTask,

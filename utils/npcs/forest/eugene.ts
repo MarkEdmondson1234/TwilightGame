@@ -8,7 +8,7 @@
  * the same proven mechanism that brings the duck out only in spring.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 

@@ -5,7 +5,7 @@
 
 import { ITEMS } from './items';
 import { CROPS } from './crops';
-import { Season as CropSeason } from '../utils/TimeManager';
+import { type Season as CropSeason } from '../utils/TimeManager';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 

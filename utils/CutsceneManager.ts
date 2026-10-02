@@ -9,7 +9,7 @@
  * - Player position save/restore
  */
 
-import { CutsceneDefinition, CutsceneTrigger, Position } from '../types';
+import { type CutsceneDefinition, type CutsceneTrigger, type Position } from '../types';
 import { TimeManager } from './TimeManager';
 import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';

@@ -34,7 +34,7 @@ vi.mock('../utils/EventBus', () => ({
 }));
 vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => true }));
 vi.mock('../GameState', () => ({ gameState: { getPlacedItems: () => state.placed } }));
-vi.mock('../maps', () => ({ mapManager: { getCurrentMap: () => null } }));
+vi.mock('../maps/MapManager', () => ({ mapManager: { getCurrentMap: () => null } }));
 import CookingStationIndicators from '../components/CookingStationIndicators';
 import { MUMS_KITCHEN_FIREPLACE } from '../utils/kitchenFireplace';
 

@@ -1,7 +1,7 @@
-import { NPC } from '../../types';
+import { type NPC } from '../../types';
 import { npcAssets } from '../../assets';
 import { createStaticNPC } from './createNPC';
-import { Position } from '../../types';
+import { type Position } from '../../types';
 
 export function createGoddessOfEyesNPC(id: string, position: Position): NPC {
   return createStaticNPC({

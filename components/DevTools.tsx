@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { TimeManager, Season } from '../utils/TimeManager';
-import { WeatherType } from '../data/weatherConfig';
+import { type WeatherType } from '../data/weatherConfig';
 import { isDebugLogEnabled, setDebugLogsEnabled } from '../utils/debugLog';
 import { gameState } from '../GameState';
 import { characterData } from '../utils/CharacterData';
 import { farmManager } from '../utils/farmManager';
 import { mapManager } from '../maps/MapManager';
 import { FarmPlotState } from '../types';
-import { audioManager, SoundCategory, AudioEffects } from '../utils/AudioManager';
+import { audioManager, type SoundCategory, type AudioEffects } from '../utils/AudioManager';
 import { magicManager } from '../utils/MagicManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { decorationManager } from '../utils/DecorationManager';

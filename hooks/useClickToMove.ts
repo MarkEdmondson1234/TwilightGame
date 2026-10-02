@@ -5,8 +5,8 @@
  * Integrates with usePlayerMovement for smooth path following.
  */
 
-import { useState, useCallback, useRef, MutableRefObject } from 'react';
-import { Position, NPC } from '../types';
+import { useState, useCallback, useRef, type MutableRefObject } from 'react';
+import { type Position, type NPC } from '../types';
 import { findPath } from '../utils/pathfinding';
 
 /** Threshold for considering a waypoint reached (in tiles) */

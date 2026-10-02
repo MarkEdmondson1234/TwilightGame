@@ -37,7 +37,7 @@ import {
   SEASON_SCENES,
   PANORAMA_SCENE_IDS,
   CUTSCENE_DIR,
-  SplashLayer,
+  type SplashLayer,
 } from '../utils/splashScenes';
 import type { CutsceneDefinition } from '../types';
 import {

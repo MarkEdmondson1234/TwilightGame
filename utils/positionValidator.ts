@@ -1,4 +1,4 @@
-import { Position, TileType, isTileSolid } from '../types';
+import { type Position, TileType, isTileSolid } from '../types';
 import { getTileData, getTileCoords } from './mapUtils';
 import { PLAYER_SIZE } from '../constants';
 

@@ -9,8 +9,8 @@
  * - AnimatedNPCStates (state machine for animated NPCs)
  */
 
-import { Position, Direction } from './core';
-import { AnimationConditions } from './animation';
+import { type Position, type Direction } from './core';
+import { type AnimationConditions } from './animation';
 import type { SharedEventType } from '../firebase/types';
 import type { CookingDomain, RecipeCategory } from '../data/recipes';
 

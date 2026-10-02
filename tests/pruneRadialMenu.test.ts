@@ -15,7 +15,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getAvailableInteractions } from '../utils/interactions/index';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { fruitTreeManager } from '../utils/fruitTreeManager';
 import { inventoryManager } from '../utils/inventoryManager';

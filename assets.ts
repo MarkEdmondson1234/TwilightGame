@@ -917,7 +917,7 @@ export const furnitureAssets = {
 // Audio assets - Sound effects, music, and ambient sounds
 // Note: Add audio files to /public/assets/audio/ and they will be auto-served
 // Recommended format: OGG (best compression) or MP3 (wide compatibility)
-import { AudioAssetConfig } from './utils/AudioManager';
+import type { AudioAssetConfig } from './utils/AudioManager';
 import { lavaLeapAudioAssets } from './minigames/lava-leap/audioAssets';
 
 export const audioAssets: Record<string, AudioAssetConfig> = {

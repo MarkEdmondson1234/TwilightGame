@@ -10,10 +10,10 @@
  * - Palette color to hex conversion
  */
 
-import { TileType, ColorScheme } from '../types';
+import { TileType, type ColorScheme } from '../types';
 import { TILE_LEGEND } from '../constants';
-import { mapManager } from '../maps';
-import { TimeManager, Season } from './TimeManager';
+import { mapManager } from '../maps/MapManager';
+import { TimeManager, type Season } from './TimeManager';
 import { getColorHexByName } from '../palette';
 
 type TileColorKey = keyof ColorScheme['colors'];

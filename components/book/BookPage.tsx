@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookThemeConfig, bookStyles } from './bookThemes';
+import { type BookThemeConfig, bookStyles } from './bookThemes';
 
 interface BookPageProps {
   side: 'left' | 'right';

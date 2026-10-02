@@ -8,7 +8,7 @@
  * Follows the same singleton + characterData pattern as DecorationManager.
  */
 
-import { Photo } from '../types';
+import { type Photo } from '../types';
 import { characterData } from './CharacterData';
 import { getSharedAlbumService } from '../firebase/safe';
 import { eventBus, GameEvent } from './EventBus';

@@ -1,5 +1,6 @@
 import { runSelfTests } from './testUtils';
-import { initializeMaps, mapManager, dailyProceduralSeed } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { initializeMaps, dailyProceduralSeed } from '../maps';
 import type { ProceduralMapKind } from '../maps';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';

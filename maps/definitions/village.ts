@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, Direction } from '../../types';
+import { type MapDefinition, TileType, Direction } from '../../types';
 import { parseGrid } from '../gridParser';
 import { tileAssets } from '../../assets';
 import {

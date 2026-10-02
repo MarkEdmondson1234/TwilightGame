@@ -1,5 +1,5 @@
 import { setDiagnosticMap, startDiagnosticOperation } from '../utils/sessionDiagnostics';
-import { MapDefinition, Position, TileType, ColorScheme, isTileSolid, Transition } from '../types';
+import { type MapDefinition, type Position, type TileType, type ColorScheme, isTileSolid, type Transition } from '../types';
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
 import { TILE_LEGEND, PLAYER_SIZE } from '../constants';

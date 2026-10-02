@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameState } from '../hooks/useGameState';
-import { TimeManager, GameTime } from '../utils/TimeManager';
+import { TimeManager, type GameTime } from '../utils/TimeManager';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';

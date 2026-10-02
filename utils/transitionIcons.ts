@@ -6,8 +6,8 @@
  */
 
 import { TileType } from '../types/core';
-import { Transition } from '../types/maps';
-import { NPC } from '../types/npc';
+import { type Transition } from '../types/maps';
+import { type NPC } from '../types/npc';
 
 // Cottage-core colour palette (matches RadialMenu, Toast, etc.)
 export const COTTAGE_COLOURS = {

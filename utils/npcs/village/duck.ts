@@ -4,7 +4,7 @@
  * A duck that appears near the pond in spring.
  */
 
-import { NPC, NPCBehavior, Position } from '../../../types';
+import { type NPC, NPCBehavior, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createNPC } from '../createNPC';
 

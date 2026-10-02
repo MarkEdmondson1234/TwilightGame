@@ -4,7 +4,7 @@
  * Contains both the forest encounter and at-home versions of Chill Bear.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 

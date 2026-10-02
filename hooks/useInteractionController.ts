@@ -11,18 +11,18 @@
  */
 
 import type { CookingResult } from '../utils/CookingManager';
-import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
+import { useState, useRef, useCallback, useEffect, type MutableRefObject } from 'react';
 import { useTouchDevice } from './useTouchDevice';
-import { Position, NPC } from '../types';
+import { type Position, type NPC } from '../types';
 import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
-import { MouseClickInfo } from './useMouseControls';
-import { RadialMenuOption } from '../components/RadialMenu';
-import { FarmActionType } from '../components/FarmActionAnimation';
+import { type MouseClickInfo } from './useMouseControls';
+import { type RadialMenuOption } from '../components/RadialMenu';
+import { type FarmActionType } from '../components/FarmActionAnimation';
 import type { EmoteId } from '../multiplayer/emotes';
 import {
-  FarmActionResult,
-  ForageResult,
-  TransitionResult,
+  type FarmActionResult,
+  type ForageResult,
+  type TransitionResult,
   getGiftPreferenceReveal,
   handleOpenCooking,
 } from '../utils/actionHandlers';
@@ -45,7 +45,7 @@ import { registerItemSprite } from '../utils/inventoryUIHelper';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { getDistance } from '../utils/pathfinding';
 import { snowAngelManager } from '../utils/SnowAngelManager';
-import { InventoryItem } from '../components/Inventory';
+import { type InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
 import {
   canCleanCobwebs,
@@ -65,7 +65,7 @@ import {
   clearBoulder,
   boulderTierToActivity,
 } from '../utils/boulderInteractions';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import {
   onWreathPlacedInVillage,
   WREATH_ITEM_IDS,

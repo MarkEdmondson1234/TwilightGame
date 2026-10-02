@@ -11,12 +11,12 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  CutsceneScene,
-  CutsceneBackgroundLayer,
-  CutsceneCharacter,
-  CutsceneDialogue,
-  CutsceneWeatherEffect,
-  CutscenePanDirection,
+  type CutsceneScene,
+  type CutsceneBackgroundLayer,
+  type CutsceneCharacter,
+  type CutsceneDialogue,
+  type CutsceneWeatherEffect,
+  type CutscenePanDirection,
 } from '../types';
 import { cutsceneManager } from '../utils/CutsceneManager';
 import { TimeManager } from '../utils/TimeManager';

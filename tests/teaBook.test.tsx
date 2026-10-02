@@ -24,7 +24,7 @@ vi.mock('../components/CookingResultPopup', () => ({
   default: ({ result }: { result: { message: string } }) => <p role="status">{result.message}</p>,
 }));
 vi.mock('../GameState', () => ({ gameState: { getPlacedItems: () => state.placed } }));
-vi.mock('../maps', () => ({ mapManager: { getCurrentMap: () => null } }));
+vi.mock('../maps/MapManager', () => ({ mapManager: { getCurrentMap: () => null } }));
 import RecipeContent from '../components/book/RecipeContent';
 import { cookingTheme } from '../components/book/bookThemes';
 import { NO_COOKING_STATION_MESSAGE, TEA_NEEDS_FIREPLACE_MESSAGE } from '../utils/cookingStations';

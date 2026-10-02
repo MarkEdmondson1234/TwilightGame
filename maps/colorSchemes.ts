@@ -1,4 +1,4 @@
-import { ColorScheme } from '../types';
+import { type ColorScheme } from '../types';
 
 /**
  * Color schemes for different map themes

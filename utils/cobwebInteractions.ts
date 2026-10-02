@@ -9,7 +9,7 @@
 
 import {
   COBWEB_POSITIONS,
-  CobwebPosition,
+  type CobwebPosition,
   getCobwebsCleaned,
   getCobwebsRemaining,
   markCobwebCleaned,

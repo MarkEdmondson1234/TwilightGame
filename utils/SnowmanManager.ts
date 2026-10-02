@@ -11,10 +11,10 @@
  * per-map weather condition here, only a global season check.
  */
 
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { getItem } from '../data/items';
 
 export const SNOWMAN_IMAGE = '/TwilightGame/assets-optimized/seasonal/snowman.png';

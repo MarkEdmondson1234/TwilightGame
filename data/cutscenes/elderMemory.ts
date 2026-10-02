@@ -6,7 +6,7 @@
  * Perfect for testing cutscene functionality
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 export const elderMemoryCutscene: CutsceneDefinition = {
   id: 'elder_memory',

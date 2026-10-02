@@ -12,7 +12,7 @@ import { decorationManager } from '../../DecorationManager';
 import { getFrameStyle } from '../../frameStyles';
 import { inventoryManager } from '../../inventoryManager';
 import { PHOTO_ITEM_ID } from '../../../types/photography';
-import { mapManager } from '../../../maps';
+import { mapManager } from '../../../maps/MapManager';
 
 export function decorationPlacementProvider(ctx: InteractionContext): AvailableInteraction[] {
   const {

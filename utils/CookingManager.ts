@@ -16,13 +16,13 @@
  */
 
 import {
-  RecipeDefinition,
-  RecipeCategory,
+  type RecipeDefinition,
+  type RecipeCategory,
   RECIPES,
   getRecipe,
   canUnlockRecipe,
   NPC_FOOD_PREFERENCES,
-  CookingDomain,
+  type CookingDomain,
   COOKING_DOMAINS,
   getRecipesByDomain,
 } from '../data/recipes';

@@ -4,7 +4,7 @@
  * Althea, the elder's wife, who knits peacefully.
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { type NPC, Direction, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 import { gardenRequestNodes } from '../../../data/npcGardeners';

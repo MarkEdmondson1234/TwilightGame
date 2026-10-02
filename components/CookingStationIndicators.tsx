@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { COTTAGE_COLOURS } from '../utils/transitionIcons';

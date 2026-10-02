@@ -16,7 +16,8 @@ import {
   handleBlueberryHarvest,
   handleRedBerryHarvest,
 } from '../utils/forageHandlers';
-import { mapManager, transitionToMap } from '../maps';
+import { mapManager } from '../maps/MapManager';
+import { transitionToMap } from '../maps';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import type { MapDefinition } from '../types';

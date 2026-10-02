@@ -17,9 +17,9 @@
  */
 
 import { getWorldUiScale } from '../utils/touchLayout';
-import { useCallback, useMemo, useRef, MutableRefObject } from 'react';
-import { Position } from '../types';
-import { computeViewFrame, isSameViewFrame, ViewFrame, ViewFrameInputs } from '../utils/viewFrame';
+import { useCallback, useMemo, useRef, type MutableRefObject } from 'react';
+import { type Position } from '../types';
+import { computeViewFrame, isSameViewFrame, type ViewFrame, type ViewFrameInputs } from '../utils/viewFrame';
 
 export interface UseViewFrameReturn {
   /** The live frame, written by the loop. Read it per frame; never render from it. */

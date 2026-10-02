@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import { npcManager } from '../NPCManager';
 import { eventChainManager } from '../utils/EventChainManager';
 import { TimeManager, Season } from '../utils/TimeManager';

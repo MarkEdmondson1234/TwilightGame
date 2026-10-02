@@ -1,7 +1,7 @@
-import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
+import { type Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { animationAssets } from '../../assets';
 import { CAVE_DRIP, CAVE_DRIP_PLACEMENTS, caveDripFrame } from '../../data/caveDrips';
-import { SpriteMetadata } from '../../types';
+import { type SpriteMetadata } from '../../types';
 import { textureManager } from '../TextureManager';
 import { hashString } from '../seededRandom';
 

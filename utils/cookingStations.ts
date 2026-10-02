@@ -20,7 +20,7 @@ import { TileType } from '../types';
 import { COOKING } from '../constants';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
-import { mapManager } from '../maps';
+import { mapManager } from '../maps/MapManager';
 import { getTileCoords } from './mapUtils';
 import { MUMS_KITCHEN_FIREPLACE } from './kitchenFireplace';
 

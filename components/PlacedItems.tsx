@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlacedItem } from '../types';
+import { type PlacedItem } from '../types';
 import { TILE_SIZE } from '../constants';
 import { shouldShowDecayWarning } from '../utils/itemDecayManager';
 import { getItem } from '../data/items';

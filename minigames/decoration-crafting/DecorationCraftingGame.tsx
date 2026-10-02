@@ -17,7 +17,7 @@ import {
   CANVAS_RECIPE,
   FLOWER_ARRANGEMENT_RECIPES,
   POTTED_PLANT_RECIPES,
-  DecorationRecipe,
+  type DecorationRecipe,
 } from '../../data/decorationRecipes';
 import { decorationManager } from '../../utils/DecorationManager';
 import { inventoryManager } from '../../utils/inventoryManager';

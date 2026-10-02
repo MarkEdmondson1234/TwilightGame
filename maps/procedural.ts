@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, Position } from '../types';
+import { type MapDefinition, TileType, type Position } from '../types';
 import { tileAssets } from '../assets';
 import { gameState } from '../GameState';
 import {

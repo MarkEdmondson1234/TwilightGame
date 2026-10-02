@@ -8,12 +8,12 @@
  * Region: europe-west2 (London)
  */
 
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth, connectAuthEmulator } from 'firebase/auth';
 import { debugLog } from '../utils/debugLog';
 import {
   initializeFirestore,
-  Firestore,
+  type Firestore,
   connectFirestoreEmulator,
   persistentLocalCache,
   persistentMultipleTabManager,

@@ -21,7 +21,7 @@ import {
   ALL_DECORATION_RECIPES,
   PAINT_RECIPES,
   CANVAS_RECIPE,
-  DecorationRecipe,
+  type DecorationRecipe,
   getPaintColourMap,
 } from '../data/decorationRecipes';
 import { getItem } from '../data/items';

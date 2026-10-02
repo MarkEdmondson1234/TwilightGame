@@ -8,7 +8,7 @@
  * that manages desk item storage.
  */
 
-import { DeskContents, DeskItem, Position } from '../types';
+import { type DeskContents, type DeskItem, type Position } from '../types';
 import { characterData } from './CharacterData';
 import { debugLog } from './debugLog';
 

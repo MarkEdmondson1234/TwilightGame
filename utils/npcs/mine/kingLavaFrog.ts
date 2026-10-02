@@ -2,7 +2,7 @@
  * King Lava Frog NPC Factory Function
  */
 
-import { NPC, Position } from '../../../types';
+import { type NPC, type Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 

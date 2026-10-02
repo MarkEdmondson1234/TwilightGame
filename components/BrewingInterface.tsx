@@ -1,9 +1,9 @@
 import MobileMenuShell from './MobileMenuShell';
 import '../src/styles/mobileMenus.css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { PotionLevel } from '../data/potionRecipes';
+import { type PotionLevel } from '../data/potionRecipes';
 import { getItem } from '../data/items';
-import { magicManager, BrewingResult } from '../utils/MagicManager';
+import { magicManager, type BrewingResult } from '../utils/MagicManager';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { audioManager } from '../utils/AudioManager';
 import { inventoryManager } from '../utils/inventoryManager';

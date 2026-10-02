@@ -21,7 +21,7 @@
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
-import { MapDefinition, RoomLayer, ImageRoomLayer, NPC, LayerCondition } from '../../types';
+import { type MapDefinition, type RoomLayer, type ImageRoomLayer, type NPC, type LayerCondition } from '../../types';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
 import { npcManager } from '../../NPCManager';
 import { gameState } from '../../GameState';

@@ -5,7 +5,7 @@
  * the filled picnic basket. Shows the picnic with Spring Periwinkle.
  */
 
-import { CutsceneDefinition } from '../../types';
+import { type CutsceneDefinition } from '../../types';
 
 const MEADOW = '/TwilightGame/assets/cutscenes/picnic_meadow.jpg';
 const SCENE1 = '/TwilightGame/assets/cutscenes/fox_picnic1.png';

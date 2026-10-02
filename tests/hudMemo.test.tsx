@@ -18,7 +18,7 @@ import { areAnalogClockPropsEqual } from '../components/AnalogClock';
 import SundialClock, { areSundialClockPropsEqual } from '../components/SundialClock';
 import { useGameState } from '../hooks/useGameState';
 import { gameState } from '../GameState';
-import { TimeManager, GameTime } from '../utils/TimeManager';
+import { TimeManager, type GameTime } from '../utils/TimeManager';
 
 vi.mock('../utils/AudioManager', () => ({
   audioManager: { hasActiveSound: () => false, playSfx: () => 'sfx', stopSound: () => {} },

@@ -12,7 +12,7 @@
  */
 
 import { SPRITE_METADATA } from '../constants';
-import { TileType, SpriteMetadata } from '../types';
+import { type TileType, type SpriteMetadata } from '../types';
 
 class MetadataCacheImpl {
   /** Set of tile types that have multi-tile sprites */

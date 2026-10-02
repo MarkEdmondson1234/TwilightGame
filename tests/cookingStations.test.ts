@@ -15,7 +15,7 @@ const state = vi.hoisted(() => ({
 vi.mock('../GameState', () => ({
   gameState: { getPlacedItems: (mapId: string) => state.placed[mapId] ?? [] },
 }));
-vi.mock('../maps', () => ({
+vi.mock('../maps/MapManager', () => ({
   mapManager: { getCurrentMap: () => state.map },
 }));
 

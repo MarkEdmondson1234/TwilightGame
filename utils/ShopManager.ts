@@ -3,17 +3,17 @@
  * Handles buying, selling, and inventory filtering for the shop system
  */
 
-import { ItemDefinition, getItem } from '../data/items';
+import { type ItemDefinition, getItem } from '../data/items';
 import {
-  ShopItem,
+  type ShopItem,
   getSeasonalInventory,
   getMushrasShopInventory,
   getShellaShopInventory,
   getBuyPrice,
   getSellPrice,
-  Season as ShopSeason,
+  type Season as ShopSeason,
 } from '../data/shopInventory';
-import { TimeManager, Season as GameSeason } from './TimeManager';
+import { TimeManager, type Season as GameSeason } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { cookingManager } from './CookingManager';
 

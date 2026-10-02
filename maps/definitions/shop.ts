@@ -1,4 +1,4 @@
-import { MapDefinition, TileType, RoomLayer, Direction } from '../../types';
+import { type MapDefinition, TileType, type RoomLayer, Direction } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createShopkeeperNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND, Z_INTERIOR_FOREGROUND } from '../../zIndex';

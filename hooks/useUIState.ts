@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Position } from '../types';
+import { type Position } from '../types';
 import type { MiniGameTriggerData } from '../minigames/types';
 
 /**

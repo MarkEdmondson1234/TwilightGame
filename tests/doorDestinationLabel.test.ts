@@ -22,6 +22,13 @@ vi.mock('../maps', () => ({
   },
   transitionToMap: () => ({ map: { id: 'village', name: 'Village' }, spawn: { x: 0, y: 0 } }),
 }));
+vi.mock('../maps/MapManager', () => ({
+  mapManager: {
+    getTransitionAt: () => transitionAt,
+    getMap: (id: string) => registeredMaps.get(id),
+  },
+  transitionToMap: () => ({ map: { id: 'village', name: 'Village' }, spawn: { x: 0, y: 0 } }),
+}));
 vi.mock('../utils/MagicEffects', () => ({ getTierName: (t: number) => `Tier${t}` }));
 
 import { transitionProvider } from '../utils/interactions/providers/transition';

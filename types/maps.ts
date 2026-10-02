@@ -10,8 +10,8 @@
  * - GridString (character-based grid for map editing)
  */
 
-import { TileType, Position } from './core';
-import { NPC } from './npc';
+import { type TileType, type Position } from './core';
+import { type NPC } from './npc';
 
 // Size tier type for transition restrictions (-3 to +3)
 export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;

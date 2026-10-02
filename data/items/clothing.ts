@@ -12,7 +12,7 @@
  * `tests/clothingActions.test.ts` walks the pairing.
  */
 
-import { ItemCategory, ItemDefinition } from './types';
+import { ItemCategory, type ItemDefinition } from './types';
 import { itemAssets } from '../../assets';
 
 export const CLOTHING_ITEMS: Record<string, ItemDefinition> = {

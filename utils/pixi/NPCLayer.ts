@@ -19,7 +19,7 @@
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
-import { Position, Direction, NPC } from '../../types';
+import { type Position, Direction, type NPC } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 import { npcSpeechManager } from '../../multiplayer/npcSpeech';
