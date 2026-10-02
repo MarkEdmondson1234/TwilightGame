@@ -307,6 +307,9 @@ export const Z_CUTSCENE = 2090;
 /** Cutscene subtitles */
 export const Z_CUTSCENE_SUBTITLES = 2095;
 
+/** Loading progress bar drawn over a cutscene that is standing in for the loading screen */
+export const Z_CUTSCENE_PROGRESS = 2096;
+
 // =============================================================================
 // CRITICAL OVERLAYS (3000+)
 // =============================================================================

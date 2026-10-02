@@ -8,7 +8,7 @@
 
 import { useEffect, useRef } from 'react';
 import { type Position, TileType } from '../types';
-import { getTileData } from '../utils/mapUtils';
+import { getTileData, getTileCoords } from '../utils/mapUtils';
 import { gameState } from '../GameState';
 
 interface AmbientVFXConfig {
@@ -51,8 +51,7 @@ const WATER_TILES = new Set([
  * Check if there's water within a given radius of a position
  */
 function findNearbyWaterTile(pos: Position, radius: number): Position | null {
-  const centerX = Math.floor(pos.x);
-  const centerY = Math.floor(pos.y);
+  const { x: centerX, y: centerY } = getTileCoords(pos);
 
   const waterTiles: Position[] = [];
 

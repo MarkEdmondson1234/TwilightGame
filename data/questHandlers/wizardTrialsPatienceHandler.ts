@@ -26,6 +26,7 @@ import { eventChainManager } from '../../utils/EventChainManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { CropGrowthStage } from '../../types';
 import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -62,7 +63,7 @@ export function isWizardTrialsPatienceAtStage(stageId: string): boolean {
 export function startWizardTrialsPatience(): void {
   if (!eventChainManager.isChainStarted(QUEST_ID)) {
     eventChainManager.startChain(QUEST_ID);
-    if (DEBUG.QUEST) console.log('[WizardTrialsPatience] Trial started');
+    if (DEBUG.QUEST) debugLog('WizardTrialsPatience', 'Trial started');
   }
 }
 
@@ -93,6 +94,6 @@ eventBus.on(GameEvent.FARM_CROP_GREW, ({ position, stage }) => {
     if (!plot || plot.cropType !== 'magic_bean') return;
 
     eventChainManager.advanceToStage(QUEST_ID, 'cleared');
-    if (DEBUG.QUEST) console.log('[WizardTrialsPatience] Beanstalk matured — the way up unlocks');
+    if (DEBUG.QUEST) debugLog('WizardTrialsPatience', 'Beanstalk matured — the way up unlocks');
   });
 });
