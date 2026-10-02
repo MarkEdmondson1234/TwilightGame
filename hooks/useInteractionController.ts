@@ -10,6 +10,7 @@
  * Part of Phase 3 App.tsx refactoring - Domain Controllers.
  */
 
+import type { CookingResult } from '../utils/CookingManager';
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
 import { useTouchDevice } from './useTouchDevice';
 import { Position, NPC } from '../types';
@@ -411,11 +412,11 @@ export function useInteractionController(
           onShowToast,
         });
       },
-      onFireplaceTea: (result) => {
+      onFireplaceTea: (result: CookingResult) => {
         onShowToast(result.message, result.success ? 'success' : 'info');
       },
-      onBrewing: (position: Position | null) => {
-        openUI('brewingUI', { brewingPosition: position || undefined });
+      onBrewing: (position?: Position) => {
+        openUI('brewingUI', { brewingPosition: position });
       },
       onFarmAction: (result: FarmActionResult) => {
         if (result.handled) {

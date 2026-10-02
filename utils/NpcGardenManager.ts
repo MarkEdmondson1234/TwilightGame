@@ -202,7 +202,7 @@ export function computeGardenTarget(mapId: string, inputs: GardenPlanInputs): Np
               gardener.favourites,
               // In winter the daily variety comes from the gardener's own
               // favourites, not the season's shop catalogue.
-              isWinter ? gardener.favourites : inSeasonShopCrops,
+              inSeasonShopCrops ?? gardener.favourites,
               mapId,
               tile.x,
               tile.y,

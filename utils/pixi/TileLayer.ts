@@ -454,9 +454,9 @@ export class TileLayer extends PixiLayer {
             const winterKey = `plant_${cropType}_winter`;
             const adultKey = `plant_${cropType}_adult`;
             imageUrl =
-              isHerbDormant && lookupFarmingAsset(winterKey)
-                ? lookupFarmingAsset(winterKey)
-                : lookupFarmingAsset(adultKey) || farmingAssets.seedling;
+              (isHerbDormant && lookupFarmingAsset(winterKey)) ||
+              lookupFarmingAsset(adultKey) ||
+              farmingAssets.seedling;
           }
         } else {
           // Select image variant deterministically
@@ -574,9 +574,9 @@ export class TileLayer extends PixiLayer {
         // Fires every frame while the miss lasts — gated like the other render-loop
         // diagnostics; TextureManager logs each load attempt once.
         debugLog('TileLayer', `Texture not loaded: ${imageUrl}`);
-        // Hide any stale sprite holding a texture that was just evicted — rendering a
-        // destroyed texture surfaces as a garbage-coloured square (issue #107).
-        if (sprite && !(sprite instanceof PIXI.Graphics)) sprite.visible = false;
+        // No stale sprite to hide here: this branch only runs with no sprite or a
+        // just-removed Graphics. Evicted textures on live sprites are hidden in the
+        // update branches below (issue #107).
         // Color background already rendered
         return;
       }
@@ -899,8 +899,6 @@ export class TileLayer extends PixiLayer {
         // Gated like the other render-loop diagnostics (fires every frame on a miss);
         // TextureManager logs each load attempt once.
         debugLog('TileLayer', `Animated texture not loaded: ${imageUrl}`);
-        // Hide any stale sprite holding a texture that was just evicted (issue #107).
-        if (sprite && !(sprite instanceof PIXI.Graphics)) sprite.visible = false;
         return;
       }
 

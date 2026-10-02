@@ -171,9 +171,9 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                   const winterKey = `plant_${cropType}_winter`;
                   const adultKey = `plant_${cropType}_adult`;
                   selectedImage =
-                    isHerbDormant && lookupFarmingAsset(winterKey)
-                      ? lookupFarmingAsset(winterKey)
-                      : lookupFarmingAsset(adultKey) || farmingAssets.seedling;
+                    (isHerbDormant && lookupFarmingAsset(winterKey)) ||
+                    lookupFarmingAsset(adultKey) ||
+                    farmingAssets.seedling;
                 }
               } else {
                 // Use a separate hash for image selection to avoid bias

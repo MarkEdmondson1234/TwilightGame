@@ -779,7 +779,7 @@ Where things go:
 - Naming: hooks `useX.ts`, components `PascalCase.tsx`, utilities `camelCase.ts`, constants
   `SCREAMING_SNAKE_CASE`
 
-Code standards: no `any` (use `unknown` + guards); interfaces for data; discriminated unions
+Code standards: strict TypeScript; no `any` (use `unknown` + guards); interfaces for data; discriminated unions
 for state variants; refs (not state) for anything that changes every frame; comments explain
 **why**.
 
@@ -908,7 +908,7 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 ## Technical Notes
 
 - React 19.2.0 with functional components and hooks
-- TypeScript (non-strict tsconfig — see Code Quality Standards)
+- TypeScript, `strict: true`
 - Vite dev server with HMR
 - Vitest test suite in `tests/` — run with `make verify` (see Testing and Validation)
 - Position coordinates are in tile units (not pixels)

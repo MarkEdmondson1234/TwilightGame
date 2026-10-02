@@ -70,7 +70,7 @@ describe('pick', () => {
 });
 
 describe('pickWeightedMove', () => {
-  let rand: ReturnType<typeof vi.spyOn>;
+  let rand: ReturnType<typeof vi.spyOn> | undefined;
 
   afterEach(() => {
     rand?.mockRestore();
@@ -196,7 +196,7 @@ describe('calculateRewards', () => {
     ],
   };
 
-  let rand: ReturnType<typeof vi.spyOn>;
+  let rand: ReturnType<typeof vi.spyOn> | undefined;
   afterEach(() => {
     rand?.mockRestore();
   });
