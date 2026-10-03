@@ -1,0 +1,42 @@
+{
+  "rooms/bear_den/bear_den.jpg": {
+    "source": "89b3936ce55cace6c57e7946e4f5c998b0bd0c56d0129c8303b6d2c392248acc",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/cottage_small_interior/cottage_small_interior.jpg": {
+    "source": "0cb1bfa0ff38a9f7bf7e14ca95441b0dc4181f8e04d35780c23acfbb19428f0f",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/empty_room.jpg": {
+    "source": "5c83e9159d267b8ca75da94256d13cb23e31cbc36cf2441602f109e49c8e5323",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/grocery_shop/grocery_shop_back.jpg": {
+    "source": "69e2f97080aa2c71d00e3b34fb12a9b038b48ee5c1628a6e2033565dc60746f7",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/home/mums_kitchen.jpg": {
+    "source": "f68ecf6de6bad1d95d5eb520321d6e4b44941e2ed8596fd43f51227d406bc372",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/little_girls_house/celias_room_background.jpg": {
+    "source": "2734820f640cdc520682b6a3f05051f3615f2bba11f29653eb329b70a0df3c9e",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/mushra_shop/mushra_shop_background.jpg": {
+    "source": "3c8f2029ecc7e50324d0ce9ba4f007ea35835af4846252ddd0d3be255ac41fe8",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/seedShed/shed_interior.jpg": {
+    "source": "ce3481db63b7df2a90c2ef731b709926573b567638dae3d8cae45799eb0bd96f",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/strengthTrial/strength_trial.jpg": {
+    "source": "d3aef552f765ae8c02acda4be6887ad79a6811a5e77c0dfa051338a04bef86ac",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
+  "rooms/witch_hut/witch_hut_interior1.jpg": {
+    "source": "7e15a7f75996a6a575c46c8ed95ac6cdd0409b7e6c17a1f937c04ce3d660151b",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  }
+}

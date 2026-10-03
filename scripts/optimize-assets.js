@@ -40,6 +40,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { execSync } from 'child_process';
+import { createHash } from 'crypto';
 import sharp from 'sharp';
 
 const require = createRequire(import.meta.url);
@@ -1489,6 +1490,41 @@ function jpegOptions(quality) {
  */
 const ROOM_JPEG_QUALITY = 92;
 
+/**
+ * Source fingerprints of every JPEG the optimiser writes, committed so that a
+ * JPEG is only re-encoded when its source art (or the encoder settings) change.
+ *
+ * Lossy encoding is not bit-identical across platforms: the same sharp version
+ * writes a slightly different mozjpeg file on Windows than on Linux or macOS
+ * (a few colour levels on a fraction of a percent of pixels — invisible, but
+ * new bytes). Without this, every run on a different machine rewrote all the
+ * room backgrounds and their @half siblings. PNG output is lossless and
+ * reproducible, so it does not need this. tests/jpegSourceManifest.test.ts
+ * fails if an entry is missing or its source has changed without a re-run.
+ */
+const JPEG_MANIFEST_PATH = path.join(__dirname, 'jpeg-source-manifest.json');
+const jpegManifest = fs.existsSync(JPEG_MANIFEST_PATH)
+  ? JSON.parse(fs.readFileSync(JPEG_MANIFEST_PATH, 'utf8'))
+  : {};
+
+/** Manifest key: the output's path under assets-optimized, with forward slashes. */
+function jpegManifestKey(outputPath) {
+  return path.relative(OPTIMIZED_DIR, outputPath).split(path.sep).join('/');
+}
+
+function sha256File(filePath) {
+  return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+/** Write the manifest sorted, dropping entries whose JPEG no longer exists. */
+function saveJpegManifest() {
+  const kept = {};
+  for (const key of Object.keys(jpegManifest).sort()) {
+    if (fs.existsSync(path.join(OPTIMIZED_DIR, key))) kept[key] = jpegManifest[key];
+  }
+  fs.writeFileSync(JPEG_MANIFEST_PATH, JSON.stringify(kept, null, 2) + '\n');
+}
+
 async function optimizeImageDir(
   dirName,
   { size, quality, compressionLevel = 4, label, halfVariant = false, opaqueAsJpeg = false }
@@ -1534,6 +1570,34 @@ async function optimizeImageDir(
     }
 
     const originalSize = fs.statSync(inputPath).size;
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+
+    // JPEG output: skip the encode when the source and settings are unchanged
+    // and the files are already there — see JPEG_MANIFEST_PATH for why.
+    const jpegOutput = toJpeg || isJpeg;
+    const manifestKey = jpegOutput ? jpegManifestKey(outputPath) : null;
+    const jpegSettings = jpegOutput
+      ? JSON.stringify({
+          size,
+          jpeg: toJpeg ? jpegOptions(ROOM_JPEG_QUALITY) : { quality, mozjpeg: true },
+          half: halfVariant ? jpegOptions(toJpeg ? ROOM_JPEG_QUALITY : quality) : null,
+        })
+      : null;
+    const sourceHash = jpegOutput ? sha256File(inputPath) : null;
+    if (jpegOutput) {
+      const entry = jpegManifest[manifestKey];
+      const halfPath = outputPath.replace(/(\.[^.]+)$/, `${HALF_SUFFIX}$1`);
+      if (
+        entry?.source === sourceHash &&
+        entry?.settings === jpegSettings &&
+        fs.existsSync(outputPath) &&
+        (!halfVariant || fs.existsSync(halfPath))
+      ) {
+        console.log(`  ⏭️  ${displayPath}: unchanged, keeping the existing JPEG`);
+        continue;
+      }
+    }
+
     deleteIfExists(outputPath);
 
     const pipeline = sharp(inputPath).resize(size, size, {
@@ -1562,9 +1626,10 @@ async function optimizeImageDir(
       await writeHalfVariant(outputPath, { quality: toJpeg ? ROOM_JPEG_QUALITY : quality, compressionLevel });
     }
 
+    if (jpegOutput) jpegManifest[manifestKey] = { source: sourceHash, settings: jpegSettings };
+
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
-    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
     console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
     optimized++;
   }
@@ -1649,6 +1714,7 @@ async function main() {
       opaqueAsJpeg: true,
       halfVariant: true,
     });
+    saveJpegManifest();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

@@ -691,6 +691,14 @@ add a keyword are in [`docs/ASSETS.md`](docs/ASSETS.md#image-optimisation).
 2. **`withoutEnlargement` on the paths that use `inside`** — a 500×530 source was being upscaled
    to 1024×1024, quadrupling its GPU cost for no extra detail.
 
+**Re-running the optimiser must not rewrite files nobody changed.** PNG output is lossless and
+reproducible on every platform — but only with `palette: false`, which every PNG path sets; the
+colormap clean-up step that would otherwise catch a palette PNG shells out to `find` and does
+nothing on Windows. JPEG output (opaque room backgrounds) is lossy and is *not* bit-identical
+across platforms, so it is only re-encoded when its source art or settings change, tracked in
+`scripts/jpeg-source-manifest.json` — commit that file with the JPEGs. Guarded by
+`tests/animationSheets.test.ts` and `tests/jpegSourceManifest.test.ts`.
+
 Always reference `/assets-optimized/` in `assets.ts`. If an asset must bypass the optimiser,
 that is a bug in the optimiser, not a reason to reference `/assets/`: the original is what the
 browser then downloads _and_ uploads to the GPU. Animated GIFs ship as sprite sheets
