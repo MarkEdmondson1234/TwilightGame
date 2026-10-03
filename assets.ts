@@ -518,6 +518,7 @@ export const potionAssets = {
   cherry_blossom: '/TwilightGame/assets-optimized/items/magical/potions/cherry_blossom.png',
   mistweaver: '/TwilightGame/assets-optimized/items/magical/potions/mistweaver.png',
   verdant_surge: '/TwilightGame/assets-optimized/items/magical/potions/verdant_surge.png',
+  beast_tongue: '/TwilightGame/assets-optimized/items/magical/potions/beast_tongue.png',
   healing_salve: '/TwilightGame/assets-optimized/items/magical/potions/healing_salve.png',
   drink_me: '/TwilightGame/assets-optimized/items/magical/potions/drink_me.png',
   eat_me: '/TwilightGame/assets-optimized/items/magical/potions/eat_me.png',

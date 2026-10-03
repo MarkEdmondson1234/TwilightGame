@@ -1078,6 +1078,13 @@
     "source": "assets-optimized/items/magical/potions/verdant_surge.png"
   },
   {
+    "id": "item:potion_beast_tongue",
+    "label": "Beast Tongue",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_beast_tongue.png",
+    "source": "assets-optimized/items/magical/potions/beast_tongue.png"
+  },
+  {
     "id": "item:potion_time_skip",
     "label": "Time Skip",
     "category": "potion",

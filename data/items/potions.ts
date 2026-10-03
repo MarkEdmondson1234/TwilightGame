@@ -194,6 +194,7 @@ export const POTION_ITEMS: Record<string, ItemDefinition> = {
       'A strange potion that tastes like different animals. Lets you talk to beasts for a day!',
     stackable: true,
     sellPrice: 100,
+    image: potionAssets.beast_tongue,
   },
 
   // Level 3: Full Witch
