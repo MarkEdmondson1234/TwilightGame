@@ -6,6 +6,9 @@
 import { ITEMS } from './items';
 import { CROPS } from './crops';
 import { type Season as CropSeason } from '../utils/TimeManager';
+import { isMagicShopMapId, MAGIC_SHOP_ID } from '../maps/magicShopId';
+
+export { MAGIC_SHOP_ID };
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
@@ -560,6 +563,63 @@ export const SHELLA_SHOP_INVENTORY: ShopItem[] = [
  */
 export function getShellaShopInventory(season: Season): ShopItem[] {
   return SHELLA_SHOP_INVENTORY.filter((item) => {
+    const seasons = getEffectiveSeasons(item);
+    if (!seasons) return true;
+    return seasons.includes(season);
+  });
+}
+
+/** The shop id a map's counter opens — the map id itself, except for the magic shop. */
+export function getShopIdForMap(mapId: string): string {
+  return isMagicShopMapId(mapId) ? MAGIC_SHOP_ID : mapId;
+}
+
+/**
+ * A magic-shop listing. The sell price is the item's own, so it cannot drift
+ * from what every other shop pays for it.
+ */
+function magicShopItem(itemId: string, buyPrice: number): ShopItem {
+  return { itemId, buyPrice, sellPrice: ITEMS[itemId]?.sellPrice ?? 0, stock: 'unlimited' };
+}
+
+/**
+ * Magic Shop inventory — magical ingredients, in the rare shop found in the
+ * procedural forest and mines.
+ *
+ * Buy prices are about 2.5× each item's sell price, the same markup as the
+ * other shops. They must stay above what any shop pays for the item, or buying
+ * here and selling to the General Store makes unlimited gold —
+ * tests/magicShop.test.ts guards that. The last four are deliberately dear:
+ * they are hard to come by any other way.
+ */
+export const MAGIC_SHOP_INVENTORY: ShopItem[] = [
+  // ===== FORAGEABLE HERBS & INGREDIENTS =====
+  magicShopItem('feather', 12),
+  magicShopItem('eye_of_newt', 25),
+  magicShopItem('wolfsbane', 50),
+  magicShopItem('forest_mushroom', 60),
+  magicShopItem('ghost_lichen', 60),
+  magicShopItem('moonpetal', 60),
+  magicShopItem('dragonfly_wings', 75),
+  magicShopItem('shrinking_violet', 75),
+  magicShopItem('luminescent_toadstool', 85),
+  magicShopItem('sakura_petal', 100),
+  magicShopItem('frost_flower', 110),
+  magicShopItem('addersmeat', 125),
+  magicShopItem('giant_mushroom_cap', 135),
+
+  // ===== RARE =====
+  magicShopItem('golden_apple', 3000), // 3× its 1000g sell price
+  magicShopItem('phoenix_ash', 1500),
+  magicShopItem('hearthstone', 2000),
+  magicShopItem('shadow_essence', 5000),
+];
+
+/**
+ * Get the magic shop's inventory filtered by current season.
+ */
+export function getMagicShopInventory(season: Season): ShopItem[] {
+  return MAGIC_SHOP_INVENTORY.filter((item) => {
     const seasons = getEffectiveSeasons(item);
     if (!seasons) return true;
     return seasons.includes(season);

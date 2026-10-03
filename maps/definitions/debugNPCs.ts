@@ -23,6 +23,7 @@ import {
   createEugeneNightNPC,
 } from '../../utils/npcFactories';
 import { createGoddessOfEyesNPC } from '../../utils/npcs/goddessOfEyes';
+import { MAGIC_SHOP_SPAWN } from './magicShop';
 
 /**
  * Debug NPC Showcase Map
@@ -40,6 +41,7 @@ import { createGoddessOfEyesNPC } from '../../utils/npcs/goddessOfEyes';
  * P = Path (stepping stones)
  * L = Wall boundary (trees for map edges)
  * D = Door (exit)
+ * S = Shop door (dev shortcut to the magic shop)
  */
 
 const gridString = `
@@ -53,7 +55,7 @@ LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
-LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
+LGGGPGGGGGGGGGGGGGGGGGGGGPGSGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
 LGGGPGGGGGGGGGGGGGGGGGGGGPGGGL
@@ -165,6 +167,15 @@ export const debugNPCs: MapDefinition = {
       toMapId: 'wizard_trials',
       toPosition: { x: 2, y: 8 }, // (3,7) clipped a wall tile
       label: 'To Wizard Trials',
+    },
+    {
+      // Dev shortcut to the magic shop (normally a rare roll in the procedural
+      // forest and mines). RANDOM_SHOP sends the exit back here.
+      fromPosition: { x: 27, y: 10 },
+      tileType: TileType.SHOP_DOOR,
+      toMapId: 'RANDOM_SHOP',
+      toPosition: MAGIC_SHOP_SPAWN,
+      label: 'To Magic Shop',
     },
   ],
   npcs,

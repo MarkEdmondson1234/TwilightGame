@@ -14,6 +14,7 @@ import {
   createLavaFrogWorkerNPC,
 } from '../utils/npcFactories';
 import { debugLog } from '../utils/debugLog';
+import { createMagicShop, MAGIC_SHOP_SPAWN } from './definitions/magicShop';
 import { createSeededRandom } from '../utils/seededRandom';
 import { createLavaLeapGuide } from '../utils/npcs/mine/lavaLeapGuide';
 import { LAVA_LEAP_QUEST, LAVA_LEAP_GATE_MESSAGE } from '../minigames/lava-leap/progression';
@@ -880,7 +881,7 @@ export function generateRandomForest(
       fromPosition: { x: shopX, y: shopY },
       tileType: TileType.SHOP_DOOR,
       toMapId: 'RANDOM_SHOP',
-      toPosition: { x: 6, y: 7 },
+      toPosition: MAGIC_SHOP_SPAWN,
       label: 'To Shop',
     });
     debugLog(
@@ -1453,7 +1454,7 @@ export function generateRandomCave(
       fromPosition: { x: shopX, y: shopY },
       tileType: TileType.SHOP_DOOR,
       toMapId: 'RANDOM_SHOP',
-      toPosition: { x: 6, y: 7 },
+      toPosition: MAGIC_SHOP_SPAWN,
       label: 'To Shop',
     });
     debugLog(
@@ -1526,66 +1527,13 @@ export function generateRandomCave(
   };
 }
 
+/** The rare "To Shop" door leads here — a background-image room, see maps/definitions/magicShop.ts. */
 export function generateRandomShop(
   seed: number = Date.now(),
   returnToMapId?: string,
-  returnToPosition?: { x: number; y: number }
+  returnToPosition?: Position
 ): MapDefinition {
-  const width = 12;
-  const height = 10;
-  const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.FLOOR));
-
-  // Set borders to walls
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-        map[y][x] = TileType.WALL;
-      }
-    }
-  }
-
-  // Add some furniture
-  map[2][2] = TileType.TABLE;
-  map[2][9] = TileType.TABLE;
-  map[5][5] = TileType.TABLE;
-  map[5][6] = TileType.CHAIR;
-  map[7][3] = TileType.TABLE;
-
-  // Add carpet area
-  for (let y = 4; y <= 6; y++) {
-    for (let x = 4; x <= 7; x++) {
-      if (map[y][x] === TileType.FLOOR) {
-        map[y][x] = TileType.CARPET;
-      }
-    }
-  }
-
-  // Place shop door (exit) at bottom
-  map[height - 1][6] = TileType.SHOP_DOOR;
-
-  // Exit back to where we came from (or village as default)
-  const exitMapId = returnToMapId || 'village';
-  const exitPosition = returnToPosition || { x: 12, y: 8 };
-
-  return {
-    id: `shop_${seed}`,
-    name: 'Shop',
-    width,
-    height,
-    grid: map,
-    colorScheme: 'shop',
-    isRandom: true,
-    spawnPoint: { x: 6, y: 7 },
-    transitions: [
-      {
-        fromPosition: { x: 6, y: height - 1 },
-        tileType: TileType.SHOP_DOOR,
-        toMapId: exitMapId,
-        toPosition: exitPosition,
-        label: 'Exit Shop',
-      },
-    ],
-  };
+  return createMagicShop(seed, returnToMapId, returnToPosition);
 }
 
 /**

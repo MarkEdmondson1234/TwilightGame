@@ -268,7 +268,7 @@ export const MAGICAL_INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.VERY_RARE,
     stackable: true,
     sellPrice: 80,
-    buyPrice: 200,
+    buyPrice: 1500, // The magic shop's price (data/shopInventory.ts)
     image: magicalAssets.phoenix_ash,
     forageSuccessRate: 0.6, // 60% chance when foraging lava lakes
   },

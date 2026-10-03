@@ -37,6 +37,7 @@ import { audioManager } from '../utils/AudioManager';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { getItem } from '../data/items';
+import { getShopIdForMap } from '../data/shopInventory';
 import { inventoryManager } from '../utils/inventoryManager';
 import { PHOTO_ITEM_ID } from '../types/photography';
 import { savePaintingImage } from '../utils/paintingImageService';
@@ -353,7 +354,7 @@ export function useInteractionController(
       onOpenEmoteWheel,
       onStartChat,
       onGiftPlayer,
-      onOpenShop: () => openUI('shopUI', { activeShopId: currentMapId }),
+      onOpenShop: () => openUI('shopUI', { activeShopId: getShopIdForMap(currentMapId) }),
       onNPC: (npcId: string) => {
         // Play duck quacking if interacting with a duck
         if (npcId.toLowerCase().includes('duck')) {

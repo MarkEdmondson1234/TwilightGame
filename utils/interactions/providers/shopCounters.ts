@@ -1,5 +1,6 @@
 /**
- * Shop counters — clicking the counter tiles in Mushra's shop or the grocery shop opens
+ * Shop counters — clicking the counter tiles in Mushra's shop, the grocery shop or the
+ * herb table in the magic shop opens
  * the shop UI. Exclusive: the counter fully owns the click, so no other interaction is offered.
  *
  * Registered in ../registry.ts. See ../README.md for how to add a new provider.
@@ -8,6 +9,7 @@
 import type { AvailableInteraction, InteractionContext, ProviderResult } from '../types';
 import { Season, TimeManager } from '../../TimeManager';
 import { SHELLA_NPC_ID } from '../../npcs/seaSideNPCs';
+import { isMagicShopMapId } from '../../../maps/magicShopId';
 
 export function shopCounterProvider(ctx: InteractionContext): ProviderResult {
   const { currentMapId, onOpenShop, onNPC, tileX, tileY } = ctx;
@@ -66,6 +68,20 @@ export function shopCounterProvider(ctx: InteractionContext): ProviderResult {
       label: 'Browse the Shop',
       icon: '🛒',
       color: '#86efac',
+      execute: () => onOpenShop?.(),
+    });
+    return { interactions, exclusive: true };
+  }
+
+  // Magic shop — the herb table in the foreground layer (maps/definitions/magicShop.ts).
+  // Only its solid tiles, so the click zone never covers the walkable strip behind the
+  // table or the door at (3,5): an exclusive counter there would swallow walking and exiting.
+  if (isMagicShopMapId(currentMapId) && tileY >= 6 && tileY <= 8 && tileX >= 0 && tileX <= 5) {
+    interactions.push({
+      type: 'open_shop',
+      label: 'Browse the Magic Shop',
+      icon: '🔮',
+      color: '#c4b5fd',
       execute: () => onOpenShop?.(),
     });
     return { interactions, exclusive: true };

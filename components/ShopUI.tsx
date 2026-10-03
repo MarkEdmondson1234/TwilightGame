@@ -16,6 +16,7 @@ import { Z_SHOP, Z_SHOP_CONFIRM, zClass } from '../zIndex';
 import React, { useState, useEffect, useCallback } from 'react';
 import { shopManager } from '../utils/ShopManager';
 import { type ShopItem } from '../data/shopInventory';
+import { MAGIC_SHOP_ID } from '../maps/magicShopId';
 import { getItem, type ItemDefinition, ItemCategory } from '../data/items';
 import { magicManager } from '../utils/MagicManager';
 import { TimeManager } from '../utils/TimeManager';
@@ -85,7 +86,18 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
   const isMushrasShop = shopId === 'mushras_shop';
   const isShellaShop = shopId === 'seaSide';
-  const theme = isMushrasShop
+  const isMagicShop = shopId === MAGIC_SHOP_ID;
+  const theme = isMagicShop
+    ? {
+        title: 'Magic Shop',
+        container: 'bg-gradient-to-b from-indigo-950 to-violet-950 border-4 border-violet-700',
+        titleColor: 'text-violet-200',
+        stockHeader: 'text-violet-300',
+        filterActive: 'bg-violet-500 text-violet-950',
+        filterInactive:
+          'bg-violet-900/50 text-violet-300 border border-violet-700 hover:bg-violet-800/60',
+      }
+    : isMushrasShop
     ? {
         title: "Mushra's Shop",
         container: 'bg-gradient-to-b from-rose-950 to-rose-900 border-4 border-rose-800',
@@ -298,7 +310,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
             handleSlotClick(
               shopItem.itemId,
               true,
-              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold)
+              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold, shopId)
             );
           }}
           onContextMenu={(e) => {
@@ -306,14 +318,14 @@ const ShopUI: React.FC<ShopUIProps> = ({
             handleSlotContextMenu(
               shopItem.itemId,
               true,
-              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold)
+              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold, shopId)
             );
           }}
           onTouchStart={(e) => {
             shopPressRef.current = {
               itemId: shopItem.itemId,
               fromShop: true,
-              maxQuantity: shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold),
+              maxQuantity: shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold, shopId),
             };
             shopLongPress.handlers.onTouchStart(e);
           }}

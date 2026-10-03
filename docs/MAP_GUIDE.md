@@ -112,7 +112,7 @@ Transitions allow players to move between maps. You can link to:
 2. **Random maps** - Use special IDs:
    - `'RANDOM_FOREST'` - Generates a random forest
    - `'RANDOM_CAVE'` - Generates a random cave
-   - `'RANDOM_SHOP'` - Generates a random shop
+   - `'RANDOM_SHOP'` - The magic shop room (`maps/definitions/magicShop.ts`), exit leads back to where the player came from
 
 ## Multi-Tile Objects (Important!)
 

@@ -958,8 +958,9 @@ const App: React.FC = () => {
 
     // Camera zoom is clamped to the new room while retaining the player’s preferred view.
 
-    // Play Mr. Fox greeting when entering the shop
-    if (map.id.includes('shop')) {
+    // Play Mr. Fox greeting when entering the village grocery shop — only that one.
+    // (`includes('shop')` also caught Mushra's shop and the magic shop, `shop_<seed>`.)
+    if (map.id === 'shop') {
       setTimeout(() => audioManager.playSfx('sfx_mr_fox'), 800);
     }
 

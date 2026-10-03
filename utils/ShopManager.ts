@@ -9,7 +9,8 @@ import {
   getSeasonalInventory,
   getMushrasShopInventory,
   getShellaShopInventory,
-  getBuyPrice,
+  getMagicShopInventory,
+  MAGIC_SHOP_ID,
   getSellPrice,
   type Season as ShopSeason,
 } from '../data/shopInventory';
@@ -91,7 +92,8 @@ export class ShopManager {
 
   /**
    * Get inventory for a specific shop, filtered by season.
-   * @param shopId Map ID of the shop ('shop' = General Store, 'mushras_shop' = Mushra's)
+   * @param shopId Shop id: usually the map id ('shop' = General Store, 'mushras_shop' = Mushra's),
+   *   or MAGIC_SHOP_ID — see getShopIdForMap()
    */
   public getInventoryForShop(shopId: string): ShopItem[] {
     const currentTime = TimeManager.getCurrentTime();
@@ -101,6 +103,9 @@ export class ShopManager {
     }
     if (shopId === 'seaSide') {
       return this.filterUnlockedItems(getShellaShopInventory(season));
+    }
+    if (shopId === MAGIC_SHOP_ID) {
+      return this.filterUnlockedItems(getMagicShopInventory(season));
     }
     return this.filterUnlockedItems(getSeasonalInventory(season));
   }
@@ -359,11 +364,13 @@ export class ShopManager {
    * Get maximum quantity player can buy
    * @param itemId Item to buy
    * @param playerGold Player's gold
+   * @param shopId The shop being browsed. Its own list sets the price: the General
+   *   Store's list alone priced every other shop's items at nothing, so they could not be bought.
    * @returns Maximum affordable quantity
    */
-  public getMaxBuyQuantity(itemId: string, playerGold: number): number {
-    const buyPrice = getBuyPrice(itemId);
-    if (buyPrice === undefined) return 0;
+  public getMaxBuyQuantity(itemId: string, playerGold: number, shopId: string = 'shop'): number {
+    const buyPrice = this.getInventoryForShop(shopId).find((item) => item.itemId === itemId)?.buyPrice;
+    if (!buyPrice) return 0;
 
     return Math.floor(playerGold / buyPrice);
   }

@@ -23,6 +23,10 @@
     "source": "2734820f640cdc520682b6a3f05051f3615f2bba11f29653eb329b70a0df3c9e",
     "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
   },
+  "rooms/magicShop/magic_shop_background.jpg": {
+    "source": "a0369a5d5ef60db72877490b35d39124d3c733a0507b18a1f5e40e15870348fb",
+    "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
+  },
   "rooms/mushra_shop/mushra_shop_background.jpg": {
     "source": "3c8f2029ecc7e50324d0ce9ba4f007ea35835af4846252ddd0d3be255ac41fe8",
     "settings": "{\"size\":1920,\"jpeg\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"},\"half\":{\"quality\":92,\"mozjpeg\":true,\"chromaSubsampling\":\"4:4:4\"}}"
