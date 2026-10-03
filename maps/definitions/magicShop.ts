@@ -1,6 +1,7 @@
 import { type MapDefinition, type Position, TileType, type RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR, Z_SPRITE_FOREGROUND } from '../../zIndex';
+import { createGoddessOfEyesNPC, GODDESS_OF_EYES_ID } from '../../utils/npcs/goddessOfEyes';
 import { magicShopMapId } from '../magicShopId';
 
 /**
@@ -45,6 +46,12 @@ export const MAGIC_SHOP_SPAWN: Position = { x: 4, y: 5 };
 
 const DOOR_POSITION: Position = { x: 3, y: 5 };
 
+/** Player (and NPC) size multiplier for this room. */
+const CHARACTER_SCALE = 2.125;
+
+/** The Goddess's final on-screen scale (her scale × CHARACTER_SCALE), as tuned in game. */
+const GODDESS_ON_SCREEN_SCALE = 3.8 * 2.5;
+
 const magicShopLayers: RoomLayer[] = [
   // Layer 1: Background (walls, shelves, back table, plants — behind everything)
   {
@@ -59,7 +66,22 @@ const magicShopLayers: RoomLayer[] = [
     centered: true,
   },
 
-  // Layer 2: Foreground herb table (in front of the player)
+  // The shopkeeper — Shatakshiama, the Goddess of Eyes, floating by the plants.
+  // Always in front of the player (whose depth is 100 + feetY×10, so at most ~190 in
+  // this room) but still behind the foreground herb table at 200.
+  {
+    type: 'npc',
+    npc: {
+      ...createGoddessOfEyesNPC(GODDESS_OF_EYES_ID, { x: 11, y: 5 }),
+      // NPCs are drawn at scale × the room's characterScale, so her on-screen size
+      // is fixed against that rather than chosen alone. Change one, adjust the other.
+      scale: GODDESS_ON_SCREEN_SCALE / CHARACTER_SCALE,
+      interactionRadius: 3,
+    },
+    zIndex: Z_SPRITE_FOREGROUND - 1,
+  },
+
+  // Layer 3: Foreground herb table (in front of the player)
   {
     type: 'image',
     image: '/TwilightGame/assets-optimized/rooms/magicShop/magic_shop_layer1.png',
@@ -90,7 +112,7 @@ export function createMagicShop(
     isRandom: true,
     spawnPoint: MAGIC_SHOP_SPAWN,
     renderMode: 'background-image',
-    characterScale: 2.5,
+    characterScale: CHARACTER_SCALE,
     referenceViewport: { width: 1280, height: 720 },
     layers: magicShopLayers,
     transitions: [

@@ -870,6 +870,26 @@ class FriendshipManagerClass {
   }
 
   /**
+   * Check a one-off, never-expiring milestone with this NPC (e.g. "has met her").
+   * Stored in the friendship record, so it is per character and cloud-saved —
+   * unlike the localStorage flags some older quest handlers use.
+   */
+  hasNpcMilestone(npcId: string, key: string): boolean {
+    return this.friendships.get(npcId)?.rewardsReceived?.includes(`${npcId}_${key}`) ?? false;
+  }
+
+  /** Record a one-off milestone with this NPC — see hasNpcMilestone. */
+  markNpcMilestone(npcId: string, key: string): void {
+    const friendship = this.getFriendship(npcId);
+    const entry = `${npcId}_${key}`;
+    friendship.rewardsReceived = friendship.rewardsReceived ?? [];
+    if (!friendship.rewardsReceived.includes(entry)) {
+      friendship.rewardsReceived.push(entry);
+      this.save();
+    }
+  }
+
+  /**
    * Get all friendships (for UI/save)
    */
   getAllFriendships(): NPCFriendship[] {

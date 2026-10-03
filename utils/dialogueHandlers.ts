@@ -82,6 +82,10 @@ import {
   setHasRevealedYear,
   setBubblePopped,
 } from '../data/questHandlers/mordecaiTimebubbleHandler';
+import {
+  isGoddessOfEyesNpc,
+  handleGoddessOfEyesActions,
+} from '../data/questHandlers/goddessOfEyesHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -197,6 +201,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle Mordecai's time bubble (Wizard Trials epilogue)
   if (npcId === WIZARD_TRIALS_MORDECAI_ID) {
     const redirect = handleMordecaiTimebubbleActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Goddess of Eyes, the Magic Shop's keeper — first-visit vs returning greetings
+  if (isGoddessOfEyesNpc(npcId)) {
+    const redirect = handleGoddessOfEyesActions(nodeId);
     if (redirect) return redirect;
   }
 }
