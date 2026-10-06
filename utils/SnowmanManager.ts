@@ -5,7 +5,8 @@
  * finishes the "build_snowman" cutscene with the village child (see
  * data/cutscenes/buildSnowman.ts and App.tsx's handleCutsceneComplete).
  * Replayable, so many snowmen can accumulate around the village over a
- * winter — check() removes all of them the moment the season changes.
+ * winter — check() removes all of them the moment the season changes,
+ * including ones only present in the shared-world mirror (see check()).
  *
  * Modeled directly on utils/SnowAngelManager.ts, simplified: there's no
  * per-map weather condition here, only a global season check.
@@ -98,15 +99,33 @@ class SnowmanManagerClass {
   /**
    * Call this periodically (every TIMING.SEASONAL_EVENT_CHECK_MS) from the game loop.
    * Removes every snowman, on every map, the moment it stops being winter.
+   *
+   * The village is a shared map, so a snowman is a shared placement too. Local
+   * state alone is not enough: the season usually turns while the builder is
+   * somewhere else, and the shared-world reconcile only deletes documents for
+   * the map you are standing on — so the local copy went, the shared one stayed,
+   * and it came back through the mirror into spring. A friend's snowmen were
+   * never in our local state at all. So, as SnowAngelManager does, also sweep
+   * the snowmen that are only in the shared mirror for the current map:
+   * removing one reconciles to a server-side delete, so whoever is standing
+   * there is the janitor.
    */
   check(): void {
-    const snowmen = gameState.getAllPlacedItems().filter((item) => item.itemId === SNOWMAN_ITEM_ID);
-    if (snowmen.length === 0) return;
+    if (TimeManager.isCurrentSeason(Season.WINTER)) return;
 
-    if (!TimeManager.isCurrentSeason(Season.WINTER)) {
-      for (const snowman of snowmen) {
-        gameState.removePlacedItem(snowman.id);
-      }
+    const currentMapId = mapManager.getCurrentMapId();
+    // Ours on every map, plus everyone's on the map we can see.
+    const local = gameState.getAllPlacedItems();
+    const here = currentMapId ? gameState.getPlacedItems(currentMapId) : [];
+    const seen = new Set<string>();
+    const snowmen = [...local, ...here].filter((item) => {
+      if (item.itemId !== SNOWMAN_ITEM_ID || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+
+    for (const snowman of snowmen) {
+      gameState.removePlacedItem(snowman.id);
     }
   }
 }
