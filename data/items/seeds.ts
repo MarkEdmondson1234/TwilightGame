@@ -178,7 +178,7 @@ export const SEED_ITEMS: Record<string, ItemDefinition> = {
     name: 'seed_onion',
     displayName: 'Onion Sets',
     category: ItemCategory.SEED,
-    description: 'Small onion bulbs for planting. Plant in autumn!',
+    description: 'Small onion bulbs for planting. Plant in spring, summer or autumn.',
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 5,

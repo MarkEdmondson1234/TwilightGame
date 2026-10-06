@@ -96,9 +96,9 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'You used to be a gardener, and you still look after the communal kitchen gardens, but you could use some help',
       'Old legends and folk tales',
       // Farming - seeds and seasons
-      'Spring is the best season for planting most crops. The shop sells: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, and sunflowers in spring',
-      'In summer you can still plant: chillies, spinach, salad greens, carrots, corn, and radishes',
-      'Autumn is the time for onion sets, and onion sets alone - plant them now and harvest in summer',
+      'Spring is the best season for planting most crops. The shop sells: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, onion sets, and sunflowers in spring',
+      'In summer you can still plant: chillies, spinach, salad greens, carrots, corn, onion sets, and radishes',
+      'Onion sets can be planted in spring, summer or autumn - in autumn they are the only crop that will still take',
       'Nothing can be planted in winter - the ground is frozen solid',
       'Radishes are the best crop for beginners - they grow quickly and teach the basics',
       'Pumpkins take the longest to grow but are the most valuable at harvest',

@@ -319,7 +319,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'pickled_onions_ingredients',
-        text: '"Onions you can plant in autumn, or buy from the village shop whenever you like. Vinegar, sugar, and pepper are sold there too. Water from any well." *She smiles.* "It\'s simpler than it sounds, dear. Just follow the recipe."',
+        text: '"Onions you can plant any time but winter, or buy from the village shop whenever you like. Vinegar, sugar, and pepper are sold there too. Water from any well." *She smiles.* "It\'s simpler than it sounds, dear. Just follow the recipe."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 3,
         // Stage gating handled by dialogueHandlers redirect

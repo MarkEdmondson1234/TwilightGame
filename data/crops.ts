@@ -140,7 +140,7 @@ export const TESTING_MODE = import.meta.env.DEV || import.meta.env.VITE_TESTING_
  * Seasonal Guide (from design doc):
  * - Spring planting: Most crops
  * - Summer planting: Chili, Spinach, Salad, Carrots
- * - Autumn planting: Onion only
+ * - Autumn planting: Onion (which also plants in spring and summer)
  * - Winter: Nothing can be planted
  */
 export const CROPS: Record<string, CropDefinition> = {
@@ -407,12 +407,14 @@ export const CROPS: Record<string, CropDefinition> = {
     seedSource: 'shop',
   },
 
-  // Onion - Autumn planting (unique!)
+  // Onion - Spring, summer and autumn planting. Was autumn-only until players
+  // found waiting most of a year for onion sets frustrating; winter stays out
+  // because the beds are under snow.
   onion: {
     id: 'onion',
     name: 'onion',
     displayName: 'Onion',
-    plantSeasons: [Season.AUTUMN],
+    plantSeasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN],
     growthTime: 10 * MINUTE,
     growthTimeWatered: 7 * MINUTE,
     waterNeededInterval: WATER_NEEDED,
@@ -423,7 +425,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 15,
     seedDropMin: 1,
     seedDropMax: 2,
-    description: 'Pungent onions. Plant in autumn for spring harvest.',
+    description: 'Pungent onions. Plant any time except winter.',
     seedCost: 0,
     rarity: CropRarity.UNCOMMON,
     seedSource: 'friendship',

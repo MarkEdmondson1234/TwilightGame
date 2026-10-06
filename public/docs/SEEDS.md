@@ -55,7 +55,7 @@ Befriending villagers unlocks special seed rewards! The **Old Man (Jebediah)** i
 - Tomato Seeds - a classic garden favourite
 - Carrot Seeds - crunchy and nutritious
 - Cucumber Seeds - cool and refreshing
-- Onion Sets - plant in autumn only!
+- Onion Sets - plant in spring, summer or autumn
 
 ### 4. Foraging Seeds
 
@@ -101,7 +101,7 @@ When you harvest fully-grown crops, there's a chance to receive seeds back:
 1. **Start with Radishes** - They grow quickly (2 minutes) and are forgiving for beginners
 2. **Talk to the Old Man daily** - He'll reward your friendship with seeds
 3. **Save some seeds** - Don't plant everything; keep reserves for replanting
-4. **Check the season** - Some crops only grow in specific seasons (Onions need Autumn!)
+4. **Check the season** - Some crops only grow in specific seasons (Onions are the only crop you can plant in Autumn)
 5. **Water regularly** - Watered crops grow faster and won't wilt
 
 ## Seasonal Planting
@@ -112,7 +112,7 @@ Not all seeds can be planted year-round:
 |--------|----------------|
 | Spring | Most crops (Radish, Tomato, Salad, Corn, etc.) |
 | Summer | Radish, Spinach, Lettuce, Chili, Salad, Corn, Carrot |
-| Autumn | Onion (only season for this crop!) |
+| Autumn | Onion (it can also be planted in spring and summer) |
 | Winter | Nothing can be planted |
 
 Plan your farming calendar wisely!

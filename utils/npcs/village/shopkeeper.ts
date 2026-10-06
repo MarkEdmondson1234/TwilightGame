@@ -554,16 +554,16 @@ export function createShopkeeperNPC(
 
       {
         id: 'fox_seeds_autumn',
-        text: 'Two interesting cases. Onion seeds are exclusively an autumn planting at 12 gold — the only crop I know of that categorically refuses any other season. Then there is the carrot at 8 gold: planted in spring, and fresh carrots also come into stock in autumn when they are harvested. They are, in other words, useful across the year.',
+        text: 'Two interesting cases. Onion sets at 12 gold are remarkably accommodating — spring, summer or autumn, they will take. Only winter defeats them. Then there is the carrot at 8 gold: planted in spring, and fresh carrots also come into stock in autumn when they are harvested. They are, in other words, useful across the year.',
         seasonalText: {
           spring:
-            'Carrot seeds at 8 gold are available now for spring planting. Onion seeds are an autumn-only item — I do not stock them until then. Fresh carrots will be available again in autumn.',
+            'Carrot seeds at 8 gold are available now for spring planting. Onion sets are in as well, at 12 gold, and will stay in stock until the first frost. Fresh carrots will be available again in autumn.',
           summer:
-            'Carrot seeds are a spring crop and are no longer in stock for planting. Onion seeds will not arrive until autumn. Come back then.',
+            'Carrot seeds are a spring crop and are no longer in stock for planting. Onion sets, however, are still on the shelf at 12 gold — they do not mind the heat.',
           autumn:
-            '*brightens slightly* Autumn is precisely the right moment for this section. Onion seeds are in — 12 gold — plant them now. And fresh carrots have just arrived in the produce section at 35 gold if thou dost not wish to grow them thyself.',
+            '*brightens slightly* Autumn is precisely the right moment for this section. Onion sets are in — 12 gold — and this is their last season before winter. And fresh carrots have just arrived in the produce section at 35 gold if thou dost not wish to grow them thyself.',
           winter:
-            'Onion seeds were an autumn item and are out of stock until next autumn. I find winter is a good time to plan the spring garden — makes the cold months feel purposeful.',
+            'Onion sets are out of stock until spring — nothing goes into snow-covered beds. I find winter is a good time to plan the spring garden — makes the cold months feel purposeful.',
         },
         responses: [{ text: 'Back to seeds.', nextId: 'fox_seeds_hub' }],
       },

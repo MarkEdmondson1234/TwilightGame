@@ -215,10 +215,10 @@ export function createVillageElderNPC(
       },
       {
         id: 'gardening_tips',
-        text: "Indeed! Though I could use some help these days. If thou art interested in growing things, I have some advice: spring is best for most crops, but put thy onion sets down in autumn - they'll be ready come summer. And if thou needest seeds, the forest sometimes hides them, but mind the wild creatures!",
+        text: "Indeed! Though I could use some help these days. If thou art interested in growing things, I have some advice: spring is best for most crops, and onion sets will take any time the ground is not frozen. And if thou needest seeds, the forest sometimes hides them, but mind the wild creatures!",
         seasonalText: {
           autumn:
-            "Autumn is the time for onion sets, young one! Plant them now, and come summer, thou'lt have fine bulbs. The shop should have some in stock.",
+            "Autumn is a fine time for onion sets, young one! Get them in before the snow, and thou'lt have fine bulbs. The shop should have some in stock.",
           spring:
             'Spring! The perfect time to plant most things. Visit the shop for seeds, or search the forest - nature provides for those who look carefully.',
         },
@@ -529,9 +529,9 @@ export function createVillageElderNPC(
         id: 'elias_seeds_seasonal',
         text: "Every season has its planting. Miss the right moment and thou'lt wait a whole year to try again.",
         seasonalText: {
-          spring: "Spring is the busy season! The shop sells nearly everything now: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, and sunflowers. Start with radishes if thou art new to it — they grow quickly and teach the basics well.",
-          summer: "Summer is still good for planting! The shop has chillies, spinach, salad greens, carrots, corn, and radishes available. Melons and pumpkins planted in spring should be coming along nicely — keep watering them!",
-          autumn: "Autumn is for onion sets, and onion sets alone! They are special — plant them now, let them sleep through winter, and they shall reward thee come summer. The shop keeps them in stock only this season, so do not delay.",
+          spring: "Spring is the busy season! The shop sells nearly everything now: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, onion sets, and sunflowers. Start with radishes if thou art new to it — they grow quickly and teach the basics well.",
+          summer: "Summer is still good for planting! The shop has chillies, spinach, salad greens, carrots, corn, onion sets, and radishes available. Melons and pumpkins planted in spring should be coming along nicely — keep watering them!",
+          autumn: "Autumn is for onion sets! They are hardy little things — the only crop that will still take this late in the year. Get them in before the snow comes, for nothing can be planted in winter.",
           winter: "'Tis a time for rest, not planting — the ground is frozen solid. Use the quiet months to plan what thou wouldst like to grow come spring. Radishes and peas are always a fine beginning for a new gardener.",
         },
         responses: [

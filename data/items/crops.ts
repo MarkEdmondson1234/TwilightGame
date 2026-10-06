@@ -165,8 +165,8 @@ export const CROP_ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 20,
     // Sold year-round: the witch's pickled-onions quest step needs four, and
-    // onion sets only plant in autumn — without this a player reaching that
-    // step in spring was stuck for most of a year.
+    // onion sets cannot be planted in winter — without this a player reaching
+    // that step in winter would be stuck until spring.
     buyPrice: 30,
     image: groceryAssets.onion_bunch,
   },
