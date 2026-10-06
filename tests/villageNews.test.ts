@@ -1,6 +1,13 @@
 /** @vitest-environment node */
 import { describe, expect, it } from 'vitest';
-import { compareNews, isNewsCursor, summariseNews, type NewsEvent } from '../utils/villageNews';
+import {
+  compareNews,
+  isNewsCursor,
+  newsBullet,
+  resolveMilestone,
+  summariseNews,
+  type NewsEvent,
+} from '../utils/villageNews';
 const event = (
   id: string,
   contributorId = 'other',
@@ -40,11 +47,28 @@ describe('village news selection', () => {
       ],
       'self'
     );
-    expect(stories[0].lead).toBeUndefined();
-    expect(JSON.stringify(stories)).not.toMatch(/secret ending|give reward|invented/);
-    expect(
-      summariseNews([event('b', 'other', { milestoneId: '__proto__' })], 'self')[0].lead
-    ).toBeUndefined();
+    expect(stories).toEqual([]);
+    expect(summariseNews([event('b', 'other', { milestoneId: '__proto__' })], 'self')).toEqual([]);
+  });
+  it('drops vague events that are not authored milestones', () => {
+    const vague = ['discovery', 'achievement', 'seasonal', 'community'].map((eventType, i) => ({
+      ...event(`v${i}`, 'other', {}),
+      eventType,
+    }));
+    expect(summariseNews(vague, 'self')).toEqual([]);
+  });
+  it('names the recipe a neighbour learned, from our own data only', () => {
+    const tea = { milestoneId: 'cooking:tea' };
+    const stories = summariseNews([event('a', 'other', tea), event('b', 'x', tea)], 'self');
+    expect(stories).toHaveLength(1);
+    expect(newsBullet(stories[0])).toBe('2 neighbours learned to cook Tea!');
+    expect(stories[0].itemId).toBe('food_tea');
+    expect(newsBullet({ headline: resolveMilestone('skiing')!.headline, neighbours: 1 })).toBe(
+      'A neighbour went skiing!'
+    );
+    for (const id of ['cooking:invented', 'cooking:__proto__', 'skiing:tea', 'cooking:tea:x'])
+      expect(resolveMilestone(id), id).toBeUndefined();
+    expect(resolveMilestone('gardening:crop_radish')?.headline).toBe('grew their first Radish');
   });
   it('rejects damaged cursors', () => {
     expect(isNewsCursor(event('a'))).toBe(true);

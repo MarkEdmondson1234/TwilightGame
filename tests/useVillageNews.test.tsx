@@ -106,14 +106,40 @@ describe('returning player news lifecycle', () => {
     const hook = renderHook(() => useVillageNews(true));
     await waitFor(() => expect(hook.result.current.batch).not.toBeNull());
     act(() => {
-      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking' });
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking', detail: 'tea' });
       window.dispatchEvent(new Event('online'));
     });
     await waitFor(() => expect(mock.publish).toHaveBeenCalledTimes(1));
-    expect(readVillageNews('reader').pending).toEqual(['cooking']);
+    expect(readVillageNews('reader').pending).toEqual(['cooking:tea']);
     act(() => window.dispatchEvent(new Event('online')));
-    await waitFor(() => expect(readVillageNews('reader').published).toEqual(['cooking']));
+    await waitFor(() => expect(readVillageNews('reader').published).toEqual(['cooking:tea']));
     expect(readVillageNews('reader').recent).toHaveLength(1);
+  });
+  it('publishes the first cook of a recipe, not every batch', async () => {
+    mock.publish.mockResolvedValue(false);
+    const hook = renderHook(() => useVillageNews(true));
+    await waitFor(() => expect(hook.result.current.batch).not.toBeNull());
+    act(() => {
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking' });
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking', detail: 'tea' });
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'skiing' });
+    });
+    expect(readVillageNews('reader').pending).toEqual(['cooking:tea', 'skiing']);
+  });
+  it('tells a player back after a week which festival they missed', async () => {
+    const start = Date.now();
+    // A season is one real week, so eight days away always spans a festival.
+    mock.saved.set('reader', { lastSeenMs: start - 8 * 24 * 60 * 60 * 1000 });
+    const hook = renderHook(() => useVillageNews(true));
+    await waitFor(() => expect(hook.result.current.batch).not.toBeNull());
+    expect(hook.result.current.batch!.festivals.length).toBeGreaterThan(0);
+    expect(hook.result.current.batch!.returning).toBe(true);
+    expect(readVillageNews('reader').lastSeenMs).toBeGreaterThanOrEqual(start);
+  });
+  it('shows no festivals on a first visit', async () => {
+    const hook = renderHook(() => useVillageNews(true));
+    await waitFor(() => expect(hook.result.current.batch).not.toBeNull());
+    expect(hook.result.current.batch!.festivals).toEqual([]);
   });
   it('discards a slow response after the account changes', async () => {
     let resolve!: (value: unknown) => void;

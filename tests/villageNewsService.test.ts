@@ -55,8 +55,19 @@ describe('village news transport', () => {
       metadata: { milestoneId: 'cooking' },
     });
   });
+  it('publishes each learned recipe once, under its own document', async () => {
+    expect(await sharedDataService.publishMilestone('cooking:tea')).toBe(true);
+    expect(await sharedDataService.publishMilestone('cooking:tea')).toBe(true);
+    expect(await sharedDataService.publishMilestone('cooking:crepes')).toBe(true);
+    expect(mock.set).toHaveBeenCalledTimes(2);
+    expect(mock.set.mock.calls[0][1]).toMatchObject({
+      description: 'learned to cook Tea',
+      metadata: { milestoneId: 'cooking:tea' },
+    });
+  });
   it('does not write unknown milestones or signed-out actions', async () => {
     expect(await sharedDataService.publishMilestone('invented')).toBe(false);
+    expect(await sharedDataService.publishMilestone('cooking:invented')).toBe(false);
     mock.uid = null;
     expect(await sharedDataService.publishMilestone('cooking')).toBe(false);
     expect(mock.set).not.toHaveBeenCalled();

@@ -75,7 +75,10 @@ describe('first tea lesson', () => {
     expect(state.items.milk).toBe(0);
     expect(state.items.food_tea).toBe(1);
     expect(cookingManager.isFireplaceTutorialComplete()).toBe(true);
-    expect(state.emit).toHaveBeenCalledWith('milestone', { milestoneId: 'cooking' });
+    expect(state.emit).toHaveBeenCalledWith('milestone', {
+      milestoneId: 'cooking',
+      detail: 'tea',
+    });
     state.saved = cookingManager.getCookingState();
     cookingManager.reset();
     cookingManager.initialise();

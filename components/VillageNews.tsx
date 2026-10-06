@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { useVillageNews } from '../hooks/useVillageNews';
-import { rememberActivityLead } from '../utils/activityLeadStorage';
-import { ACTIVITY_LEADS, type ActivityLeadId } from '../utils/activityDiscovery';
 import { getItem } from '../data/items';
+import { festivalBullet } from '../utils/missedFestivals';
+import { newsBullet } from '../utils/villageNews';
 import { COTTAGE_COLOURS as colours, COTTAGE_FONTS } from '../utils/transitionIcons';
 import { Z_QUEST_GUIDANCE, Z_QUEST_GUIDANCE_RAISED } from '../zIndex';
 import { useIsTinyTouchScreen } from '../hooks/useIsTinyTouchScreen';
 import './ActivityInvitation.css';
 
+/** Bullets shown on the card; the rest wait in the journal. A long card drowns a child in text. */
+const MAX_BULLETS = 5;
+const ICON_SIZE_PX = 24;
+
 type Props = { news: ReturnType<typeof useVillageNews>; blocked: boolean; onJournal: () => void };
 export default function VillageNews({ news, blocked, onJournal }: Props) {
-  const [all, setAll] = useState(false);
-  const [saved, setSaved] = useState<ActivityLeadId[]>([]);
   // On a tiny screen the card sits over the controls while it is open (see Z_QUEST_GUIDANCE_RAISED).
   const isTinyScreen = useIsTinyTouchScreen();
-  if (blocked || news.dismissed || !news.batch?.stories.length) return null;
-  const { stories, returning, truncated } = news.batch;
+  if (blocked || news.dismissed || !news.batch) return null;
+  const { stories, returning, festivals } = news.batch;
+  const bullets: { key: string; text: string; image?: string }[] = [
+    ...festivals.map(({ name, image }) => ({
+      key: `festival:${name}`,
+      text: festivalBullet(name),
+      image,
+    })),
+    ...stories.map((story) => ({
+      key: story.key,
+      text: newsBullet(story),
+      image: story.itemId ? getItem(story.itemId)?.image : undefined,
+    })),
+  ];
+  if (!bullets.length) return null;
+  const hidden = bullets.length - MAX_BULLETS;
   return (
     <aside
       className="activity-invitation village-news"
@@ -30,73 +46,47 @@ export default function VillageNews({ news, blocked, onJournal }: Props) {
     >
       <div
         className="activity-invitation-actions"
-        style={{
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: -14,
-          padding: '10px 0',
-          background: colours.parchmentLight,
-        }}
+        style={{ justifyContent: 'space-between', alignItems: 'center' }}
       >
         <strong>{returning ? 'While you were away' : 'Village news'}</strong>
-        <button onClick={news.dismiss}>Later</button>
-      </div>
-      <small>
-        {truncated
-          ? 'Recent highlights from a busy village (up to 100 events).'
-          : 'News from other players. Your own adventures await.'}
-      </small>
-      {(all ? stories : stories.slice(0, 3)).map((story) => (
-        <section
-          key={story.key}
-          style={{ marginTop: 14, borderTop: '1px solid #8b735550', paddingTop: 10 }}
-        >
-          <div className="activity-invitation-heading">
-            {story.itemId && getItem(story.itemId)?.image && (
-              <img src={getItem(story.itemId)!.image} alt="" />
-            )}
-            <div>
-              <strong>{story.title}</strong>
-              <p>{story.story}</p>
-              {story.neighbours > 1 && (
-                <small>{story.neighbours} neighbours shared this kind of news.</small>
-              )}
-            </div>
-          </div>
-          {story.lead && (
-            <div className="activity-invitation-actions">
-              <button
-                disabled={saved.includes(story.lead)}
-                onClick={() => {
-                  rememberActivityLead(story.lead!);
-                  setSaved((ids) => [...ids, story.lead!]);
-                }}
-              >
-                {saved.includes(story.lead) ? 'Kept in Things to try' : 'Keep this lead'}
-              </button>
-            </div>
-          )}
-          {story.lead && saved.includes(story.lead) && (
-            <p>{ACTIVITY_LEADS.find((lead) => lead.id === story.lead)?.directions}</p>
-          )}
-        </section>
-      ))}
-      <div className="activity-invitation-actions" style={{ marginTop: 14 }}>
-        {!all && stories.length > 3 && (
-          <button onClick={() => setAll(true)}>More village news ({stories.length - 3})</button>
-        )}
-        <button
-          onClick={() => {
-            news.dismiss();
-            onJournal();
-          }}
-        >
-          Read in journal
+        <button aria-label="Later" title="Later" onClick={news.dismiss}>
+          ×
         </button>
-        <button onClick={news.markRead}>Mark this news read</button>
       </div>
-      <small>Later keeps this news unread. Find it again in your journal.</small>
+      <ul style={{ margin: '8px 0', paddingLeft: 20, fontSize: 15, lineHeight: 1.45 }}>
+        {bullets.slice(0, MAX_BULLETS).map((bullet) => (
+          <li key={bullet.key} style={{ margin: '4px 0' }}>
+            {bullet.text}
+            {bullet.image && (
+              <img
+                src={bullet.image}
+                alt=""
+                width={ICON_SIZE_PX}
+                height={ICON_SIZE_PX}
+                style={{ objectFit: 'contain', verticalAlign: 'middle', marginLeft: 6 }}
+              />
+            )}
+          </li>
+        ))}
+      </ul>
+      <div
+        className="activity-invitation-actions"
+        style={{ justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        {hidden > 0 ? (
+          <button
+            onClick={() => {
+              news.dismiss();
+              onJournal();
+            }}
+          >
+            …and {hidden} more
+          </button>
+        ) : (
+          <span />
+        )}
+        <button onClick={news.markRead}>Got it</button>
+      </div>
     </aside>
   );
 }

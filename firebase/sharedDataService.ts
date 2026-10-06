@@ -1,4 +1,4 @@
-import { NEWS_MILESTONES, type VillageNewsResult } from '../utils/villageNews';
+import { resolveMilestone, type VillageNewsResult } from '../utils/villageNews';
 /**
  * Shared Data Service
  *
@@ -202,16 +202,16 @@ class SharedDataService {
     }
   }
 
-  /** One immutable milestone per account/kind, even across devices and retries. */
+  /** One immutable milestone per account/kind (and per recipe or crop), even across devices and retries. */
   async publishMilestone(milestoneId: string): Promise<boolean> {
     if (
-      !Object.hasOwn(NEWS_MILESTONES, milestoneId) ||
+      !resolveMilestone(milestoneId) ||
       !isFirebaseInitialized() ||
       !authService.isAuthenticated()
     )
       return false;
     const uid = authService.getUserId()!;
-    const story = NEWS_MILESTONES[milestoneId];
+    const story = resolveMilestone(milestoneId)!;
     try {
       // Unlike the legacy display hash, use a collision-resistant key for deduplication.
       const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(uid));
@@ -232,7 +232,7 @@ class SharedDataService {
         transaction.set(ref, {
           eventType: 'achievement',
           title: story.title,
-          description: story.story.replace(/^A neighbour /, ''),
+          description: story.headline,
           contributorId: hashUserId(uid),
           contributorName: 'A neighbour',
           timestamp: serverTimestamp(),

@@ -884,7 +884,10 @@ class FarmManager {
     }
   ): void {
     if (!SHARED_FARM_MAP_IDS.has(mapId)) {
-      eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, {
+        milestoneId: 'gardening',
+        detail: granted.cropItemId,
+      });
       return;
     }
 
@@ -910,7 +913,10 @@ class FarmManager {
 
         if (won) {
           if (harvestOwner === getAuthService().getState().user?.uid) {
-            eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
+            eventBus.emit(GameEvent.PLAYER_MILESTONE, {
+              milestoneId: 'gardening',
+              detail: granted.cropItemId,
+            });
           }
           // Our write went out inside the transaction; mark it flushed so the
           // snapshot echo does not overwrite the plot we just harvested.
@@ -1087,7 +1093,11 @@ class FarmManager {
       position: plot.position,
     });
     this.syncSharedPlot(mapId, position);
-    if (!SHARED_FARM_MAP_IDS.has(mapId)) eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'gardening' });
+    if (!SHARED_FARM_MAP_IDS.has(mapId) && plot.cropType)
+      eventBus.emit(GameEvent.PLAYER_MILESTONE, {
+        milestoneId: 'gardening',
+        detail: getCropItemId(plot.cropType),
+      });
 
     return {
       cropId: plot.cropType,

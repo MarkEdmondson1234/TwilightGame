@@ -30,6 +30,15 @@ describe('news persistence', () => {
   it('ignores unknown milestone IDs', () => {
     queueMilestone('alice', '__proto__');
     queueMilestone('alice', 'not-a-feature');
+    queueMilestone('alice', 'cooking:not-a-recipe');
     expect(data.size).toBe(0);
+    queueMilestone('alice', 'cooking:tea');
+    expect(readVillageNews('alice').pending).toEqual(['cooking:tea']);
+  });
+  it('keeps a valid last-seen time and drops a damaged one', () => {
+    updateVillageNews('alice', (state) => ({ ...state, lastSeenMs: 1234 }));
+    expect(readVillageNews('alice').lastSeenMs).toBe(1234);
+    data.set('alice', { lastSeenMs: 'yesterday' });
+    expect(readVillageNews('alice').lastSeenMs).toBeUndefined();
   });
 });

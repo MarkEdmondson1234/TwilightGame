@@ -395,7 +395,10 @@ class MagicManagerClass {
     // Save inventory and magic state
     this.saveInventory();
     this.save();
-    eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'brewing' });
+    eventBus.emit(GameEvent.PLAYER_MILESTONE, {
+      milestoneId: 'brewing',
+      detail: progress.timesBrewed === 1 ? recipeId : undefined,
+    });
 
     // Build result message
     let message = `Brewed ${resultQuantity}x ${recipe.displayName}!`;

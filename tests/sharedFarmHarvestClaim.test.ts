@@ -151,7 +151,10 @@ describe('shared farm — contested harvest', () => {
       claimPlot.mockResolvedValue(true);
       farmManager.harvestCrop('village', { x: 3, y: 4 });
       await settle();
-      expect(milestone).toHaveBeenCalledExactlyOnceWith({ milestoneId: 'gardening' });
+      expect(milestone).toHaveBeenCalledExactlyOnceWith({
+        milestoneId: 'gardening',
+        detail: expect.stringMatching(/^crop_/),
+      });
     } finally { unsubscribe(); }
   });
 

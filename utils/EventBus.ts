@@ -154,7 +154,8 @@ export enum GameEvent {
  * Type-safe payload definitions for each event
  */
 export interface EventPayloads {
-  [GameEvent.PLAYER_MILESTONE]: { milestoneId: string };
+  /** `detail` names what was made (recipe id, potion recipe id, crop item id) for village news. */
+  [GameEvent.PLAYER_MILESTONE]: { milestoneId: string; detail?: string };
   [GameEvent.FARM_PLOT_CHANGED]: {
     position?: Position;
     action?: 'till' | 'plant' | 'water' | 'harvest' | 'clear' | 'wilt' | 'die' | 'revive';

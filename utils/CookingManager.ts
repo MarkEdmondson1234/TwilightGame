@@ -504,7 +504,11 @@ class CookingManagerClass {
     // Save inventory and cooking state
     this.saveInventory();
     this.save();
-    eventBus.emit(GameEvent.PLAYER_MILESTONE, { milestoneId: 'cooking' });
+    // Only a recipe's first cook is news: "learned to cook", not every batch.
+    eventBus.emit(GameEvent.PLAYER_MILESTONE, {
+      milestoneId: 'cooking',
+      detail: progress.timesCooked === 1 ? recipeId : undefined,
+    });
 
     // Build result message
     let message = masteryAchieved

@@ -248,6 +248,9 @@ export const TIMING = {
 
   // Seasonal events
   SEASONAL_EVENT_CHECK_MS: 10000, // How often to check for seasonal decoration placement/removal (10s)
+  // How often village news records "last seen" (for festivals missed while away). Each write is
+  // a save, and festivals are a week apart, so minutes of staleness cost nothing.
+  VILLAGE_NEWS_LAST_SEEN_MS: 5 * 60 * 1000,
   SNOW_ANGEL_DURATION_MS: 3 * 60 * 1000, // How long a placed snow angel lasts before disappearing (3 min)
 
   // Background-image rooms
