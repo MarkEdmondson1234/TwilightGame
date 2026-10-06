@@ -35,7 +35,7 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
     invitation:
       'The village child sketches a delivery path in the dirt. “Oh no! Crates everywhere! Can you help me get through?”',
     directions:
-      'Interact with the village child and choose Play Crate Trail. Push crates to reach the golden door. Try Undo, Restart or Hint whenever you like. It costs nothing and is available all year. This is a small practice puzzle; the harder Test of Wits waits in the Wizard Trials deep in the mines.',
+      'Interact with the village child and choose Play Crate Trail. Push crates to reach the golden door. Try Undo, Restart or Hint whenever you like. It costs nothing and is available all year.',
   },
   {
     id: 'painting',
