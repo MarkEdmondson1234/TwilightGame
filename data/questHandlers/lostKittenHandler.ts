@@ -2,9 +2,10 @@
  * Lost Kitten Quest Handler
  *
  * The lost kitten discovery chain (near the village well) records its outcome
- * in chain metadata so the kitten NPC can react: adopted kittens go home with
- * the player and leave the well; kittens left as the village cat stay by the
- * well forever. All state is stored in EventChainManager metadata.
+ * in chain metadata the moment the player decides, so the kitten NPCs can
+ * react: an adopted kitten leaves the well and appears in the upstairs
+ * bedroom; a kitten let go slips away and appears nowhere. All state is stored
+ * in EventChainManager metadata.
  */
 
 import { eventChainManager } from '../../utils/EventChainManager';
@@ -18,17 +19,26 @@ export const LOST_KITTEN_QUEST_ID = 'lost_kitten';
 
 export const LOST_KITTEN_STAGES = {
   FOUND: 'found',
-  ADOPT: 'adopt',
   SEARCH_OWNER: 'search_owner',
-  ASK_WITCH: 'ask_witch',
-  VILLAGE_CAT: 'village_cat',
-  HAPPY_ENDING: 'happy_ending',
+  ADOPT: 'adopt',
+  LET_GO: 'let_go',
+  HOME: 'home',
+  FAREWELL: 'farewell',
 } as const;
 
-/** What became of the kitten once the chain completed. */
-export type LostKittenOutcome = 'adopted' | 'village_cat';
+/** What became of the kitten once the player decided. */
+export type LostKittenOutcome = 'adopted' | 'released';
 
 const OUTCOME_METADATA_KEY = 'outcome';
+
+/** Outcome stored by saves from before the quest was simplified. */
+const LEGACY_VILLAGE_CAT_OUTCOME = 'village_cat';
+
+/** Choice texts from the old chain that meant the kitten was not kept. */
+const LEGACY_RELEASE_CHOICES = [
+  'Let it stay as the village cat',
+  "Maybe it's a forest cat — it should stay free",
+];
 
 // ============================================================================
 // Helper Functions
@@ -44,35 +54,42 @@ export function isLostKittenActive(): boolean {
   return eventChainManager.isChainActive(LOST_KITTEN_QUEST_ID);
 }
 
-/** True once the chain has reached its happy ending. */
+/** True once the chain has reached one of its endings. */
 export function isLostKittenCompleted(): boolean {
   return eventChainManager.getProgress(LOST_KITTEN_QUEST_ID)?.completed ?? false;
 }
 
 /**
- * What became of the kitten. Returns undefined while the quest is undecided
- * (not started or still in progress).
+ * What became of the kitten. Returns undefined while the player has not yet
+ * decided (quest not started, or still at a choice).
  *
- * Falls back to reading the recorded choice texts for chains completed before
- * the outcome handler existed, so older saves still resolve.
+ * Saves from the old chain resolve too: a stored 'village_cat' outcome means
+ * the kitten was not kept, and chains completed before any outcome was stored
+ * are read from the recorded choice texts.
  */
 export function getLostKittenOutcome(): LostKittenOutcome | undefined {
-  const stored = eventChainManager.getMetadata(
-    LOST_KITTEN_QUEST_ID,
-    OUTCOME_METADATA_KEY
-  ) as LostKittenOutcome | undefined;
-  if (stored) return stored;
+  const stored = eventChainManager.getMetadata(LOST_KITTEN_QUEST_ID, OUTCOME_METADATA_KEY);
+  if (stored === 'adopted' || stored === 'released') return stored;
+  if (stored === LEGACY_VILLAGE_CAT_OUTCOME) return 'released';
 
   if (!isLostKittenCompleted()) return undefined;
 
   const progress = eventChainManager.getProgress(LOST_KITTEN_QUEST_ID);
   const chosenTexts = Object.values(progress?.choicesMade ?? {});
-  const villageCat = "Let it stay as the village cat";
-  const stayFree = "Maybe it's a forest cat — it should stay free";
-  if (chosenTexts.includes(villageCat) || chosenTexts.includes(stayFree)) {
-    return 'village_cat';
+  if (chosenTexts.some((text) => LEGACY_RELEASE_CHOICES.includes(text))) {
+    return 'released';
   }
   return 'adopted';
+}
+
+/** The lost kitten waits by the well until the player decides its fate. */
+export function isKittenAtWell(): boolean {
+  return getLostKittenOutcome() === undefined;
+}
+
+/** An adopted kitten lives in the upstairs bedroom. */
+export function isKittenAtHome(): boolean {
+  return getLostKittenOutcome() === 'adopted';
 }
 
 // ============================================================================
@@ -83,6 +100,6 @@ handlerRegistry.register(LOST_KITTEN_QUEST_ID, LOST_KITTEN_STAGES.ADOPT, (_chain
   eventChainManager.setMetadata(LOST_KITTEN_QUEST_ID, OUTCOME_METADATA_KEY, 'adopted');
 });
 
-handlerRegistry.register(LOST_KITTEN_QUEST_ID, LOST_KITTEN_STAGES.VILLAGE_CAT, (_chainId, _stageId, _ctx) => {
-  eventChainManager.setMetadata(LOST_KITTEN_QUEST_ID, OUTCOME_METADATA_KEY, 'village_cat');
+handlerRegistry.register(LOST_KITTEN_QUEST_ID, LOST_KITTEN_STAGES.LET_GO, (_chainId, _stageId, _ctx) => {
+  eventChainManager.setMetadata(LOST_KITTEN_QUEST_ID, OUTCOME_METADATA_KEY, 'released');
 });

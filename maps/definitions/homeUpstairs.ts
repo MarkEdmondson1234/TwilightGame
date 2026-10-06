@@ -3,6 +3,7 @@ import { COMMUNAL_EASEL } from '../../data/communalEasel';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';
 import { furnitureAssets, itemAssets } from '../../assets';
+import { createHomeKittenNPC } from '../../utils/npcFactories';
 
 /**
  * Home Upstairs - Bedroom area (background-image interior)
@@ -112,6 +113,12 @@ export const homeUpstairs: MapDefinition = {
   referenceViewport: { width: 1280, height: 720 },
   layers: homeUpstairsLayers,
   props: [bedroomEasel],
+  npcs: [
+    // The lost kitten, once adopted (lost_kitten chain). Hidden until then —
+    // her customVisibility reads the quest outcome. Not id 'kitten': that id
+    // receives the chain's dialogue meant for the kitten still lost by the well.
+    createHomeKittenNPC('home_kitten', { x: 8, y: 5 }),
+  ],
   transitions: [
     {
       fromPosition: { x: 3, y: 7 }, // Stairs down

@@ -13,4 +13,4 @@ export { createVillageChildNPC } from './villageChild';
 export { createDuckNPC } from './duck';
 export { createSpringPeriwinkleNPC } from './springPeriwinkle';
 export { createGhostQueenNPC, createGhostNPC, createQueenAvericiaaNPC } from './queenAvaricia';
-export { createKittenNPC } from './kitten';
+export { createKittenNPC, createHomeKittenNPC } from './kitten';

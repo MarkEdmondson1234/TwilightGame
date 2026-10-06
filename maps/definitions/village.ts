@@ -253,8 +253,8 @@ export const village: MapDefinition = {
     // tests/npcSpawnClear.test.ts guards every moving NPC against this.
     createDuckNPC('village_duck', { x: 22, y: 17 }, 'Duck'),
     // The Lost Kitten — subject of the lost_kitten discovery chain. Sits by the
-    // well while the quest is available or in progress; after the ending it
-    // remains only if it became the village cat (adopted kittens go home).
+    // well until the player decides her fate: adopted, she moves to the
+    // upstairs bedroom (homeUpstairs.ts); let go, she disappears.
     // Id must be 'kitten' — the chain's YAML injects its dialogue by that id.
     createKittenNPC('kitten', { x: 21, y: 18 }),
     // Spring Periwinkle - visiting rabbit, present for 3 days every 8-day cycle

@@ -45,13 +45,6 @@ the PR + art-review workflow in §4.
   Girl faces the camera while strafing. Drawing `left_{0,1}.png`/`right_{0,1}.png`
   profiles and dropping them into `public/assets/character2/outfits/polka_dress/`
   (then `npm run optimize-assets`) replaces the copies with no code change.
-- **Kitten's daily spot updates only at game load.** `getDailyKittenSpot()` is drawn when
-  the map definition is built; a session that crosses an in-game day keeps yesterday's
-  spot until the next load. Fix shape: a day-change hook (compare
-  `TimeManager.getCurrentTime().totalDays` in the game loop, mirroring
-  `NPCManager.checkSeasonChange()`) that repositions the kitten and emits
-  `NPC_MOVED`. Low priority — sessions crossing a 2-hour game day are common, but the
-  kitten is always somewhere sensible either way.
 - **`ART_REVIEW_TOKEN` secret is not set**, so art-review comments link the contact
   sheets as workflow artifacts instead of showing them inline. A classic personal
   access token (Actions `GITHUB_TOKEN` is rejected for attachment uploads) pasted into

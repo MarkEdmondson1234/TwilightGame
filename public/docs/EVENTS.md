@@ -50,27 +50,26 @@ Event chains are **branching stories** that unfold across your village. Each cha
 
 ### Example: The Lost Kitten
 
-A tiny ginger kitten is spotted near the village well. What happens next depends on you:
+A tiny calico kitten is spotted near the village well. What happens next depends on you:
 
 ```
 Found a kitten by the well
-       |
-    What do you do?
-    /       |       \
-Take it  Search for  Ask the
- home    its owner    witch
-   |        |          |
-   |    Nobody     "Ginger cats
-   |    claims it   bring luck!"
-   |    /      \       |
-   | Adopt  Let it be  |
-   |  it    the village |
-   |         cat        |
-    \       |         /
-     Happy ending!
+         |
+   What do you do?
+    /          \
+Take it     Ask if anyone's
+ home        lost a cat
+   |             |
+   |        Nobody has
+   |         /       \
+   |   Look after   Let it
+   |      it        stay free
+    \    /              |
+  It moves into     It slips away
+  your bedroom      into the bushes
 ```
 
-Each path triggers different world events, gives different NPC reactions, and may offer different rewards.
+Each path leads somewhere different, so your choice really matters.
 
 ### Current Stories
 
@@ -89,7 +88,7 @@ The village comes together for the harvest festival. Will you organise a cooking
 #### The Lost Kitten
 *Type: Discovery*
 
-A lost kitten appears near the village well. Help decide its fate — adopt it yourself, find its owner, or let it become the village's beloved communal cat.
+A lost kitten appears near the village well. Help decide its fate — take it home to your bedroom, or let it go free.
 
 ### Story Progress
 

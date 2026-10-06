@@ -23,13 +23,18 @@ export const EventChainPopup: React.FC<EventChainPopupProps> = ({
   onChoice,
   onDismiss,
 }) => {
+  // A single choice is narration ("Goodbye, little one"), not a decision —
+  // there is nothing to decide later, and dismissing it would leave the chain
+  // stuck one click short of its ending.
+  const canDismiss = choices.length > 1;
+
   return (
     <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden pointer-events-none`}>
       {/* Backdrop */}
       <div
         className="absolute inset-0 pointer-events-auto"
         style={{ background: 'rgba(0, 0, 0, 0.4)' }}
-        onClick={onDismiss}
+        onClick={canDismiss ? onDismiss : undefined}
       />
 
       {/* Popup card */}
@@ -80,12 +85,14 @@ export const EventChainPopup: React.FC<EventChainPopupProps> = ({
           </div>
 
           {/* Dismiss hint */}
-          <div
-            className="px-6 pb-3 text-xs text-slate-500 text-center"
-            style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-          >
-            Click outside to decide later
-          </div>
+          {canDismiss && (
+            <div
+              className="px-6 pb-3 text-xs text-slate-500 text-center"
+              style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+            >
+              Click outside to decide later
+            </div>
+          )}
         </div>
       </div>
     </div>

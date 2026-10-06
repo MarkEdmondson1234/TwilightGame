@@ -53,8 +53,10 @@ export function useEventChainUI() {
   const handleChainChoice = useCallback(
     (index: number) => {
       if (!activeChainPopup) return;
-      eventChainManager.makeChoice(activeChainPopup.chainId, index);
+      // Clear first: if the chosen stage has choices of its own, makeChoice
+      // opens the next popup, which a clear afterwards would wipe out.
       setActiveChainPopup(null);
+      eventChainManager.makeChoice(activeChainPopup.chainId, index);
     },
     [activeChainPopup]
   );
