@@ -168,7 +168,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 3,
     stock: 'unlimited',
   },
-  // Honey removed from shop - only available by foraging from bee hives
+  // Honey is not sold here - forage it from bee hives, or buy it in the Magic Shop
   {
     itemId: 'salt',
     buyPrice: 3,
@@ -595,7 +595,11 @@ function magicShopItem(itemId: string, buyPrice: number): ShopItem {
 export const MAGIC_SHOP_INVENTORY: ShopItem[] = [
   // ===== FORAGEABLE HERBS & INGREDIENTS =====
   magicShopItem('feather', 12),
+  magicShopItem('mushroom', 20),
+  magicShopItem('rose_crop', 20),
+  magicShopItem('rose_red_crop', 20),
   magicShopItem('eye_of_newt', 25),
+  magicShopItem('heather_sprig', 45),
   magicShopItem('wolfsbane', 50),
   magicShopItem('forest_mushroom', 60),
   magicShopItem('ghost_lichen', 60),
@@ -607,6 +611,12 @@ export const MAGIC_SHOP_INVENTORY: ShopItem[] = [
   magicShopItem('frost_flower', 110),
   magicShopItem('addersmeat', 125),
   magicShopItem('giant_mushroom_cap', 135),
+
+  // ===== POTION STAPLES (common ingredients many potion recipes call for) =====
+  magicShopItem('vinegar', 8), // same as the General Store
+  magicShopItem('thyme', 8), // the dried herb potions use, same as the General Store
+  magicShopItem('honey', 20), // otherwise only foraged from bee hives
+  magicShopItem('crop_blueberry', 75), // otherwise only foraged from forest bushes
 
   // ===== RARE =====
   magicShopItem('golden_apple', 3000), // 3× its 1000g sell price

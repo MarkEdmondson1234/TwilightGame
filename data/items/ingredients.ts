@@ -201,7 +201,7 @@ export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 8,
-    // No buyPrice - only available by foraging from bee hives
+    // No buyPrice here - foraged from bee hives, or bought dear in the Magic Shop (data/shopInventory.ts)
     image: groceryAssets.honey,
     forageSuccessRate: 0.85, // 85% success rate when foraging from bee hives
   },

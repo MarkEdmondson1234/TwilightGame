@@ -22,7 +22,7 @@ World events are community milestones shared between all players via the cloud. 
 
 Events are triggered automatically by gameplay:
 
-- **Forage a rare item** (moonpetal, wolfsbane, fly agaric) — triggers a discovery event
+- **Forage a rare item** (moonpetal, wolfsbane, frost flower) — triggers a discovery event
 - **Complete a quest** — triggers an achievement event
 - **Reach a community milestone** — triggers a community event
 

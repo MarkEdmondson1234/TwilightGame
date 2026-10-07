@@ -22,7 +22,6 @@ const RARE_FORAGE_ITEMS = new Set([
   'shrinking_violet',
   'frost_flower',
   'heather_sprig',
-  'fly_agaric',
   'fairy_bluebell',
   'ghost_lichen',
   'giant_mushroom_cap',
