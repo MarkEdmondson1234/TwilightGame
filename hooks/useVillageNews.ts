@@ -182,20 +182,24 @@ export function useVillageNews(enabled: boolean) {
     setDismissed(true);
   }, [batch]);
 
+  const current = batch?.uid === uid ? batch : null;
+  const isDismissed =
+    dismissed ||
+    !!(
+      uid &&
+      // News already read in the journal hides the card — unless a festival is still to tell.
+      !current?.festivals.length &&
+      current?.cursor &&
+      readVillageNews(uid).cursor &&
+      compareNews(current.cursor, readVillageNews(uid).cursor!) <= 0
+    );
   return {
-    batch: batch?.uid === uid ? batch : null,
+    batch: current,
     uid,
     unavailable,
-    dismissed:
-      dismissed ||
-      !!(
-        uid &&
-        // News already read in the journal hides the card — unless a festival is still to tell.
-        !batch?.festivals.length &&
-        batch?.cursor &&
-        readVillageNews(uid).cursor &&
-        compareNews(batch.cursor, readVillageNews(uid).cursor!) <= 0
-      ),
+    dismissed: isDismissed,
+    /** The card has something to say: other guidance cards stand aside while this is true. */
+    showing: !isDismissed && !!(current?.stories.length || current?.festivals.length),
     markRead,
     dismiss: () => setDismissed(true),
     refresh: () => setRefresh((n) => n + 1),

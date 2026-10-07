@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import ActivityInvitation from '../components/ActivityInvitation';
+import { ACTIVITY_LEADS } from '../utils/activityDiscovery';
+
+const MAX_HINT_LENGTH = 60;
+const MAX_TITLE_LENGTH = 30;
 
 const state = vi.hoisted(() => ({
   season: 'winter',
@@ -35,7 +39,6 @@ const props = () => ({
   blocked: false,
   onTalk: vi.fn(),
   onSki: vi.fn(),
-  onJournal: vi.fn(),
 });
 beforeEach(() => {
   state.season = 'winter';
@@ -51,9 +54,26 @@ describe('activity invitations', () => {
     const view = render(<ActivityInvitation {...p} blocked />);
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
     view.rerender(<ActivityInvitation {...p} />);
-    fireEvent.click(screen.getByRole('button', { name: 'How do I try it?' }));
-    expect(screen.getByText(/Mr Fox sells skis/)).toBeInTheDocument();
+    expect(screen.getByText('Go skiing')).toBeInTheDocument();
+    expect(screen.getByText(/Buy skis from Mr Fox/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go Skiing' })).not.toBeInTheDocument();
+  });
+  it('shows a title and one short line, not the long directions', () => {
+    state.npcs = [{ id: 'mum_kitchen', name: 'Mum', position: { x: 1, y: 0 } }];
+    render(<ActivityInvitation {...props()} mapId="mums_kitchen" />);
+    expect(screen.getByText('Learn how to cook')).toBeInTheDocument();
+    expect(screen.getByText('Talk to Mum about her cooking classes.')).toBeInTheDocument();
+    const lead = ACTIVITY_LEADS.find((entry) => entry.id === 'cooking')!;
+    expect(screen.queryByText(lead.directions)).not.toBeInTheDocument();
+    expect(screen.queryByText(lead.invitation)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ask Mum', 'Later']);
+  });
+  it('keeps every card line short enough to read at a glance', () => {
+    // The card once held five-sentence directions. Detail belongs in the journal.
+    const tooLong = ACTIVITY_LEADS.filter(
+      (lead) => lead.hint.length > MAX_HINT_LENGTH || lead.title.length > MAX_TITLE_LENGTH
+    ).map((lead) => `${lead.id}: "${lead.title}" / "${lead.hint}"`);
+    expect(tooLong, 'Shorten these; put the detail in `directions`').toEqual([]);
   });
   it('reports visibility so the exploration reminder can yield and return', () => {
     const onVisibilityChange = vi.fn();

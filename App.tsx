@@ -2318,7 +2318,7 @@ const App: React.FC = () => {
     !!activeChainPopup ||
     radialMenuVisible ||
     activityInvitationVisible ||
-    (!villageNews.dismissed && !!villageNews.batch?.stories.length);
+    villageNews.showing;
 
   const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
 
@@ -2804,16 +2804,15 @@ const App: React.FC = () => {
       )}
       <VillageNews key={villageNews.uid ?? 'offline'} news={villageNews} blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible} onJournal={() => openUI('journal')} />
       <PinnedQuest
-        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || activityInvitationVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
+        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || activityInvitationVisible || villageNews.showing}
         onJournal={() => openUI('journal')}
       />
       <ActivityInvitation
         onVisibilityChange={setActivityInvitationVisible}
         mapId={currentMapId}
         playerPosition={playerPosRef}
-        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || (!villageNews.dismissed && !!villageNews.batch?.stories.length)}
+        blocked={!isInWorld || isUIActive || !!activeChainPopup || radialMenuVisible || villageNews.showing}
         onTalk={setActiveNPC}
-        onJournal={() => openUI('journal')}
         onSki={() => {
           if (
             !canSkiHere(mapManager.getCurrentMapId() ?? '', TimeManager.getCurrentTime().season) ||

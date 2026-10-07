@@ -24,7 +24,6 @@ interface Props {
   onVisibilityChange?: (visible: boolean) => void;
   onTalk: (npcId: string) => void;
   onSki: () => void;
-  onJournal: () => void;
 }
 
 export default function ActivityInvitation({
@@ -34,14 +33,12 @@ export default function ActivityInvitation({
   onTalk,
   onVisibilityChange,
   onSki,
-  onJournal,
 }: Props) {
   const [candidate, setCandidate] = useState<{
     id: ActivityLeadId;
     npcId?: string;
     mapId: string;
   } | null>(null);
-  const [expanded, setExpanded] = useState(false);
   // Touch: the invitation first appears as a small pill and opens on tap. As a
   // full card it covered a third of a phone screen whenever a host was near
   // (issue #157). Desktop keeps the full card.
@@ -84,7 +81,6 @@ export default function ActivityInvitation({
   }, [mapId, playerPosition, blocked]);
 
   useEffect(() => {
-    setExpanded(false);
     setOpened(false);
   }, [candidate?.id]);
   const visible =
@@ -142,11 +138,11 @@ export default function ActivityInvitation({
         {illustration && <img src={illustration} alt="" />}
         <div>
           <strong>{lead.title}</strong>
-          <p>{expanded ? lead.directions : lead.invitation}</p>
+          {/* One line only. The full directions live in the journal's Things to try. */}
+          <p>{lead.hint}</p>
         </div>
       </div>
       <div className="activity-invitation-actions">
-        {!expanded && <button onClick={() => setExpanded(true)}>How do I try it?</button>}
         {candidate.npcId && (
           <button
             onClick={() => {
@@ -167,28 +163,13 @@ export default function ActivityInvitation({
             Go Skiing
           </button>
         )}
-        <button
-          onClick={() => {
-            remember();
-            onJournal();
-          }}
-        >
-          Save &amp; read in journal
-        </button>
+        {/* Later also keeps the lead in the journal's Things to try. */}
         <button onClick={remember}>Later</button>
         {isTouchDevice && (
           // Back to the pill without deciding: Later files the lead away for good.
-          <button
-            onClick={() => {
-              setOpened(false);
-              setExpanded(false);
-            }}
-          >
-            Collapse
-          </button>
+          <button onClick={() => setOpened(false)}>Collapse</button>
         )}
       </div>
-      <small>Kept in your journal under Things to try, even if you choose Later.</small>
     </aside>
   );
 }

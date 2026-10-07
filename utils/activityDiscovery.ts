@@ -14,6 +14,8 @@ export type ActivityLeadId =
 export interface ActivityLead {
   id: ActivityLeadId;
   title: string;
+  /** The one-line instruction on the card. Keep it short — the journal holds `directions`. */
+  hint: string;
   itemId?: string;
   invitation: string;
   directions: string;
@@ -22,7 +24,8 @@ export interface ActivityLead {
 export const ACTIVITY_LEADS: ActivityLead[] = [
   {
     id: 'tiny-wreath',
-    title: 'Mushra’s Tiny Wreath',
+    title: 'Make a little wreath',
+    hint: 'Ask Mum, then use the crafting table in your room.',
     itemId: 'crop_lavender',
     invitation:
       'Mum smiles. “Mushra left you a basket of dried flowers, and a little flower workshop upstairs in your room to try!”',
@@ -31,7 +34,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'crate-trail',
-    title: 'The child’s Crate Trail',
+    title: 'Play the Crate Trail',
+    hint: 'Talk to the village child.',
     invitation:
       'The village child sketches a delivery path in the dirt. “Oh no! Crates everywhere! Can you help me get through?”',
     directions:
@@ -39,7 +43,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'painting',
-    title: 'A Picture for the Kitchen',
+    title: 'Paint a picture',
+    hint: 'Ask Mum, then use the easel in your room.',
     itemId: 'easel',
     invitation:
       'Mum has set up an easel upstairs in your room. “This kitchen could use a picture of somewhere you love. Shall we make one?”',
@@ -48,7 +53,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'cooking',
-    title: 'A dish of your own',
+    title: 'Learn how to cook',
+    hint: 'Talk to Mum about her cooking classes.',
     itemId: 'food_tea',
     invitation: 'Mum sets a cup beside the warm kettle. “Shall we make your first tea together?”',
     directions:
@@ -56,7 +62,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'gardening',
-    title: 'A garden of your own',
+    title: 'Grow a garden',
+    hint: 'Ask Elias about the garden.',
     itemId: 'seed_radish',
     invitation: 'Elias can help you get growing.',
     directions:
@@ -64,14 +71,16 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'brewing',
-    title: 'Rumours of bottled magic',
+    title: 'Learn to brew potions',
+    hint: 'Make friends in the village — magic comes later.',
     invitation: 'Someone in the village has learned to brew potions.',
     directions:
       'Follow Elias’s gardening and friendship stories towards the fairies. As your own story unfolds, ask Althea about magic. If you are already an apprentice, visit your teacher and consult your magic recipe book for the next potion and its ingredients.',
   },
   {
     id: 'skiing',
-    title: 'Through the winter woods',
+    title: 'Go skiing',
+    hint: 'Buy skis from Mr Fox, then use them in a winter forest.',
     itemId: 'tool_skis',
     invitation:
       'Snow blankets the forest paths. With skis, you could race through the trees, gather firewood and stop to explore deeper in the woods.',
@@ -80,7 +89,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'pumpkin-carving',
-    title: 'A pumpkin with personality',
+    title: 'Carve a pumpkin',
+    hint: 'Bring a pumpkin to the village child.',
     itemId: 'crop_pumpkin',
     invitation:
       'The village child is full of ideas for spooky pumpkin faces. Perhaps you could make one together?',
@@ -89,7 +99,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'wreath-making',
-    title: 'Flowers for your door',
+    title: 'Make a wreath',
+    hint: 'Talk to Mushra in the mushroom forest.',
     itemId: 'lavender',
     invitation:
       'Mushra knows how to turn gathered flowers into beautiful wreaths. You could make a decoration of your own.',
@@ -98,7 +109,8 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   },
   {
     id: 'lava-leap',
-    title: "Cinder's crystal paths",
+    title: 'Try Lava Leap',
+    hint: 'Talk to Cinder the Guide.',
     invitation:
       'Cinder guards the way deeper. His crystals can make stepping stones, lift you over lava and seal vents. He can teach you to use them.',
     directions:

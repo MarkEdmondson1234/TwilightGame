@@ -25,7 +25,9 @@ const chores: ChoresGuideState = {
 };
 describe('personal quest directions', () => {
   it('distinguishes the tea lesson, ingredients, mastery and returning to Mum', () => {
-    expect(cookingNextStep({ teaComplete: false, recipes: [] }).action).toBe('Make your first tea');
+    expect(cookingNextStep({ teaComplete: false, recipes: [] }).action).toBe(
+      'Make your first cup of tea'
+    );
     const recipe = { name: 'Bread', timesCooked: 2, mastered: false, missing: ['2 Flour'] };
     const step = cookingNextStep({ teaComplete: true, recipes: [recipe] });
     expect(step.action).toContain('Gather');

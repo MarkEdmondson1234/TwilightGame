@@ -18,8 +18,8 @@ export interface CookingGuideState {
 export function cookingNextStep(state: CookingGuideState): QuestNextStep {
   if (!state.teaComplete)
     return {
-      action: 'Make your first tea',
-      where: 'Mum’s kitchen',
+      action: 'Make your first cup of tea',
+      where: 'Mum’s fireplace — click the kettle',
       details: [
         'Stand by the glowing fireplace and press Cook here, then choose Tea and Cook. You can also use Make Tea at the Fireplace.',
         'Mum supplies missing ingredients for one practice cup after you ask her to teach you. The tea goes into your bag.',

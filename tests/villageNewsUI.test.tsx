@@ -19,6 +19,7 @@ const news = (
   batch: { uid: 'reader', stories, returning: true, truncated: false, festivals },
   unavailable: false,
   dismissed: false,
+  showing: true,
   markRead: vi.fn(),
   dismiss: vi.fn(),
   refresh: vi.fn(),

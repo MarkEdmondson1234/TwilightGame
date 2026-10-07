@@ -72,6 +72,7 @@ describe('quest guidance layering', () => {
           },
           unavailable: false,
           dismissed: false,
+          showing: true,
           markRead: vi.fn(),
           dismiss: vi.fn(),
           refresh: vi.fn(),
