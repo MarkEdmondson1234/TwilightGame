@@ -1,4 +1,10 @@
-import { type MapDefinition, TileType, type RoomLayer } from '../../types';
+import {
+  type MapDefinition,
+  TileType,
+  type RoomLayer,
+  type LayerSeason,
+  type TimeLayerCondition,
+} from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND, Z_SPRITE_FOREGROUND } from '../../zIndex';
 import { createShellaNPC } from '../../utils/npcFactories';
@@ -6,11 +12,12 @@ import { createShellaNPC } from '../../utils/npcFactories';
 /**
  * Sea Side - Sunny ocean beach (background-image exterior room)
  *
- * Background: ocean_summer_day_background.png / ocean_summer_sunset_background.png /
- * ocean_summer_night_background.png (1920x1080, displayed at 960x540 @ 1.3x). The three
- * are stacked at the same zIndex and toggled via a 'time' layer condition - day 6am-8pm,
- * sunset 8pm-9pm, night 9pm-6am (see TimeManager.getFixedDayPhase).
- * Foreground: ocean_summer_day_layer1.png (rocks, same dimensions) - stacked at
+ * Background: ocean_<season>_<phase>_background.png (1920x1080, displayed at 960x540 @ 1.3x).
+ * They are stacked at the same zIndex and toggled via 'time' layer conditions on the fixed
+ * clock phase (day 6am-8pm, sunset 8pm-9pm, night 9pm-6am - see
+ * TimeManager.getFixedDayPhase) and the season. Spring, summer and autumn use the summer
+ * art; winter has its own day and sunrise art (see the layer list for which shows when).
+ * Foreground: ocean_<season>_day_layer1.png (rocks, same dimensions) - stacked at
  * Z_SPRITE_FOREGROUND so it renders in front of the player, for a layered depth feel.
  * width=960 = mapWidth(15) x TILE_SIZE(64), which keeps the debug grid aligned with the image
  *
@@ -38,43 +45,60 @@ const gridString = `
 .D.............
 `;
 
-const seaSideLayers: RoomLayer[] = [
-  {
+const SEASIDE_ART = '/TwilightGame/assets-optimized/rooms/seaSide';
+const NOT_WINTER: LayerSeason[] = ['Spring', 'Summer', 'Autumn'];
+const WINTER: LayerSeason[] = ['Winter'];
+
+/**
+ * One full-screen ocean image. Every layer shares the same size and centring - width=960
+ * = mapWidth(15) x TILE_SIZE(64) keeps the debug grid aligned with the art.
+ */
+function oceanLayer(file: string, zIndex: number, condition: TimeLayerCondition): RoomLayer {
+  return {
     type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_day_background.png',
-    zIndex: Z_PARALLAX_FAR, // -100: Behind everything
+    image: `${SEASIDE_ART}/${file}`,
+    zIndex,
     parallaxFactor: 1.0,
     opacity: 1.0,
-    width: 960,  // = mapWidth (15) x TILE_SIZE (64) - keeps grid aligned with image
+    width: 960,
     height: 540, // 16:9 aspect ratio
     scale: 1.3,
     centered: true,
-    condition: { type: 'time', showWhen: 'day' },
-  },
-  {
-    type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_sunset_background.png',
-    zIndex: Z_PARALLAX_FAR, // -100: Behind everything, stacked with the day/night layers
-    parallaxFactor: 1.0,
-    opacity: 1.0,
-    width: 960,
-    height: 540,
-    scale: 1.3,
-    centered: true,
-    condition: { type: 'time', showWhen: 'sunset' },
-  },
-  {
-    type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_night_background.png',
-    zIndex: Z_PARALLAX_FAR, // -100: Behind everything, stacked with the day/sunset layers
-    parallaxFactor: 1.0,
-    opacity: 1.0,
-    width: 960,
-    height: 540,
-    scale: 1.3,
-    centered: true,
-    condition: { type: 'time', showWhen: 'night' },
-  },
+    condition,
+  };
+}
+
+const seaSideLayers: RoomLayer[] = [
+  // Backgrounds - all stacked at Z_PARALLAX_FAR (-100, behind everything). Exactly one is
+  // visible for any season x phase; tests/timeLayerCondition.test.ts checks this.
+  // Spring, summer and autumn: the summer art.
+  oceanLayer('ocean_summer_day_background.png', Z_PARALLAX_FAR, {
+    type: 'time',
+    showWhen: 'day',
+    seasons: NOT_WINTER,
+  }),
+  oceanLayer('ocean_summer_sunset_background.png', Z_PARALLAX_FAR, {
+    type: 'time',
+    showWhen: 'sunset',
+    seasons: NOT_WINTER,
+  }),
+  oceanLayer('ocean_summer_night_background.png', Z_PARALLAX_FAR, {
+    type: 'time',
+    showWhen: 'night',
+    seasons: NOT_WINTER,
+  }),
+  // Winter: no night art yet, so the day art stays up overnight (darkened by the night
+  // tint), and the sunrise painting stands in for the 8pm-9pm sunset window.
+  oceanLayer('ocean_winter_day_background.png', Z_PARALLAX_FAR, {
+    type: 'time',
+    showWhen: ['day', 'night'],
+    seasons: WINTER,
+  }),
+  oceanLayer('ocean_winter_sunrise_background.png', Z_PARALLAX_FAR, {
+    type: 'time',
+    showWhen: 'sunset',
+    seasons: WINTER,
+  }),
 
   // Shella's food truck - summer only, parked on the sand (see visibilityConditions
   // in createShellaNPC). Clicking her opens a "Talk" / "Buy" pie menu - see
@@ -85,20 +109,17 @@ const seaSideLayers: RoomLayer[] = [
     zIndex: Z_SPRITE_BACKGROUND,
   },
 
-  // Foreground rocks (right-hand corner) - renders in front of the player for depth.
-  // Always visible across day/sunset/night; still darkened by the night tint since it
-  // sits below Z_WEATHER_TINT.
-  {
-    type: 'image',
-    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_day_layer1.png',
-    zIndex: Z_SPRITE_FOREGROUND, // 200: In front of player
-    parallaxFactor: 1.0,
-    opacity: 1.0,
-    width: 960, // Must match background layers (keeps grid aligned)
-    height: 540,
-    scale: 1.3,
-    centered: true,
-  },
+  // Foreground rocks (right-hand corner) - Z_SPRITE_FOREGROUND (200) renders them in front
+  // of the player for depth. Shown at every hour of their season; still darkened by the
+  // night tint since they sit below Z_WEATHER_TINT.
+  oceanLayer('ocean_summer_day_layer1.png', Z_SPRITE_FOREGROUND, {
+    type: 'time',
+    seasons: NOT_WINTER,
+  }),
+  oceanLayer('ocean_winter_day_layer1.png', Z_SPRITE_FOREGROUND, {
+    type: 'time',
+    seasons: WINTER,
+  }),
 ];
 
 export const seaSide: MapDefinition = {

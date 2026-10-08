@@ -102,15 +102,26 @@ export interface WallpaperLayerCondition {
   wallpaperId: string; // e.g. 'furniture_strawberry_wallpaper'
 }
 
+/** Fixed game-clock window - see TimeManager.getFixedDayPhase. */
+export type FixedDayPhase = 'day' | 'sunset' | 'night';
+
+/** Season names as TimeManager's Season enum spells them. */
+export type LayerSeason = 'Spring' | 'Summer' | 'Autumn' | 'Winter';
+
 /**
- * Condition for showing/hiding a room layer based on a fixed game-clock window.
+ * Condition for showing/hiding a room layer based on a fixed game-clock window
+ * and/or the season.
  * 'day' = 6am-8pm, 'sunset' = 8pm-9pm, 'night' = 9pm-6am (see TimeManager.getFixedDayPhase).
  * This is a fixed clock window, independent of the seasonal TimeOfDay (dawn/dusk)
- * system used for lighting.
+ * system used for lighting. Both fields are optional so a layer can be seasonal
+ * only (e.g. winter foreground rocks shown at every hour).
  */
 export interface TimeLayerCondition {
   type: 'time';
-  showWhen: 'day' | 'sunset' | 'night';
+  /** Omitted = any time of day */
+  showWhen?: FixedDayPhase | FixedDayPhase[];
+  /** Omitted = every season */
+  seasons?: LayerSeason[];
 }
 
 /** Union of all supported layer condition types */

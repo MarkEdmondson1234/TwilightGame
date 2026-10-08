@@ -21,7 +21,15 @@
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
-import { type MapDefinition, type RoomLayer, type ImageRoomLayer, type NPC, type LayerCondition } from '../../types';
+import {
+  type MapDefinition,
+  type RoomLayer,
+  type ImageRoomLayer,
+  type NPC,
+  type LayerCondition,
+  type TimeLayerCondition,
+} from '../../types';
+import { matchesTimeCondition } from '../timeLayerCondition';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
 import { npcManager } from '../../NPCManager';
 import { gameState } from '../../GameState';
@@ -88,9 +96,9 @@ export class BackgroundImageLayer {
     mapId: string;
     wallpaperId: string;
   }> = [];
-  // Time-conditioned sprites (e.g. day/sunset/night backgrounds) tracked for periodic re-check
-  private timeLayerEntries: Array<{ sprite: PIXI.Sprite; showWhen: 'day' | 'sunset' | 'night' }> =
-    [];
+  // Time-conditioned sprites (day/sunset/night and seasonal backgrounds) tracked for periodic
+  // re-check - the same poll also catches a season rolling over while the player is in the room
+  private timeLayerEntries: Array<{ sprite: PIXI.Sprite; condition: TimeLayerCondition }> = [];
   // Interval polling the game clock to toggle timeLayerEntries visibility, cleared in dispose()
   private timeCheckIntervalId: ReturnType<typeof setInterval> | null = null;
   // Unsubscribe functions for this instance's EventBus listeners, released in dispose()
@@ -360,8 +368,8 @@ export class BackgroundImageLayer {
     }
 
     if (condition.type === 'time') {
-      const phase = TimeManager.getFixedDayPhase(TimeManager.getCurrentTime().hour);
-      return condition.showWhen === phase;
+      const { hour, season } = TimeManager.getCurrentTime();
+      return matchesTimeCondition(condition, TimeManager.getFixedDayPhase(hour), season);
     }
 
     return true; // Unknown condition type = show by default
@@ -445,7 +453,7 @@ export class BackgroundImageLayer {
             layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
             this.timeLayerEntries.push({
               sprite: layerSprite.sprite,
-              showWhen: layer.condition.showWhen,
+              condition: layer.condition,
             });
           }
 
@@ -476,9 +484,10 @@ export class BackgroundImageLayer {
    */
   private updateTimeLayers(): void {
     if (this.timeLayerEntries.length === 0) return;
-    const phase = TimeManager.getFixedDayPhase(TimeManager.getCurrentTime().hour);
+    const { hour, season } = TimeManager.getCurrentTime();
+    const phase = TimeManager.getFixedDayPhase(hour);
     for (const entry of this.timeLayerEntries) {
-      entry.sprite.visible = entry.showWhen === phase;
+      entry.sprite.visible = matchesTimeCondition(entry.condition, phase, season);
     }
   }
 
