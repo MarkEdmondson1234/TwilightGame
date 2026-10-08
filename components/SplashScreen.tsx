@@ -15,10 +15,13 @@ import HelpBrowser from './HelpBrowser';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { CUTSCENE_DIR, SEASON_SCENES } from '../utils/splashScenes';
+import { SPLASH_HOME_TITLE } from '../utils/splashLocation';
 import { Z_SPLASH_SCREEN, zClass } from '../zIndex';
 
 interface SplashScreenProps {
   onPlay: () => void;
+  /** Where the player will resume — see utils/splashLocation.ts. */
+  title?: string;
 }
 
 // Reuses the same village theme (and seasonal variants) the village map
@@ -36,7 +39,7 @@ const SEASON_MUSIC: Record<Season, string> = {
 
 const TITLE_FONT = 'Georgia, "Times New Roman", serif';
 
-const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
+const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay, title = SPLASH_HOME_TITLE }) => {
   const [showHelp, setShowHelp] = useState(false);
   const [helpTab, setHelpTab] = useState('getting-started');
 
@@ -108,7 +111,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
                 textShadow: '0 3px 12px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8)',
               }}
             >
-              Clover Village
+              {title}
             </h1>
             <p
               className="splash-tagline text-base sm:text-lg text-amber-100/90 mb-4"

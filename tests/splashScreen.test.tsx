@@ -20,6 +20,11 @@ describe('SplashScreen', () => {
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 
+  it('shows the given location as the title', () => {
+    render(<SplashScreen onPlay={() => {}} title="Mushroom Forest" />);
+    expect(screen.getByRole('heading', { name: 'Mushroom Forest' })).toBeInTheDocument();
+  });
+
   it('calls onPlay when the Play button is clicked', () => {
     const onPlay = vi.fn();
     render(<SplashScreen onPlay={onPlay} />);

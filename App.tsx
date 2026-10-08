@@ -21,6 +21,7 @@ import CharacterCreator from './components/CharacterCreator';
 import { getCachedPerformanceSettings } from './utils/performanceTier';
 import PortraitPlayPrompt from './components/PortraitPlayPrompt';
 import SplashScreen from './components/SplashScreen';
+import { getSplashLocationName } from './utils/splashLocation';
 import TouchControls from './components/TouchControls';
 import UnifiedDialogueBox from './components/dialogue/UnifiedDialogueBox';
 import HelpBrowser from './components/HelpBrowser';
@@ -2320,7 +2321,12 @@ const App: React.FC = () => {
     activityInvitationVisible ||
     villageNews.showing;
 
-  const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
+  const splashOverlay = showSplashScreen ? (
+    <SplashScreen
+      onPlay={handlePlay}
+      title={getSplashLocationName(currentMapId, (id) => mapManager.getMap(id)?.name)}
+    />
+  ) : null;
 
   // Show character creator as full-screen replacement only on first launch (before map loads)
   // When opened mid-game (via settings), it renders as an overlay further below
