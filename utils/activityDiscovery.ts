@@ -72,7 +72,7 @@ export const ACTIVITY_LEADS: ActivityLead[] = [
   {
     id: 'brewing',
     title: 'Learn to brew potions',
-    hint: 'Make friends in the village — magic comes later.',
+    hint: 'Find out about the fairies to learn magic.',
     invitation: 'Someone in the village has learned to brew potions.',
     directions:
       'Follow Elias’s gardening and friendship stories towards the fairies. As your own story unfolds, ask Althea about magic. If you are already an apprentice, visit your teacher and consult your magic recipe book for the next potion and its ingredients.',
@@ -128,6 +128,8 @@ export interface DiscoveryContext {
   mapId: string;
   season: string;
   nearbyNpcs: Array<{ id: string; name: string }>;
+  /** Brewing points at the fairies, which only helps until the magic book is unlocked. */
+  magicUnlocked?: boolean;
 }
 
 /** Ordered candidates; callers suppress remembered invitations. No remote/unavailable hosts. */
@@ -143,6 +145,9 @@ export function getActivityCandidates(
     }
     if (npc.name === 'Cinder the Guide') candidates.push({ id: 'lava-leap', npcId: npc.id });
     if (npc.id === 'mushra') candidates.push({ id: 'wreath-making', npcId: npc.id });
+    if (npc.id === 'goddess_of_eyes' && !ctx.magicUnlocked) {
+      candidates.push({ id: 'brewing', npcId: npc.id });
+    }
     if (npc.id === 'child') candidates.push({ id: 'crate-trail', npcId: npc.id });
     if (npc.id === 'child' && ctx.season.toLowerCase() === 'autumn') {
       candidates.push({ id: 'pumpkin-carving', npcId: npc.id });

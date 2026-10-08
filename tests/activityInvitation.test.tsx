@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import ActivityInvitation from '../components/ActivityInvitation';
 import { ACTIVITY_LEADS } from '../utils/activityDiscovery';
+import { GODDESS_OF_EYES_ID } from '../utils/npcs/goddessOfEyes';
 
 const MAX_HINT_LENGTH = 60;
 const MAX_TITLE_LENGTH = 30;
@@ -11,6 +12,7 @@ const state = vi.hoisted(() => ({
   skis: 0,
   remembered: new Set<string>(),
   touch: false,
+  magic: false,
   npcs: [] as Array<{ id: string; name: string; position: { x: number; y: number } }>,
 }));
 vi.mock('../NPCManager', () => ({
@@ -27,6 +29,9 @@ vi.mock('../utils/inventoryManager', () => ({
   inventoryManager: { getQuantity: () => state.skis },
 }));
 vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => state.touch }));
+vi.mock('../utils/MagicManager', () => ({
+  magicManager: { isMagicBookUnlocked: () => state.magic },
+}));
 vi.mock('../data/items', () => ({ getItem: () => ({ image: '/skis.png' }) }));
 vi.mock('../utils/activityLeadStorage', () => ({
   hasActivityLead: (id: string) => state.remembered.has(id),
@@ -46,6 +51,7 @@ beforeEach(() => {
   state.remembered.clear();
   state.touch = false;
   state.npcs = [];
+  state.magic = false;
 });
 
 describe('activity invitations', () => {
@@ -67,6 +73,20 @@ describe('activity invitations', () => {
     expect(screen.queryByText(lead.directions)).not.toBeInTheDocument();
     expect(screen.queryByText(lead.invitation)).not.toBeInTheDocument();
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ask Mum', 'Later']);
+  });
+  it('suggests brewing beside the Goddess of Eyes until magic is learned', () => {
+    state.npcs = [{ id: GODDESS_OF_EYES_ID, name: 'Goddess of Eyes', position: { x: 1, y: 0 } }];
+    const p = { ...props(), mapId: 'magic_shop_1' };
+    const view = render(<ActivityInvitation {...p} />);
+    expect(screen.getByText('Learn to brew potions')).toBeInTheDocument();
+    expect(screen.getByText('Find out about the fairies to learn magic.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Goddess of Eyes' }));
+    expect(p.onTalk).toHaveBeenCalledWith(GODDESS_OF_EYES_ID);
+    view.unmount();
+    state.remembered.clear();
+    state.magic = true;
+    render(<ActivityInvitation {...p} />);
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
   it('keeps every card line short enough to read at a glance', () => {
     // The card once held five-sentence directions. Detail belongs in the journal.

@@ -3,6 +3,7 @@ import type { Position } from '../types';
 import { npcManager } from '../NPCManager';
 import { TimeManager } from '../utils/TimeManager';
 import { inventoryManager } from '../utils/inventoryManager';
+import { magicManager } from '../utils/MagicManager';
 import { getItem } from '../data/items';
 import {
   ACTIVITY_LEADS,
@@ -65,6 +66,7 @@ export default function ActivityInvitation({
           mapId,
           season: TimeManager.getCurrentTime().season,
           nearbyNpcs,
+          magicUnlocked: magicManager.isMagicBookUnlocked(),
         }).find((lead) => !hasActivityLead(lead.id)) ?? null;
       setCandidate((previous) =>
         previous?.id === next?.id && previous?.npcId === next?.npcId && previous?.mapId === mapId
